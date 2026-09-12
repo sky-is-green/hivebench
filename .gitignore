@@ -14,7 +14,7 @@ build/
 htmlcov/
 .hypothesis/
 
-# Python envs (the live venv sits in the sibling strata-memory checkout)
+# Python envs (harness venv lives at this repo's root; bootstrap with install_cpu_torch.py)
 .env
 .venv/
 venv/
