@@ -39,8 +39,8 @@ jobs:
 
       - name: Install system + suite
         run: |
-          # ${{ }} expression, not $STRATA_HOME: pwsh wraps run blocks in
-          # single quotes so shell expansion never happens there (silent no-op).
+          # env.STRATA_HOME context expression, not a shell var: pwsh wraps
+          # run blocks in single quotes, so $VAR expansion never happens there.
           pip install -e ${{ env.STRATA_HOME }}
           pip install -e .
 
