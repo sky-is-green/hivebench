@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      # The system under test — sibling checkout (conftest.py default)
+      - uses: actions/checkout@v4
+        with:
+          repository: sky-is-green/Strata-memory
+          ref: StrataMemory-test
+          path: ../strata-memory
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # CPU-only torch keeps the install lean (default wheels pull CUDA)
+      - name: Install CPU torch
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install system + suite
+        run: |
+          pip install -e ../strata-memory
+          pip install -e .
+
+      # Corpora are generated, not committed (strata repo docs/INSTALL.md step 4)
+      - name: Generate fixture corpora
+        run: |
+          python -m tests.fixtures.synthetic_conversations.generate
+          python -m tests.fixtures.synthetic_conversations.generate --prose --horizon --p9 --return-corpus
+
+      # Deterministic offline suite: unit + integration (perf benchmarks stay
+      # out of CI - threshold assertions flake on shared runners)
+      - name: Run offline test suite
+        run: python -m pytest tests/unit tests/integration -q

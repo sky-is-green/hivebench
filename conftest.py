@@ -9,13 +9,9 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-# experiments/, testing/, tests/ live at the repo root.
+# experiments/, testing/, tests/ and the sidecar package harness/ live at the
+# repo root (the old double-nested harness/harness/ was flattened 2026-09-12).
 sys.path.insert(0, ROOT)
-# The sidecar package is double-nested (harness/harness/) — put the PARENT of
-# the real package on the path so flat `import harness` resolves to it, not to
-# the empty outer namespace dir (regression from the hivebench move: the old
-# strata-memory conftest inserted this root and the moved one dropped it).
-sys.path.insert(0, os.path.join(ROOT, "harness"))
 # The vendored dsh Python SDK (deepseek_harness) — the agent bridge imports it.
 sys.path.insert(0, os.path.join(ROOT, "vendor"))
 # The system under test — sibling checkout (override with $STRATA_HOME).

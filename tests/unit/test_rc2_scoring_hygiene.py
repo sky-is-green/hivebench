@@ -152,7 +152,7 @@ SECRET_REPLY = "The deploy token is api_key=supersecretvalue12345 with rotation"
 
 
 def _payload_fingerprints_like_app(store, messages):
-    """The exact recipe harness/harness/app.py uses for payload fingerprints."""
+    """The exact recipe harness/app.py uses for payload fingerprints."""
     fps = set()
     for text in messages:
         normalized = strip_boilerplate(text, store.ingest_block_prefixes)

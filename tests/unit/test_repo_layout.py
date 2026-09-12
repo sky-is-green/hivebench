@@ -66,10 +66,7 @@ def test_pyproject_declares_all_trees():
 
 def test_find_packages_resolves_flat_names():
     found = set(find_packages(where=str(ROOT)))
-    # The sidecar is double-nested (harness/harness/): find from its parent
-    # dir, the way conftest.py puts it on sys.path.
-    assert (EXPECTED_PACKAGES - {"harness"}) <= found
-    assert "harness" in set(find_packages(where=str(ROOT / "harness")))
+    assert EXPECTED_PACKAGES <= found
     # flat names, not nested: nothing may reintroduce a hivebench.* shadow
     assert not any(p.startswith("hivebench") for p in found)
 
