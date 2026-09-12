@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hivebench"
+version = "0.1.0"
+description = "HiveBench — evaluation suite + Studio sidecar harness for the Strata Memory system (sibling repo: sky-is-green/strata-memory)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Evaluation suite
+    "pytest>=8.0",
+    "accelerate>=1.1.0",
+    "datasets>=3.0",
+    # Studio sidecar (harness)
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "pydantic>=2.12,<3",
+    "python-multipart>=0.0.9",
+]
+
+[project.scripts]
+hivebench = "experiments.generate_data:main"
+hivebench-protocol = "experiments.run_p1_p10:main"
+hivebench-probe = "experiments.model_probe:main"
+hivebench-diagnostic = "experiments.retrieval_diagnostic:main"
+hivebench-gate-ab = "experiments.confirmation_gate_ab:main"
+hivebench-compare = "experiments.run_compare:main"
+hivebench-ab = "experiments.paired_ab:main"
+hivebench-harness = "harness.__main__:main"
+
+# All package roots live at the repo top level, flat import names preserved:
+#   experiments/ -> data generation, probes, A/B batteries, finetune runs
+#   testing/     -> ablation / AB test tooling
+#   tests/       -> unit + integration suite for the strata system
+#   harness/     -> the HiveBench Studio sidecar (python -m harness)
+# vendor/deepseek_harness (vendored dsh SDK) is not an installed package;
+# harness/agent.py adds it to sys.path relative to this repo root.
+# The system under test (`strata` — cortex, sieve, membrane, ...) installs
+# from the sibling checkout ../strata-memory.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["experiments*", "testing*", "tests*", "harness*"]
