@@ -39,7 +39,9 @@ jobs:
 
       - name: Install system + suite
         run: |
-          pip install -e $STRATA_HOME
+          # ${{ }} expression, not $STRATA_HOME: pwsh wraps run blocks in
+          # single quotes so shell expansion never happens there (silent no-op).
+          pip install -e ${{ env.STRATA_HOME }}
           pip install -e .
 
       # Corpora are generated, not committed (strata repo docs/INSTALL.md step 4)

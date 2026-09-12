@@ -53,6 +53,10 @@ def test_no_stray_package_dirs_at_root():
     stray = []
     for entry in sorted(ROOT.iterdir()):
         if entry.is_dir() and entry.name not in (*PACKAGE_ROOTS, *NONPKG_SCRIPT_DIRS):
+            # Nested git checkouts (e.g. CI's strata-sys sibling) are
+            # infrastructure, not package layout — exempt from the guard.
+            if (entry / ".git").exists():
+                continue
             if list(entry.glob("*.py")):
                 stray.append(entry.name)
     assert stray == []
