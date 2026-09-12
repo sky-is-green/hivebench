@@ -7,6 +7,11 @@ on:
 
 jobs:
   tests:
+    # actions/checkout refuses paths outside the workspace, so the sibling
+    # system checkout lives inside it; conftest + package bootstraps honour
+    # $STRATA_HOME (their default is ../strata-memory for local dev).
+    env:
+      STRATA_HOME: ${{ github.workspace }}/strata-sys
     strategy:
       fail-fast: false
       matrix:
@@ -16,12 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The system under test — sibling checkout (conftest.py default)
+      # The system under test — sibling repo, checked out inside the workspace
       - uses: actions/checkout@v4
         with:
           repository: sky-is-green/Strata-memory
           ref: StrataMemory-test
-          path: ../strata-memory
+          path: strata-sys
 
       - uses: actions/setup-python@v5
         with:
