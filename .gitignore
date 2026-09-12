@@ -80,3 +80,6 @@ Thumbs.db
 *.swp
 *~
 *.whl
+
+# runtime transcripts from suite/demo runs
+transcripts/

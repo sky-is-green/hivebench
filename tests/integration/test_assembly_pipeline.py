@@ -15,7 +15,7 @@ from retention.store import ContextStore
 from sieve.medium import MediumDrone
 from sieve.ultra_small import UltraSmallDrone
 
-GENERATED = Path("hivebench/tests/fixtures/generated")
+GENERATED = Path("tests/fixtures/generated")
 
 
 def _real_drone():

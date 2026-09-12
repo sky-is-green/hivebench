@@ -24,7 +24,7 @@ Usage::
 
 Reads ``runs/<ts>/run_report.json`` (``conversations`` records with per-turn
 ``query``/``reply`` + ``conversation_id``) and the fixture conversations
-(default ``hivebench/tests/fixtures/generated``).
+(default ``tests/fixtures/generated``).
 
 Exit code: 0 = hypothesis supported (B ingestion >= A AND B stored-refusals
 <= A), 1 = not supported, 2 = nothing to grade (no replies / no imprint).
@@ -170,7 +170,7 @@ def run_ab(run_dir: Path, conversations_path: str) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="P12 confirmation-gate A/B replay")
     parser.add_argument("run_dir", help="a run directory containing run_report.json")
-    parser.add_argument("--conversations", default="hivebench/tests/fixtures/generated")
+    parser.add_argument("--conversations", default="tests/fixtures/generated")
     parser.add_argument("--json", default="", help="write the report to this path")
     args = parser.parse_args(argv)
 

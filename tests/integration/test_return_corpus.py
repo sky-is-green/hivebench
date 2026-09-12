@@ -29,7 +29,7 @@ from tests.fixtures.synthetic_conversations.generate import (
     generate_return,
 )
 
-FIXTURES = Path("hivebench/tests/fixtures/generated_return")
+FIXTURES = Path("tests/fixtures/generated_return")
 
 
 def _load() -> list[dict]:

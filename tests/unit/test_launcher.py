@@ -8,7 +8,7 @@ def _defaults(**over):
         "mode": "live",
         "model": "",
         "no_thinking": True,
-        "conversations": "hivebench/tests/fixtures/generated",
+        "conversations": "tests/fixtures/generated",
         "max_convs": "3",
         "max_turns": "10",
         "max_tokens": "",
@@ -27,7 +27,7 @@ def test_build_argv_mock_small():
     assert build_argv(v) == [
         "--mock",
         "--no-thinking",
-        "--conversations", "hivebench/tests/fixtures/generated",
+        "--conversations", "tests/fixtures/generated",
         "--max-convs", "2",
         "--max-turns", "3",
         "--confidence", "off",

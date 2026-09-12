@@ -120,7 +120,7 @@ class LauncherApp:
         self.vars = {
             "mode": tk.StringVar(value="live"),
             "model": tk.StringVar(value=""),
-            "conversations": tk.StringVar(value="hivebench/tests/fixtures/generated"),
+            "conversations": tk.StringVar(value="tests/fixtures/generated"),
             "max_convs": tk.StringVar(value="3"),
             "max_turns": tk.StringVar(value="10"),
             "max_tokens": tk.StringVar(value=""),
@@ -171,7 +171,7 @@ class LauncherApp:
 
         tip(self._row(frame, "Conversations dir", ttk.Entry(frame, textvariable=self.vars["conversations"])),
             "Directory of conversation JSON files to run. Defaults to the synthetic "
-            "corpus (hivebench/tests/fixtures/generated).")
+            "corpus (tests/fixtures/generated).")
 
         tip(self._row(frame, "Max conversations", ttk.Entry(frame, textvariable=self.vars["max_convs"], width=8)),
             "How many conversations to process. Lower = faster iteration; raise it "

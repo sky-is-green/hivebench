@@ -48,7 +48,7 @@ from testing.mcp_client import (
     RawTurnClient,
 )
 
-DEFAULT_CONVERSATIONS = "hivebench/tests/fixtures/generated_horizon"
+DEFAULT_CONVERSATIONS = "tests/fixtures/generated_horizon"
 DEFAULT_TOP_K = 5
 DEFAULT_MAX_PROBES = 20
 

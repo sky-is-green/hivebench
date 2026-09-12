@@ -282,7 +282,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Deterministic P2 retrieval diagnostic")
     parser.add_argument("run_dir", help="a run directory containing run_report.json")
-    parser.add_argument("--conversations", default="hivebench/tests/fixtures/generated")
+    parser.add_argument("--conversations", default="tests/fixtures/generated")
     args = parser.parse_args()
 
     run_dir = Path(args.run_dir)

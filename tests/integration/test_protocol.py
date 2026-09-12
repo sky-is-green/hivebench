@@ -11,7 +11,7 @@ from sieve.medium import MediumDrone
 
 
 def _suite():
-    convs = load_conversations("hivebench/tests/fixtures/generated")
+    convs = load_conversations("tests/fixtures/generated")
     labels = _load_labels(convs)
     backend = LMStudioBackend(base_url="localhost", model="m", transport=MockTransport())
     auditor = Auditor(
@@ -68,11 +68,11 @@ def test_p11_comb_return_protocol_pass():
         generate_return,
     )
 
-    if not load_conversations("hivebench/tests/fixtures/generated_return"):
-        generate_return("hivebench/tests/fixtures/generated_return", seed=RETURN_SEED)
+    if not load_conversations("tests/fixtures/generated_return"):
+        generate_return("tests/fixtures/generated_return", seed=RETURN_SEED)
 
     ultra = UltraSmallDrone(confidence_mode="off")
-    convs = load_conversations("hivebench/tests/fixtures/generated")
+    convs = load_conversations("tests/fixtures/generated")
     labels = _load_labels(convs)
     suite = PredictionSuite(
         LMStudioBackend(base_url="localhost", model="m", transport=MockTransport()),
@@ -107,7 +107,7 @@ def test_p3_long_conversations_close_sufficiency():
     from sieve.ultra_small import UltraSmallDrone
 
     ultra = UltraSmallDrone(confidence_mode="off")
-    convs = [c for c in load_conversations("hivebench/tests/fixtures/generated")
+    convs = [c for c in load_conversations("tests/fixtures/generated")
              if c.get("profile") == "long"]
     labels = _load_labels(convs)
     suite = PredictionSuite(
@@ -147,14 +147,14 @@ def test_p4_horizon_corpus_separates_domains():
     from tests.fixtures.synthetic_conversations.generate import generate_horizon
 
     for horizon_dir, seed, domain in (
-        ("hivebench/tests/fixtures/generated_horizon", 4041, "code"),
-        ("hivebench/tests/fixtures/generated_prose_horizon", 5051, "prose"),
+        ("tests/fixtures/generated_horizon", 4041, "code"),
+        ("tests/fixtures/generated_prose_horizon", 5051, "prose"),
     ):
         if not load_conversations(horizon_dir):
             generate_horizon(horizon_dir, seed=seed, domain=domain)
 
     ultra = UltraSmallDrone(confidence_mode="off")
-    convs = load_conversations("hivebench/tests/fixtures/generated")
+    convs = load_conversations("tests/fixtures/generated")
     labels = _load_labels(convs)
     suite = PredictionSuite(
         LMStudioBackend(base_url="localhost", model="m", transport=MockTransport()),
@@ -189,8 +189,8 @@ def test_horizon_corpus_age_structure():
 
     expected_e = {"code": {10, 20}, "prose": {24, 32}}
     for domain, path in (
-        ("code", "hivebench/tests/fixtures/generated_horizon"),
-        ("prose", "hivebench/tests/fixtures/generated_prose_horizon"),
+        ("code", "tests/fixtures/generated_horizon"),
+        ("prose", "tests/fixtures/generated_prose_horizon"),
     ):
         convs = load_conversations(path)
         assert convs, f"{domain} horizon corpus missing (run --horizon)"
@@ -250,10 +250,10 @@ def test_p9_duplicate_pairs_merge():
 
     from experiments.p9_densest_duplicate import DUPLICATE_THRESHOLD
 
-    convs = load_conversations("hivebench/tests/fixtures/generated_p9")
+    convs = load_conversations("tests/fixtures/generated_p9")
     if not convs:
-        generate_p9("hivebench/tests/fixtures/generated_p9", seed=P9_SEED)
-        convs = load_conversations("hivebench/tests/fixtures/generated_p9")
+        generate_p9("tests/fixtures/generated_p9", seed=P9_SEED)
+        convs = load_conversations("tests/fixtures/generated_p9")
 
     ultra = UltraSmallDrone(confidence_mode="off")
     pairs = 0
@@ -290,13 +290,13 @@ def test_p9_densest_beats_recency():
 
     from experiments.p9_densest_duplicate import DUPLICATE_THRESHOLD
 
-    convs = load_conversations("hivebench/tests/fixtures/generated_p9")
+    convs = load_conversations("tests/fixtures/generated_p9")
     if not convs:
-        generate_p9("hivebench/tests/fixtures/generated_p9", seed=P9_SEED)
-        convs = load_conversations("hivebench/tests/fixtures/generated_p9")
+        generate_p9("tests/fixtures/generated_p9", seed=P9_SEED)
+        convs = load_conversations("tests/fixtures/generated_p9")
 
     ultra = UltraSmallDrone(confidence_mode="off")
-    base = load_conversations("hivebench/tests/fixtures/generated")
+    base = load_conversations("tests/fixtures/generated")
     labels = _load_labels(base)
     suite = PredictionSuite(
         LMStudioBackend(base_url="localhost", model="m", transport=MockTransport()),

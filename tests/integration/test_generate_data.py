@@ -8,7 +8,7 @@ from experiments.generate_data import _acquire_run_lock, main
 def test_generate_data_mock_run(tmp_path):
     out = tmp_path / "run"
     code = main([
-        "--mock", "--conversations", "hivebench/tests/fixtures/generated",
+        "--mock", "--conversations", "tests/fixtures/generated",
         "--max-convs", "2", "--max-turns", "3", "--output", str(out),
     ])
     assert code == 0
@@ -29,7 +29,7 @@ def test_generate_data_mock_run(tmp_path):
 def test_generate_data_mock_with_protocol(tmp_path):
     out = tmp_path / "run2"
     code = main([
-        "--mock", "--protocol", "--conversations", "hivebench/tests/fixtures/generated",
+        "--mock", "--protocol", "--conversations", "tests/fixtures/generated",
         "--max-convs", "1", "--max-turns", "3", "--output", str(out),
     ])
     assert code == 0
@@ -42,7 +42,7 @@ def test_generate_data_mock_with_protocol(tmp_path):
 def test_generate_data_resume_roundtrip(tmp_path):
     out = tmp_path / "run3"
     code = main([
-        "--mock", "--conversations", "hivebench/tests/fixtures/generated",
+        "--mock", "--conversations", "tests/fixtures/generated",
         "--max-convs", "2", "--max-turns", "3", "--output", str(out),
         "--checkpoint-every", "1",
     ])
@@ -66,7 +66,7 @@ def test_generate_data_resume_roundtrip(tmp_path):
 def test_generate_data_resume_stale_conversations_path_falls_back(tmp_path):
     out = tmp_path / "run5"
     code = main([
-        "--mock", "--conversations", "hivebench/tests/fixtures/generated",
+        "--mock", "--conversations", "tests/fixtures/generated",
         "--max-convs", "1", "--max-turns", "2", "--output", str(out),
         "--checkpoint-every", "1",
     ])
@@ -90,7 +90,7 @@ def test_generate_data_resume_stale_conversations_path_falls_back(tmp_path):
 def test_generate_data_max_tokens_cap(tmp_path):
     out = tmp_path / "run4"
     code = main([
-        "--mock", "--conversations", "hivebench/tests/fixtures/generated",
+        "--mock", "--conversations", "tests/fixtures/generated",
         "--max-convs", "1", "--max-turns", "2", "--output", str(out),
         "--max-tokens", "32",
     ])
@@ -102,7 +102,7 @@ def test_generate_data_max_tokens_cap(tmp_path):
 def test_generate_data_confidence_flag(tmp_path):
     out = tmp_path / "run5"
     code = main([
-        "--mock", "--conversations", "hivebench/tests/fixtures/generated",
+        "--mock", "--conversations", "tests/fixtures/generated",
         "--max-convs", "1", "--max-turns", "2", "--output", str(out),
         "--confidence", "off",
     ])
@@ -146,7 +146,7 @@ def test_per_conversation_store_isolation(tmp_path):
     from backend.lmstudio import LMStudioBackend
     from cortex.baselines.runner import load_conversations
 
-    convs = load_conversations("hivebench/tests/fixtures/generated")
+    convs = load_conversations("tests/fixtures/generated")
     # edge_001 is about the order schema; edge_002 about the deploy pipeline.
     first = next(c for c in convs if c["conversation_id"] == "edge_001")
     second = next(c for c in convs if c["conversation_id"] == "edge_002")

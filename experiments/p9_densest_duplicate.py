@@ -6,7 +6,7 @@ same fact, fewer tokens, so the fixed budget holds more signal. Measured as
 sufficiency-per-1k-tokens (fact presence weighted by the kept copy's token
 cost), following the project's deterministic fact-presence convention (P2/P3).
 
-Corpus: ``hivebench/tests/fixtures/generated_p9`` (``generate --p9``) — conversations
+Corpus: ``tests/fixtures/generated_p9`` (``generate --p9``) — conversations
 where each aspect is stated once DENSE (~33 tokens) and once VERBOSE (~57
 tokens, pair cosine > 0.92 — engineered to merge), in two orders:
 

@@ -234,7 +234,7 @@ def run_experiment(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="P5 targeted-masking experiment")
-    parser.add_argument("--conversations", default="hivebench/tests/fixtures/generated")
+    parser.add_argument("--conversations", default="tests/fixtures/generated")
     parser.add_argument("--steps", type=int, default=300)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--batch-size", type=int, default=8)

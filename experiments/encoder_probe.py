@@ -20,7 +20,7 @@ Encoders (--encoder):
   checkpoint:PATH            a trained SentenceTransformer checkpoint (B2/B3)
 
 Pair sources (--pairs):
-  fixture                    hivebench/tests/fixtures/generated + auditor.labeling (standard test set)
+  fixture                    tests/fixtures/generated + auditor.labeling (standard test set)
   live:RUN_DIR               reconstruct conversations from a run_report.json and label
                              with the same topic machinery (temporal-split source, B3)
   json:FILE                  a saved pairs file

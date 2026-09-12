@@ -9,7 +9,7 @@ Produces the fixed test corpus (Appendix D.2):
 
 Conversations contain domain vocabulary and code blocks (for later router
 tests) and long-range references to earlier decisions (for context-loss tests).
-Output is written to ``hivebench/tests/fixtures/generated/`` (gitignored).
+Output is written to ``tests/fixtures/generated/`` (gitignored).
 """
 
 from __future__ import annotations
@@ -895,13 +895,13 @@ def main() -> int:
     parser.add_argument("--prose-output", default=str(Path(OUTPUT_DIR).parent / "generated_prose"))
     parser.add_argument("--horizon", action="store_true",
                         help="generate the P4 long-horizon corpora "
-                             "(hivebench/tests/fixtures/generated_horizon + generated_prose_horizon)")
+                             "(tests/fixtures/generated_horizon + generated_prose_horizon)")
     parser.add_argument("--p9", action="store_true",
                         help="generate the P9 engineered-duplicate corpus "
-                             "(hivebench/tests/fixtures/generated_p9)")
+                             "(tests/fixtures/generated_p9)")
     parser.add_argument("--return-corpus", dest="return_corpus", action="store_true",
                         help="generate the P11 return corpus "
-                             "(hivebench/tests/fixtures/generated_return)")
+                             "(tests/fixtures/generated_return)")
     args = parser.parse_args()
     if args.return_corpus:
         out_dir = Path(OUTPUT_DIR).parent / "generated_return"

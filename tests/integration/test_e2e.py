@@ -9,7 +9,7 @@ from backend.lmstudio import LMStudioBackend
 
 def test_e2e_mock_run_produces_report():
     conv = json.loads(
-        Path("hivebench/tests/fixtures/generated/short_001.json").read_text(encoding="utf-8")
+        Path("tests/fixtures/generated/short_001.json").read_text(encoding="utf-8")
     )
     backend = LMStudioBackend(
         base_url="localhost:1234", model="qwen", transport=MockTransport()
@@ -33,7 +33,7 @@ def test_e2e_mock_run_produces_report():
 
 def test_e2e_prefix_caching_enabled():
     conv = json.loads(
-        Path("hivebench/tests/fixtures/generated/short_001.json").read_text(encoding="utf-8")
+        Path("tests/fixtures/generated/short_001.json").read_text(encoding="utf-8")
     )
     backend = LMStudioBackend(
         base_url="localhost:1234", model="qwen", transport=MockTransport()

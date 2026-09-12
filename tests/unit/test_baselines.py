@@ -12,7 +12,7 @@ from cortex.baselines.runner import (
     run_baseline,
 )
 
-GENERATED_DIR = "hivebench/tests/fixtures/generated"
+GENERATED_DIR = "tests/fixtures/generated"
 
 
 def test_load_conversations_generated_corpus():

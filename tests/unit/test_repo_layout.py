@@ -34,6 +34,7 @@ EXPECTED_PACKAGES = {
 # *new* root module, so package roots cannot silently leak into the top level.
 KNOWN_ROOT_SCRIPTS = {
     "conftest.py",
+    "install_cpu_torch.py",
     "launch_detached.py",
     "longrun.py",
     "longtest.py",
@@ -44,10 +45,14 @@ def test_root_python_files_are_only_known_scripts():
     assert {p.name for p in ROOT.glob("*.py")} <= KNOWN_ROOT_SCRIPTS
 
 
+# Directories that hold plain scripts (not importable packages) — allowed at
+# root even though they contain .py files.
+NONPKG_SCRIPT_DIRS = {"scripts"}
+
 def test_no_stray_package_dirs_at_root():
     stray = []
     for entry in sorted(ROOT.iterdir()):
-        if entry.is_dir() and entry.name not in PACKAGE_ROOTS:
+        if entry.is_dir() and entry.name not in (*PACKAGE_ROOTS, *NONPKG_SCRIPT_DIRS):
             if list(entry.glob("*.py")):
                 stray.append(entry.name)
     assert stray == []
@@ -61,8 +66,10 @@ def test_pyproject_declares_all_trees():
 
 def test_find_packages_resolves_flat_names():
     found = set(find_packages(where=str(ROOT)))
-    assert EXPECTED_PACKAGES <= found
-    assert "harness" in found
+    # The sidecar is double-nested (harness/harness/): find from its parent
+    # dir, the way conftest.py puts it on sys.path.
+    assert (EXPECTED_PACKAGES - {"harness"}) <= found
+    assert "harness" in set(find_packages(where=str(ROOT / "harness")))
     # flat names, not nested: nothing may reintroduce a hivebench.* shadow
     assert not any(p.startswith("hivebench") for p in found)
 

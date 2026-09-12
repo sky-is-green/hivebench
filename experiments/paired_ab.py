@@ -375,7 +375,7 @@ def main(argv: list[str] | None = None) -> int:
         description="Paired live A/B: strata context vs FIFO window on the same turns")
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--live", action="store_true")
-    parser.add_argument("--conversations", default="hivebench/tests/fixtures/generated")
+    parser.add_argument("--conversations", default="tests/fixtures/generated")
     parser.add_argument("--max-convs", type=int, default=None)
     parser.add_argument("--max-turns", type=int, default=None)
     parser.add_argument("--base-url", default="http://localhost:1234")

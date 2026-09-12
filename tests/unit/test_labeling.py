@@ -8,7 +8,7 @@ from auditor.labeling import (
     topic_of,
 )
 
-CONV = load_conversations("hivebench/tests/fixtures/generated")
+CONV = load_conversations("tests/fixtures/generated")
 
 
 def test_topic_of_detects_domain():

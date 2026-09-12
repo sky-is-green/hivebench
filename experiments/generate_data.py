@@ -563,7 +563,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Strata data-generation workflow")
     parser.add_argument("--live", action="store_true", help="use real LM Studio + all-MiniLM")
     parser.add_argument("--mock", action="store_true", help="offline (fake drone + mock backend)")
-    parser.add_argument("--conversations", default="hivebench/tests/fixtures/generated")
+    parser.add_argument("--conversations", default="tests/fixtures/generated")
     parser.add_argument("--max-convs", type=int, default=50)
     parser.add_argument("--max-turns", type=int, default=None)
     parser.add_argument("--base-url", default="http://localhost:1234")
@@ -818,7 +818,7 @@ def main(argv: list[str] | None = None) -> int:
     # run hollow (the FIFO baseline exit-2 bug found 2026-08-24). Fall back
     # loudly instead of running nothing.
     if not load_conversations(args.conversations):
-        fallback = "hivebench/tests/fixtures/generated"
+        fallback = "tests/fixtures/generated"
         print(f"warning: conversations path '{args.conversations}' resolves to "
               f"no conversations; using '{fallback}'")
         args.conversations = fallback
