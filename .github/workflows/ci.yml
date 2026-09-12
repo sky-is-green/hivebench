@@ -39,7 +39,7 @@ jobs:
 
       - name: Install system + suite
         run: |
-          pip install -e ../strata-memory
+          pip install -e $STRATA_HOME
           pip install -e .
 
       # Corpora are generated, not committed (strata repo docs/INSTALL.md step 4)
