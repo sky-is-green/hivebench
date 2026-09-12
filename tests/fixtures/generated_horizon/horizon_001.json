@@ -1,0 +1,170 @@
+{
+  "conversation_id": "horizon_001",
+  "profile": "longhorizon",
+  "domain": "code",
+  "topic": "api_gateway",
+  "establish_turns": 10,
+  "recap_turns": 10,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle throttling for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, throttling should use bucket throttling quotas. Key decision: throttling = bucket throttling quotas.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle routing for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, routing should use circuit breaker routing. Key decision: routing = circuit breaker routing.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle caching for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, caching should use edge response caching. Key decision: caching = edge response caching.\n```python\ndef handle_api_gateway():\n    return {\"ok\": True}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle observability for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, observability should use tracing header propagation. Key decision: observability = tracing header propagation.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle token checks for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, token checks should use gateway jwt verification. Key decision: token checks = gateway jwt verification.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle request logging for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, request logging should use structured request logs. Key decision: request logging = structured request logs.\n```python\ndef handle_api_gateway():\n    return {\"ok\": True}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle rate limiting for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, rate limiting should use per-key rate ceilings. Key decision: rate limiting = per-key rate ceilings.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle tls policy for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, tls policy should use mandatory tls enforcement. Key decision: tls policy = mandatory tls enforcement.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle timeouts for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, timeouts should use staggered timeout caps. Key decision: timeouts = staggered timeout caps.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle payload transforms for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, payload transforms should use payload transform filters. Key decision: payload transforms = payload transform filters.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for throttling in the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "The throttling for the api gateway is bucket throttling quotas. Key decision: throttling = bucket throttling quotas."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on routing for the api gateway?"
+    },
+    {
+      "role": "assistant",
+      "content": "The routing for the api gateway is circuit breaker routing. Key decision: routing = circuit breaker routing."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the caching decision for the api gateway?"
+    },
+    {
+      "role": "assistant",
+      "content": "The caching for the api gateway is edge response caching. Key decision: caching = edge response caching."
+    },
+    {
+      "role": "user",
+      "content": "I need the observability decision for the api gateway again."
+    },
+    {
+      "role": "assistant",
+      "content": "The observability for the api gateway is tracing header propagation. Key decision: observability = tracing header propagation."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for token checks in the api gateway?"
+    },
+    {
+      "role": "assistant",
+      "content": "The token checks for the api gateway is gateway jwt verification. Key decision: token checks = gateway jwt verification."
+    },
+    {
+      "role": "user",
+      "content": "Restate the request logging policy for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "The request logging for the api gateway is structured request logs. Key decision: request logging = structured request logs."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for rate limiting in the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "The rate limiting for the api gateway is per-key rate ceilings. Key decision: rate limiting = per-key rate ceilings."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on tls policy for the api gateway?"
+    },
+    {
+      "role": "assistant",
+      "content": "The tls policy for the api gateway is mandatory tls enforcement. Key decision: tls policy = mandatory tls enforcement."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the timeouts decision for the api gateway?"
+    },
+    {
+      "role": "assistant",
+      "content": "The timeouts for the api gateway is staggered timeout caps. Key decision: timeouts = staggered timeout caps."
+    },
+    {
+      "role": "user",
+      "content": "I need the payload transforms decision for the api gateway again."
+    },
+    {
+      "role": "assistant",
+      "content": "The payload transforms for the api gateway is payload transform filters. Key decision: payload transforms = payload transform filters."
+    }
+  ]
+}

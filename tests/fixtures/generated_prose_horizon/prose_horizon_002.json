@@ -1,0 +1,362 @@
+{
+  "conversation_id": "prose_horizon_002",
+  "profile": "longhorizon",
+  "domain": "prose",
+  "topic": "product_planning",
+  "establish_turns": 24,
+  "recap_turns": 20,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle roadmap for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, roadmap should use two-quarter horizon roadmaps. Key decision: roadmap = two-quarter horizon roadmaps. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle prioritization for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, prioritization should use impact scoring boards. Key decision: prioritization = impact scoring boards. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle discovery for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, discovery should use customer discovery sprints. Key decision: discovery = customer discovery sprints. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle success metrics for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, success metrics should use adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle experiments for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, experiments should use bounded experiment windows. Key decision: experiments = bounded experiment windows. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle stakeholder updates for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, stakeholder updates should use fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle postmortems for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle meeting cadence for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, meeting cadence should use daily standup huddles. Key decision: meeting cadence = daily standup huddles. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle status updates for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, status updates should use written async status posts. Key decision: status updates = written async status posts. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle decision log for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, decision log should use shared choice ledger. Key decision: decision log = shared choice ledger. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle feedback for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, feedback should use semiannual feedback circles. Key decision: feedback = semiannual feedback circles. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle knowledge sharing for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, knowledge sharing should use rotating demo showcases. Key decision: knowledge sharing = rotating demo showcases. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle oncall for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, oncall should use staggered oncall rotations. Key decision: oncall = staggered oncall rotations. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle documentation for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, documentation should use living handbook pages. Key decision: documentation = living handbook pages. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle conflict resolution for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, conflict resolution should use facilitated mediation sessions. Key decision: conflict resolution = facilitated mediation sessions. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle calendar for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, calendar should use seasonal content calendars. Key decision: calendar = seasonal content calendars. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle voice for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, voice should use plainspoken brand voice. Key decision: voice = plainspoken brand voice. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle distribution for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, distribution should use newsletter and social distribution. Key decision: distribution = newsletter and social distribution. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle analytics for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, analytics should use readership cohort analytics. Key decision: analytics = readership cohort analytics. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle keyword research for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, keyword research should use keyword research cycles. Key decision: keyword research = keyword research cycles. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle community for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, community should use moderated community forums. Key decision: community = moderated community forums. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle partnerships for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, partnerships should use cross-promotion partnership deals. Key decision: partnerships = cross-promotion partnership deals. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle licensing for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, licensing should use syndicated reprint licensing. Key decision: licensing = syndicated reprint licensing. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for roadmap in the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The roadmap for the product planning is two-quarter horizon roadmaps. Key decision: roadmap = two-quarter horizon roadmaps."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on prioritization for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The prioritization for the product planning is impact scoring boards. Key decision: prioritization = impact scoring boards."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the discovery decision for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The discovery for the product planning is customer discovery sprints. Key decision: discovery = customer discovery sprints."
+    },
+    {
+      "role": "user",
+      "content": "I need the success metrics decision for the product planning again."
+    },
+    {
+      "role": "assistant",
+      "content": "The success metrics for the product planning is adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for experiments in the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The experiments for the product planning is bounded experiment windows. Key decision: experiments = bounded experiment windows."
+    },
+    {
+      "role": "user",
+      "content": "Restate the stakeholder updates policy for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The stakeholder updates for the product planning is fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for launch reviews in the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The launch reviews for the product planning is prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on postmortems for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The postmortems for the product planning is blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the meeting cadence decision for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The meeting cadence for the product planning is daily standup huddles. Key decision: meeting cadence = daily standup huddles."
+    },
+    {
+      "role": "user",
+      "content": "I need the status updates decision for the product planning again."
+    },
+    {
+      "role": "assistant",
+      "content": "The status updates for the product planning is written async status posts. Key decision: status updates = written async status posts."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for decision log in the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The decision log for the product planning is shared choice ledger. Key decision: decision log = shared choice ledger."
+    },
+    {
+      "role": "user",
+      "content": "Restate the feedback policy for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The feedback for the product planning is semiannual feedback circles. Key decision: feedback = semiannual feedback circles."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for knowledge sharing in the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The knowledge sharing for the product planning is rotating demo showcases. Key decision: knowledge sharing = rotating demo showcases."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on oncall for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The oncall for the product planning is staggered oncall rotations. Key decision: oncall = staggered oncall rotations."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the documentation decision for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The documentation for the product planning is living handbook pages. Key decision: documentation = living handbook pages."
+    },
+    {
+      "role": "user",
+      "content": "I need the conflict resolution decision for the product planning again."
+    },
+    {
+      "role": "assistant",
+      "content": "The conflict resolution for the product planning is facilitated mediation sessions. Key decision: conflict resolution = facilitated mediation sessions."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for calendar in the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The calendar for the product planning is seasonal content calendars. Key decision: calendar = seasonal content calendars."
+    },
+    {
+      "role": "user",
+      "content": "Restate the voice policy for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The voice for the product planning is plainspoken brand voice. Key decision: voice = plainspoken brand voice."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for distribution in the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The distribution for the product planning is newsletter and social distribution. Key decision: distribution = newsletter and social distribution."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on analytics for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The analytics for the product planning is readership cohort analytics. Key decision: analytics = readership cohort analytics."
+    }
+  ]
+}

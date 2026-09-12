@@ -1,0 +1,15 @@
+{
+  "conversation_id": "edge_001",
+  "profile": "edge",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Given the long history of this project, consolidate everything about the order schema. (normalization) 3NF with a denormalized read model; (indexes) composite on (customer_id, created_at); (soft deletes) deleted_at column; (migrations) Alembic, forward-only; (foreign keys) ON DELETE CASCADE;"
+    },
+    {
+      "role": "assistant",
+      "content": "Summary of order schema: normalization=3NF with a denormalized read model, indexes=composite on (customer_id, created_at), soft deletes=deleted_at column, migrations=Alembic, forward-only, foreign keys=ON DELETE CASCADE"
+    }
+  ]
+}

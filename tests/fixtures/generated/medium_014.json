@@ -1,0 +1,119 @@
+{
+  "conversation_id": "medium_014",
+  "profile": "medium",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's work on the REST API. How should we handle pagination?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set pagination to cursor-based for the REST API. This keeps pagination consistent.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the REST API. How should we handle versioning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for versioning is URL /v1 prefix. Recall that earlier we decided versioning.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for versioning in our REST API?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for versioning is URL /v1 prefix. Recall that earlier we decided versioning.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address pagination for the REST API. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, pagination should use cursor-based. Key decision: pagination = cursor-based.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for rate limits in our REST API?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set rate limits to 100 req/min per key for the REST API. This keeps rate limits consistent.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the REST API. How should we handle versioning?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, versioning should use URL /v1 prefix. Key decision: versioning = URL /v1 prefix.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the REST API. How should we handle error envelope?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set error envelope to problem+json for the REST API. This keeps error envelope consistent.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address normalization for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for normalization is 3NF with a denormalized read model. Recall that earlier we decided normalization.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does normalization fit with normalization?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set normalization to 3NF with a denormalized read model for the order schema. This keeps normalization consistent.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for indexes in our order schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, indexes should use composite on (customer_id, created_at). Key decision: indexes = composite on (customer_id, created_at).\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for foreign keys in the order schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, foreign keys should use ON DELETE CASCADE. Key decision: foreign keys = ON DELETE CASCADE.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for indexes in the order schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, indexes should use composite on (customer_id, created_at). Key decision: indexes = composite on (customer_id, created_at).\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the order schema. How should we handle foreign keys?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, foreign keys should use ON DELETE CASCADE. Key decision: foreign keys = ON DELETE CASCADE.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does foreign keys fit with foreign keys?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, foreign keys should use ON DELETE CASCADE. Key decision: foreign keys = ON DELETE CASCADE.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    }
+  ]
+}

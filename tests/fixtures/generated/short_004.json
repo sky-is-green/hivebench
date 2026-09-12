@@ -1,0 +1,79 @@
+{
+  "conversation_id": "short_004",
+  "profile": "short",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "What would you recommend for OAuth2 scopes in our auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided OAuth2 scopes.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for refresh-token rotation in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set refresh-token rotation to rotate on every refresh for the auth service. This keeps refresh-token rotation consistent.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address OAuth2 scopes for the auth service. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set OAuth2 scopes to read/write split for the auth service. This keeps OAuth2 scopes consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does bcrypt hashing fit with bcrypt hashing?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for bcrypt hashing is cost factor 12. Recall that earlier we decided bcrypt hashing.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for session store in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set session store to Redis with TTL for the auth service. This keeps session store consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address OAuth2 scopes for the auth service. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, OAuth2 scopes should use read/write split. Key decision: OAuth2 scopes = read/write split.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the auth service. How should we handle session store?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, session store should use Redis with TTL. Key decision: session store = Redis with TTL.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does refresh-token rotation fit with refresh-token rotation?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for refresh-token rotation is rotate on every refresh. Recall that earlier we decided refresh-token rotation.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how bcrypt hashing works in the auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, bcrypt hashing should use cost factor 12. Key decision: bcrypt hashing = cost factor 12.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "conversation_id": "edge_005",
+  "profile": "edge",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Set pagination to the default for the REST API."
+    },
+    {
+      "role": "assistant",
+      "content": "OK, pagination defaulted for the REST API."
+    },
+    {
+      "role": "user",
+      "content": "Actually, never mind \u2014 override pagination to a non-standard value now."
+    },
+    {
+      "role": "assistant",
+      "content": "Understood, overriding pagination for the REST API."
+    }
+  ]
+}

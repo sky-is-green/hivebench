@@ -1,0 +1,330 @@
+{
+  "conversation_id": "horizon_004",
+  "profile": "longhorizon",
+  "domain": "code",
+  "topic": "inventory_schema",
+  "establish_turns": 20,
+  "recap_turns": 20,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle partitioning for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, partitioning should use sharded by warehouse id. Key decision: partitioning = sharded by warehouse id.\n```python\nclass InventorySchemaService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle indexing for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, indexing should use hot-path composite indexes. Key decision: indexing = hot-path composite indexes.\n```python\nasync def process_inventory_schema(request):\n    await request.accept()\n    return request\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle soft delete for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, soft delete should use archived flag column. Key decision: soft delete = archived flag column.\n```python\ndef handle_inventory_schema():\n    return {\"ok\": True}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle migrations for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, migrations should use squashed monthly migrations. Key decision: migrations = squashed monthly migrations.\n```python\nclass InventorySchemaService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle constraints for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, constraints should use cascade purge constraints. Key decision: constraints = cascade purge constraints.\n```python\nclass InventorySchemaService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle backup strategy for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, backup strategy should use nightly snapshot backups. Key decision: backup strategy = nightly snapshot backups.\n```python\nclass InventorySchemaService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle data retention for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, data retention should use two-year archive spans. Key decision: data retention = two-year archive spans.\n```python\nclass InventorySchemaService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle schema versioning for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, schema versioning should use numbered schema releases. Key decision: schema versioning = numbered schema releases.\n```python\ndef handle_inventory_schema():\n    return {\"ok\": True}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle sync scheduling for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, sync scheduling should use overnight sync cycles. Key decision: sync scheduling = overnight sync cycles.\n```python\nasync def process_inventory_schema(request):\n    await request.accept()\n    return request\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle compaction for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the inventory schema, compaction should use periodic compaction sweeps. Key decision: compaction = periodic compaction sweeps.\n```python\nclass InventorySchemaService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef list_inventory(page):\n    return query_page(page, limit=100)\n``` The inventory crew reviews the numbers every evening."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle token lifetime for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, token lifetime should use fifteen-minute expiring tokens. Key decision: token lifetime = fifteen-minute expiring tokens.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle refresh strategy for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, refresh strategy should use rolling refresh rotation. Key decision: refresh strategy = rolling refresh rotation.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle session backend for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, session backend should use postgres session store. Key decision: session backend = postgres session store.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle scope policy for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, scope policy should use read and write scopes. Key decision: scope policy = read and write scopes.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle password hashing for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, password hashing should use argon2 password hashing. Key decision: password hashing = argon2 password hashing.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle client authentication for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, client authentication should use client certificate authentication. Key decision: client authentication = client certificate authentication.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle logout handling for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, logout handling should use immediate access revocation. Key decision: logout handling = immediate access revocation.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle account lockout for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, account lockout should use graduated lockout timers. Key decision: account lockout = graduated lockout timers.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle oauth flows for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, oauth flows should use explicit oauth consent screens. Key decision: oauth flows = explicit oauth consent screens.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle password resets for the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, password resets should use tokenized reset links. Key decision: password resets = tokenized reset links.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n```\n```python\ndef verify_auth(request):\n    return check_signature(request.headers)\n``` We keep the material in the vault notebook afterwards."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for partitioning in the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The partitioning for the inventory schema is sharded by warehouse id. Key decision: partitioning = sharded by warehouse id."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on indexing for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The indexing for the inventory schema is hot-path composite indexes. Key decision: indexing = hot-path composite indexes."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the soft delete decision for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The soft delete for the inventory schema is archived flag column. Key decision: soft delete = archived flag column."
+    },
+    {
+      "role": "user",
+      "content": "I need the migrations decision for the inventory schema again."
+    },
+    {
+      "role": "assistant",
+      "content": "The migrations for the inventory schema is squashed monthly migrations. Key decision: migrations = squashed monthly migrations."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for constraints in the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The constraints for the inventory schema is cascade purge constraints. Key decision: constraints = cascade purge constraints."
+    },
+    {
+      "role": "user",
+      "content": "Restate the backup strategy policy for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The backup strategy for the inventory schema is nightly snapshot backups. Key decision: backup strategy = nightly snapshot backups."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for data retention in the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The data retention for the inventory schema is two-year archive spans. Key decision: data retention = two-year archive spans."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on schema versioning for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The schema versioning for the inventory schema is numbered schema releases. Key decision: schema versioning = numbered schema releases."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the sync scheduling decision for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The sync scheduling for the inventory schema is overnight sync cycles. Key decision: sync scheduling = overnight sync cycles."
+    },
+    {
+      "role": "user",
+      "content": "I need the compaction decision for the inventory schema again."
+    },
+    {
+      "role": "assistant",
+      "content": "The compaction for the inventory schema is periodic compaction sweeps. Key decision: compaction = periodic compaction sweeps."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for token lifetime in the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The token lifetime for the inventory schema is fifteen-minute expiring tokens. Key decision: token lifetime = fifteen-minute expiring tokens."
+    },
+    {
+      "role": "user",
+      "content": "Restate the refresh strategy policy for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The refresh strategy for the inventory schema is rolling refresh rotation. Key decision: refresh strategy = rolling refresh rotation."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for session backend in the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The session backend for the inventory schema is postgres session store. Key decision: session backend = postgres session store."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on scope policy for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The scope policy for the inventory schema is read and write scopes. Key decision: scope policy = read and write scopes."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the password hashing decision for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The password hashing for the inventory schema is argon2 password hashing. Key decision: password hashing = argon2 password hashing."
+    },
+    {
+      "role": "user",
+      "content": "I need the client authentication decision for the inventory schema again."
+    },
+    {
+      "role": "assistant",
+      "content": "The client authentication for the inventory schema is client certificate authentication. Key decision: client authentication = client certificate authentication."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for logout handling in the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The logout handling for the inventory schema is immediate access revocation. Key decision: logout handling = immediate access revocation."
+    },
+    {
+      "role": "user",
+      "content": "Restate the account lockout policy for the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The account lockout for the inventory schema is graduated lockout timers. Key decision: account lockout = graduated lockout timers."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for oauth flows in the inventory schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The oauth flows for the inventory schema is explicit oauth consent screens. Key decision: oauth flows = explicit oauth consent screens."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on password resets for the inventory schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The password resets for the inventory schema is tokenized reset links. Key decision: password resets = tokenized reset links."
+    }
+  ]
+}

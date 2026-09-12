@@ -1,0 +1,23 @@
+{
+  "conversation_id": "edge_002",
+  "profile": "edge",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Set blue-green to the default for the deploy pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "OK, blue-green defaulted for the deploy pipeline."
+    },
+    {
+      "role": "user",
+      "content": "Actually, never mind \u2014 override blue-green to a non-standard value now."
+    },
+    {
+      "role": "assistant",
+      "content": "Understood, overriding blue-green for the deploy pipeline."
+    }
+  ]
+}

@@ -1,0 +1,330 @@
+{
+  "conversation_id": "horizon_005",
+  "profile": "longhorizon",
+  "domain": "code",
+  "topic": "audit_pipeline",
+  "establish_turns": 20,
+  "recap_turns": 20,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle transport for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, transport should use kafka audit transport. Key decision: transport = kafka audit transport.\n```python\ndef handle_audit_pipeline():\n    return {\"ok\": True}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle enrichment for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, enrichment should use service metadata enrichment. Key decision: enrichment = service metadata enrichment.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle batching for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, batching should use thousand-message batches. Key decision: batching = thousand-message batches.\n```python\ndef handle_audit_pipeline():\n    return {\"ok\": True}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle retention for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, retention should use ninety-day hot retention. Key decision: retention = ninety-day hot retention.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle alerts for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, alerts should use anomaly alerting rules. Key decision: alerts = anomaly alerting rules.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle event ordering for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, event ordering should use sequence number ordering. Key decision: event ordering = sequence number ordering.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle sampling policy for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, sampling policy should use stratified trace sampling. Key decision: sampling policy = stratified trace sampling.\n```python\ndef handle_audit_pipeline():\n    return {\"ok\": True}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle consumer lag for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, consumer lag should use lag threshold alarms. Key decision: consumer lag = lag threshold alarms.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle schema drift detection for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, schema drift detection should use immutable schema locks. Key decision: schema drift detection = immutable schema locks.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle replay capability for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, replay capability should use replay from cold archives. Key decision: replay capability = replay from cold archives.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle throttling for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, throttling should use bucket throttling quotas. Key decision: throttling = bucket throttling quotas.\n```python\ndef handle_api_gateway():\n    return {\"ok\": True}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle routing for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, routing should use circuit breaker routing. Key decision: routing = circuit breaker routing.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle caching for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, caching should use edge response caching. Key decision: caching = edge response caching.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle observability for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, observability should use tracing header propagation. Key decision: observability = tracing header propagation.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle token checks for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, token checks should use gateway jwt verification. Key decision: token checks = gateway jwt verification.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle request logging for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, request logging should use structured request logs. Key decision: request logging = structured request logs.\n```python\nclass ApiGatewayService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle rate limiting for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, rate limiting should use per-key rate ceilings. Key decision: rate limiting = per-key rate ceilings.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle tls policy for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, tls policy should use mandatory tls enforcement. Key decision: tls policy = mandatory tls enforcement.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle timeouts for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, timeouts should use staggered timeout caps. Key decision: timeouts = staggered timeout caps.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle payload transforms for the api gateway."
+    },
+    {
+      "role": "assistant",
+      "content": "For the api gateway, payload transforms should use payload transform filters. Key decision: payload transforms = payload transform filters.\n```python\nasync def process_api_gateway(request):\n    await request.accept()\n    return request\n```\n```python\ndef route_request(path):\n    return lookup_route(path)\n``` The network crew monitors the traffic each hour."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for transport in the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The transport for the audit pipeline is kafka audit transport. Key decision: transport = kafka audit transport."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on enrichment for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The enrichment for the audit pipeline is service metadata enrichment. Key decision: enrichment = service metadata enrichment."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the batching decision for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The batching for the audit pipeline is thousand-message batches. Key decision: batching = thousand-message batches."
+    },
+    {
+      "role": "user",
+      "content": "I need the retention decision for the audit pipeline again."
+    },
+    {
+      "role": "assistant",
+      "content": "The retention for the audit pipeline is ninety-day hot retention. Key decision: retention = ninety-day hot retention."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for alerts in the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The alerts for the audit pipeline is anomaly alerting rules. Key decision: alerts = anomaly alerting rules."
+    },
+    {
+      "role": "user",
+      "content": "Restate the event ordering policy for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The event ordering for the audit pipeline is sequence number ordering. Key decision: event ordering = sequence number ordering."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for sampling policy in the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The sampling policy for the audit pipeline is stratified trace sampling. Key decision: sampling policy = stratified trace sampling."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on consumer lag for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The consumer lag for the audit pipeline is lag threshold alarms. Key decision: consumer lag = lag threshold alarms."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the schema drift detection decision for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The schema drift detection for the audit pipeline is immutable schema locks. Key decision: schema drift detection = immutable schema locks."
+    },
+    {
+      "role": "user",
+      "content": "I need the replay capability decision for the audit pipeline again."
+    },
+    {
+      "role": "assistant",
+      "content": "The replay capability for the audit pipeline is replay from cold archives. Key decision: replay capability = replay from cold archives."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for throttling in the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The throttling for the audit pipeline is bucket throttling quotas. Key decision: throttling = bucket throttling quotas."
+    },
+    {
+      "role": "user",
+      "content": "Restate the routing policy for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The routing for the audit pipeline is circuit breaker routing. Key decision: routing = circuit breaker routing."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for caching in the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The caching for the audit pipeline is edge response caching. Key decision: caching = edge response caching."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on observability for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The observability for the audit pipeline is tracing header propagation. Key decision: observability = tracing header propagation."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the token checks decision for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The token checks for the audit pipeline is gateway jwt verification. Key decision: token checks = gateway jwt verification."
+    },
+    {
+      "role": "user",
+      "content": "I need the request logging decision for the audit pipeline again."
+    },
+    {
+      "role": "assistant",
+      "content": "The request logging for the audit pipeline is structured request logs. Key decision: request logging = structured request logs."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for rate limiting in the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The rate limiting for the audit pipeline is per-key rate ceilings. Key decision: rate limiting = per-key rate ceilings."
+    },
+    {
+      "role": "user",
+      "content": "Restate the tls policy policy for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The tls policy for the audit pipeline is mandatory tls enforcement. Key decision: tls policy = mandatory tls enforcement."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for timeouts in the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The timeouts for the audit pipeline is staggered timeout caps. Key decision: timeouts = staggered timeout caps."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on payload transforms for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The payload transforms for the audit pipeline is payload transform filters. Key decision: payload transforms = payload transform filters."
+    }
+  ]
+}

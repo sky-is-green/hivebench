@@ -1,0 +1,15 @@
+{
+  "conversation_id": "edge_004",
+  "profile": "edge",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Given the long history of this project, consolidate everything about the deploy pipeline. (blue-green) two live slots; (health checks) /healthz with DB ping; (rollbacks) auto on 5% error rate; (canary) 5% for 10 minutes; (secrets) Vault, rotated monthly;"
+    },
+    {
+      "role": "assistant",
+      "content": "Summary of deploy pipeline: blue-green=two live slots, health checks=/healthz with DB ping, rollbacks=auto on 5% error rate, canary=5% for 10 minutes, secrets=Vault, rotated monthly"
+    }
+  ]
+}

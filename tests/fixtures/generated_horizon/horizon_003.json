@@ -1,0 +1,170 @@
+{
+  "conversation_id": "horizon_003",
+  "profile": "longhorizon",
+  "domain": "code",
+  "topic": "release_flow",
+  "establish_turns": 10,
+  "recap_turns": 10,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle branching for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, branching should use trunk branching model. Key decision: branching = trunk branching model.\n```python\nasync def process_release_flow(request):\n    await request.accept()\n    return request\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle staging for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, staging should use ephemeral staging environments. Key decision: staging = ephemeral staging environments.\n```python\nasync def process_release_flow(request):\n    await request.accept()\n    return request\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle rollback for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, rollback should use instant rollback snapshots. Key decision: rollback = instant rollback snapshots.\n```python\nasync def process_release_flow(request):\n    await request.accept()\n    return request\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle signing for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, signing should use signed release artifacts. Key decision: signing = signed release artifacts.\n```python\ndef handle_release_flow():\n    return {\"ok\": True}\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle freeze windows for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, freeze windows should use holiday release freezes. Key decision: freeze windows = holiday release freezes.\n```python\ndef handle_release_flow():\n    return {\"ok\": True}\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle feature flags for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, feature flags should use permanent feature flags. Key decision: feature flags = permanent feature flags.\n```python\nclass ReleaseFlowService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle hotfix policy for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, hotfix policy should use emergency hotfix lanes. Key decision: hotfix policy = emergency hotfix lanes.\n```python\nasync def process_release_flow(request):\n    await request.accept()\n    return request\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle release candidates for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, release candidates should use tagged release candidates. Key decision: release candidates = tagged release candidates.\n```python\ndef handle_release_flow():\n    return {\"ok\": True}\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle environment parity for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, environment parity should use mirrored environment parity. Key decision: environment parity = mirrored environment parity.\n```python\ndef handle_release_flow():\n    return {\"ok\": True}\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle shipping gates for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "For the release flow, shipping gates should use approval shipping gates. Key decision: shipping gates = approval shipping gates.\n```python\ndef handle_release_flow():\n    return {\"ok\": True}\n```\n```python\ndef promote_build(artifact):\n    signer.sign(artifact)\n``` The delivery crew signs the packages every cycle."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for branching in the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "The branching for the release flow is trunk branching model. Key decision: branching = trunk branching model."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on staging for the release flow?"
+    },
+    {
+      "role": "assistant",
+      "content": "The staging for the release flow is ephemeral staging environments. Key decision: staging = ephemeral staging environments."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the rollback decision for the release flow?"
+    },
+    {
+      "role": "assistant",
+      "content": "The rollback for the release flow is instant rollback snapshots. Key decision: rollback = instant rollback snapshots."
+    },
+    {
+      "role": "user",
+      "content": "I need the signing decision for the release flow again."
+    },
+    {
+      "role": "assistant",
+      "content": "The signing for the release flow is signed release artifacts. Key decision: signing = signed release artifacts."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for freeze windows in the release flow?"
+    },
+    {
+      "role": "assistant",
+      "content": "The freeze windows for the release flow is holiday release freezes. Key decision: freeze windows = holiday release freezes."
+    },
+    {
+      "role": "user",
+      "content": "Restate the feature flags policy for the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "The feature flags for the release flow is permanent feature flags. Key decision: feature flags = permanent feature flags."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for hotfix policy in the release flow."
+    },
+    {
+      "role": "assistant",
+      "content": "The hotfix policy for the release flow is emergency hotfix lanes. Key decision: hotfix policy = emergency hotfix lanes."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on release candidates for the release flow?"
+    },
+    {
+      "role": "assistant",
+      "content": "The release candidates for the release flow is tagged release candidates. Key decision: release candidates = tagged release candidates."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the environment parity decision for the release flow?"
+    },
+    {
+      "role": "assistant",
+      "content": "The environment parity for the release flow is mirrored environment parity. Key decision: environment parity = mirrored environment parity."
+    },
+    {
+      "role": "user",
+      "content": "I need the shipping gates decision for the release flow again."
+    },
+    {
+      "role": "assistant",
+      "content": "The shipping gates for the release flow is approval shipping gates. Key decision: shipping gates = approval shipping gates."
+    }
+  ]
+}

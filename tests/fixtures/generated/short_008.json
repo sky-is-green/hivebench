@@ -1,0 +1,79 @@
+{
+  "conversation_id": "short_008",
+  "profile": "short",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "How does rollbacks fit with rollbacks?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, rollbacks should use auto on 5% error rate. Key decision: rollbacks = auto on 5% error rate.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address blue-green for the deploy pipeline. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, blue-green should use two live slots. Key decision: blue-green = two live slots.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for health checks in our deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, health checks should use /healthz with DB ping. Key decision: health checks = /healthz with DB ping.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address secrets for the deploy pipeline. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set secrets to Vault, rotated monthly for the deploy pipeline. This keeps secrets consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for health checks in the deploy pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set health checks to /healthz with DB ping for the deploy pipeline. This keeps health checks consistent.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for blue-green in the deploy pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set blue-green to two live slots for the deploy pipeline. This keeps blue-green consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for health checks in our deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, health checks should use /healthz with DB ping. Key decision: health checks = /healthz with DB ping.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how health checks works in the deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for health checks is /healthz with DB ping. Recall that earlier we decided health checks.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the deploy pipeline. How should we handle secrets?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for secrets is Vault, rotated monthly. Recall that earlier we decided secrets.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    }
+  ]
+}

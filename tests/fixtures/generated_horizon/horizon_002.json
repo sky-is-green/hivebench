@@ -1,0 +1,170 @@
+{
+  "conversation_id": "horizon_002",
+  "profile": "longhorizon",
+  "domain": "code",
+  "topic": "audit_pipeline",
+  "establish_turns": 10,
+  "recap_turns": 10,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle transport for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, transport should use kafka audit transport. Key decision: transport = kafka audit transport.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle enrichment for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, enrichment should use service metadata enrichment. Key decision: enrichment = service metadata enrichment.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle batching for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, batching should use thousand-message batches. Key decision: batching = thousand-message batches.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle retention for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, retention should use ninety-day hot retention. Key decision: retention = ninety-day hot retention.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle alerts for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, alerts should use anomaly alerting rules. Key decision: alerts = anomaly alerting rules.\n```python\nclass AuditPipelineService:\n    def __init__(self):\n        self._cache = {}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle event ordering for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, event ordering should use sequence number ordering. Key decision: event ordering = sequence number ordering.\n```python\ndef handle_audit_pipeline():\n    return {\"ok\": True}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle sampling policy for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, sampling policy should use stratified trace sampling. Key decision: sampling policy = stratified trace sampling.\n```python\ndef handle_audit_pipeline():\n    return {\"ok\": True}\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle consumer lag for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, consumer lag should use lag threshold alarms. Key decision: consumer lag = lag threshold alarms.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle schema drift detection for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, schema drift detection should use immutable schema locks. Key decision: schema drift detection = immutable schema locks.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle replay capability for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "For the audit pipeline, replay capability should use replay from cold archives. Key decision: replay capability = replay from cold archives.\n```python\nasync def process_audit_pipeline(request):\n    await request.accept()\n    return request\n```\n```python\ndef emit_audit(event):\n    serializer.write(event)\n``` The operations crew checks the counters each morning."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for transport in the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The transport for the audit pipeline is kafka audit transport. Key decision: transport = kafka audit transport."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on enrichment for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The enrichment for the audit pipeline is service metadata enrichment. Key decision: enrichment = service metadata enrichment."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the batching decision for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The batching for the audit pipeline is thousand-message batches. Key decision: batching = thousand-message batches."
+    },
+    {
+      "role": "user",
+      "content": "I need the retention decision for the audit pipeline again."
+    },
+    {
+      "role": "assistant",
+      "content": "The retention for the audit pipeline is ninety-day hot retention. Key decision: retention = ninety-day hot retention."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for alerts in the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The alerts for the audit pipeline is anomaly alerting rules. Key decision: alerts = anomaly alerting rules."
+    },
+    {
+      "role": "user",
+      "content": "Restate the event ordering policy for the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The event ordering for the audit pipeline is sequence number ordering. Key decision: event ordering = sequence number ordering."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for sampling policy in the audit pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The sampling policy for the audit pipeline is stratified trace sampling. Key decision: sampling policy = stratified trace sampling."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on consumer lag for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The consumer lag for the audit pipeline is lag threshold alarms. Key decision: consumer lag = lag threshold alarms."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the schema drift detection decision for the audit pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The schema drift detection for the audit pipeline is immutable schema locks. Key decision: schema drift detection = immutable schema locks."
+    },
+    {
+      "role": "user",
+      "content": "I need the replay capability decision for the audit pipeline again."
+    },
+    {
+      "role": "assistant",
+      "content": "The replay capability for the audit pipeline is replay from cold archives. Key decision: replay capability = replay from cold archives."
+    }
+  ]
+}

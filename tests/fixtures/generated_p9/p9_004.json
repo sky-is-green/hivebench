@@ -1,0 +1,162 @@
+{
+  "conversation_id": "p9_004",
+  "profile": "p9",
+  "domain": "prose",
+  "topic": "hiring",
+  "order": "control",
+  "aspects_per_conv": 6,
+  "aspects": [
+    "onboarding",
+    "referrals",
+    "candidate experience",
+    "interview format",
+    "diversity",
+    "offers"
+  ],
+  "turns": [
+    {
+      "role": "user",
+      "content": "Confirm again that onboarding is still the right call for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, onboarding should use mentored first-month plans. Key decision: onboarding = mentored first-month plans. Key decision: onboarding = mentored first-month plans. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle onboarding for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, onboarding should use mentored first-month plans. Key decision: onboarding = mentored first-month plans."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that referrals is still the right call for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, referrals should use double-sided referral bonuses. Key decision: referrals = double-sided referral bonuses. Key decision: referrals = double-sided referral bonuses. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle referrals for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, referrals should use double-sided referral bonuses. Key decision: referrals = double-sided referral bonuses."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that candidate experience is still the right call for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, candidate experience should use same-week review letters. Key decision: candidate experience = same-week review letters. Key decision: candidate experience = same-week review letters. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle candidate experience for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, candidate experience should use same-week review letters. Key decision: candidate experience = same-week review letters."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that interview format is still the right call for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, interview format should use structured panel interviews. Key decision: interview format = structured panel interviews. Key decision: interview format = structured panel interviews. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle interview format for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, interview format should use structured panel interviews. Key decision: interview format = structured panel interviews."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that diversity is still the right call for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, diversity should use slate diversity targets. Key decision: diversity = slate diversity targets. Key decision: diversity = slate diversity targets. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle diversity for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, diversity should use slate diversity targets. Key decision: diversity = slate diversity targets."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that offers is still the right call for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, offers should use team-vetted offer packages. Key decision: offers = team-vetted offer packages. Key decision: offers = team-vetted offer packages. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle offers for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, offers should use team-vetted offer packages. Key decision: offers = team-vetted offer packages."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for onboarding in the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "The onboarding for the hiring is mentored first-month plans. Key decision: onboarding = mentored first-month plans."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on referrals for the hiring?"
+    },
+    {
+      "role": "assistant",
+      "content": "The referrals for the hiring is double-sided referral bonuses. Key decision: referrals = double-sided referral bonuses."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the candidate experience decision for the hiring?"
+    },
+    {
+      "role": "assistant",
+      "content": "The candidate experience for the hiring is same-week review letters. Key decision: candidate experience = same-week review letters."
+    },
+    {
+      "role": "user",
+      "content": "I need the interview format decision for the hiring again."
+    },
+    {
+      "role": "assistant",
+      "content": "The interview format for the hiring is structured panel interviews. Key decision: interview format = structured panel interviews."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for diversity in the hiring?"
+    },
+    {
+      "role": "assistant",
+      "content": "The diversity for the hiring is slate diversity targets. Key decision: diversity = slate diversity targets."
+    },
+    {
+      "role": "user",
+      "content": "Restate the offers policy for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "The offers for the hiring is team-vetted offer packages. Key decision: offers = team-vetted offer packages."
+    }
+  ]
+}

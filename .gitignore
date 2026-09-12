@@ -1,0 +1,82 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.hypothesis/
+
+# Python envs (the live venv sits in the sibling strata-memory checkout)
+.env
+.venv/
+venv/
+env/
+.Python
+site-packages/
+
+# Model weights + generated data (downloaded / regenerated, never authored)
+models/
+runs/
+runs_mock/
+data/
+sample_data/
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.gguf
+*.onnx
+*.npy
+*.npz
+*.h5
+*.pkl
+*.joblib
+*.ckpt
+*.ndjson
+
+# Runtime state (sidecar conversation store, checkpoints)
+state/
+checkpoints/
+harness_state/
+harness_state*
+*.jsonl
+
+# Databases (ground truth, vault)
+*.sqlite3
+*.sqlite
+*.db
+*.db-journal
+
+# Logs & generated reports
+logs/
+*.log
+reports/
+*.html
+
+# Local working docs / coordination state (local-only, not repo content)
+.claims/
+.opencode/
+opencode.json
+*.local.md
+*.local.json
+config.local.*
+HANDOFF-*.md
+STRATA-HANDOFF.md
+HARNESS-SPEC.md
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+*.whl

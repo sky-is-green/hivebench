@@ -1,0 +1,502 @@
+[
+  {
+    "chunk": "Summary of order schema: normalization=3NF with a denormalized read model, indexes=composite on (customer_id, created_at), soft deletes=deleted_at column, migrations=Alembic, forward-only, foreign keys=ON DELETE CASCADE",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "OK, blue-green defaulted for the deploy pipeline.",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "Understood, overriding blue-green for the deploy pipeline.",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for correlation ids is X-Request-Id header. Recall that earlier we decided correlation ids.\n```python\ndef handle_log_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the log pipeline, structured logs should use JSON via python logging. Key decision: structured logs = JSON via python logging.\n```python\nclass LogPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set structured logs to JSON via python logging for the log pipeline. This keeps structured logs consistent.\n```python\nasync def process_log_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the REST API, error envelope should use problem+json. Key decision: error envelope = problem+json.\n```python\nclass RestApiService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the REST API, error envelope should use problem+json. Key decision: error envelope = problem+json.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set idempotency to Idempotency-Key header for the REST API. This keeps idempotency consistent.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided log pipeline: structured logs=JSON via python logging.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set session store to Redis with TTL for the auth service. This keeps REST API: pagination=cursor-based consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, refresh-token rotation should use rotate on every refresh. Key decision: refresh-token rotation = rotate on every refresh.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, migrations should use Alembic, forward-only. Key decision: migrations = Alembic, forward-only.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, migrations should use Alembic, forward-only. Key decision: migrations = Alembic, forward-only.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, soft deletes should use deleted_at column. Key decision: soft deletes = deleted_at column.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for blue-green is two live slots. Recall that earlier we decided blue-green.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set health checks to /healthz with DB ping for the deploy pipeline. This keeps order schema: normalization=3NF with a denormalized read model consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the deploy pipeline, secrets should use Vault, rotated monthly. Key decision: secrets = Vault, rotated monthly.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "Summary of deploy pipeline: blue-green=two live slots, health checks=/healthz with DB ping, rollbacks=auto on 5% error rate, canary=5% for 10 minutes, secrets=Vault, rotated monthly",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "OK, pagination defaulted for the REST API.",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "Understood, overriding pagination for the REST API.",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the REST API, error envelope should use problem+json. Key decision: error envelope = problem+json.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the REST API, rate limits should use 100 req/min per key. Key decision: rate limits = 100 req/min per key.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the REST API, pagination should use cursor-based. Key decision: pagination = cursor-based.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for error envelope is problem+json. Recall that earlier we decided error envelope.\n```python\nclass RestApiService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for versioning is URL /v1 prefix. Recall that earlier we decided versioning.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for rate limits is 100 req/min per key. Recall that earlier we decided rate limits.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the REST API, error envelope should use problem+json. Key decision: error envelope = problem+json.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for pagination is cursor-based. Recall that earlier we decided pagination.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for versioning is URL /v1 prefix. Recall that earlier we decided versioning.\n```python\nclass RestApiService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set pagination to cursor-based for the REST API. This keeps pagination consistent.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, migrations should use Alembic, forward-only. Key decision: migrations = Alembic, forward-only.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set foreign keys to ON DELETE CASCADE for the order schema. This keeps foreign keys consistent.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, indexes should use composite on (customer_id, created_at). Key decision: indexes = composite on (customer_id, created_at).\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set indexes to composite on (customer_id, created_at) for the order schema. This keeps REST API: pagination=cursor-based consistent.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for normalization is 3NF with a denormalized read model. Recall that earlier we decided normalization.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set migrations to Alembic, forward-only for the order schema. This keeps REST API: pagination=cursor-based consistent.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for migrations is Alembic, forward-only. Recall that earlier we decided REST API: pagination=cursor-based.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for indexes is composite on (customer_id, created_at). Recall that earlier we decided REST API: pagination=cursor-based.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set soft deletes to deleted_at column for the order schema. This keeps soft deletes consistent.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for migrations is Alembic, forward-only. Recall that earlier we decided REST API: pagination=cursor-based.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, bcrypt hashing should use cost factor 12. Key decision: bcrypt hashing = cost factor 12.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set JWT expiry to 15 minutes for the auth service. This keeps JWT expiry consistent.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided order schema: normalization=3NF with a denormalized read model.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set session store to Redis with TTL for the auth service. This keeps REST API: pagination=cursor-based consistent.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for JWT expiry is 15 minutes. Recall that earlier we decided order schema: normalization=3NF with a denormalized read model.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, session store should use Redis with TTL. Key decision: session store = Redis with TTL.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, session store should use Redis with TTL. Key decision: session store = Redis with TTL.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, refresh-token rotation should use rotate on every refresh. Key decision: refresh-token rotation = rotate on every refresh.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, bcrypt hashing should use cost factor 12. Key decision: bcrypt hashing = cost factor 12.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for bcrypt hashing is cost factor 12. Recall that earlier we decided bcrypt hashing.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for secrets is Vault, rotated monthly. Recall that earlier we decided secrets.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for blue-green is two live slots. Recall that earlier we decided blue-green.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the deploy pipeline, rollbacks should use auto on 5% error rate. Key decision: rollbacks = auto on 5% error rate.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for rollbacks is auto on 5% error rate. Recall that earlier we decided order schema: normalization=3NF with a denormalized read model.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set blue-green to two live slots for the deploy pipeline. This keeps blue-green consistent.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set rollbacks to auto on 5% error rate for the deploy pipeline. This keeps rollbacks consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for health checks is /healthz with DB ping. Recall that earlier we decided health checks.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for blue-green is two live slots. Recall that earlier we decided blue-green.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for blue-green is two live slots. Recall that earlier we decided blue-green.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the deploy pipeline, health checks should use /healthz with DB ping. Key decision: health checks = /healthz with DB ping.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set canary to 5% for 10 minutes for the deploy pipeline. This keeps canary consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set blue-green to two live slots for the deploy pipeline. This keeps blue-green consistent.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for health checks is /healthz with DB ping. Recall that earlier we decided health checks.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for canary is 5% for 10 minutes. Recall that earlier we decided canary.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set health checks to /healthz with DB ping for the deploy pipeline. This keeps health checks consistent.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for health checks is /healthz with DB ping. Recall that earlier we decided health checks.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set health checks to /healthz with DB ping for the deploy pipeline. This keeps health checks consistent.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set canary to 5% for 10 minutes for the deploy pipeline. This keeps canary consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set blue-green to two live slots for the deploy pipeline. This keeps blue-green consistent.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for canary is 5% for 10 minutes. Recall that earlier we decided canary.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for health checks is /healthz with DB ping. Recall that earlier we decided health checks.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for rollbacks is auto on 5% error rate. Recall that earlier we decided rollbacks.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set session store to Redis with TTL for the auth service. This keeps session store consistent.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set JWT expiry to 15 minutes for the auth service. This keeps deploy pipeline: blue-green=two live slots consistent.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set JWT expiry to 15 minutes for the auth service. This keeps deploy pipeline: blue-green=two live slots consistent.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, refresh-token rotation should use rotate on every refresh. Key decision: refresh-token rotation = rotate on every refresh.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided OAuth2 scopes.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, OAuth2 scopes should use read/write split. Key decision: OAuth2 scopes = read/write split.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set OAuth2 scopes to read/write split for the auth service. This keeps deploy pipeline: blue-green=two live slots consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set session store to Redis with TTL for the auth service. This keeps session store consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set refresh-token rotation to rotate on every refresh for the auth service. This keeps refresh-token rotation consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, JWT expiry should use 15 minutes. Key decision: JWT expiry = 15 minutes.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for bcrypt hashing is cost factor 12. Recall that earlier we decided deploy pipeline: blue-green=two live slots.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the auth service, JWT expiry should use 15 minutes. Key decision: JWT expiry = 15 minutes.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for migrations is Alembic, forward-only. Recall that earlier we decided migrations.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set soft deletes to deleted_at column for the order schema. This keeps soft deletes consistent.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for indexes is composite on (customer_id, created_at). Recall that earlier we decided deploy pipeline: blue-green=two live slots.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, migrations should use Alembic, forward-only. Key decision: migrations = Alembic, forward-only.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, indexes should use composite on (customer_id, created_at). Key decision: indexes = composite on (customer_id, created_at).\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for indexes is composite on (customer_id, created_at). Recall that earlier we decided deploy pipeline: blue-green=two live slots.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for migrations is Alembic, forward-only. Recall that earlier we decided auth service: JWT expiry=15 minutes.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set indexes to composite on (customer_id, created_at) for the order schema. This keeps deploy pipeline: blue-green=two live slots consistent.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, indexes should use composite on (customer_id, created_at). Key decision: indexes = composite on (customer_id, created_at).\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, soft deletes should use deleted_at column. Key decision: soft deletes = deleted_at column.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "For the order schema, foreign keys should use ON DELETE CASCADE. Key decision: foreign keys = ON DELETE CASCADE.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for migrations is Alembic, forward-only. Recall that earlier we decided migrations.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set structured logs to JSON via python logging for the log pipeline. This keeps structured logs consistent.\n```python\nclass LogPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "We'll set structured logs to JSON via python logging for the log pipeline. This keeps deploy pipeline: blue-green=two live slots consistent.\n```python\ndef handle_log_pipeline():\n    return {\"ok\": True}\n\n```",
+    "needed_later_auto": true,
+    "reviewed": null
+  },
+  {
+    "chunk": "The right approach for retention is 30 days hot, 12 months cold. Recall that earlier we decided auth service: JWT expiry=15 minutes.\n```python\nclass LogPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```",
+    "needed_later_auto": false,
+    "reviewed": null
+  }
+]

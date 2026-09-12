@@ -1,0 +1,223 @@
+{
+  "conversation_id": "medium_020",
+  "profile": "medium",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Can we change how foreign keys works in the order schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for foreign keys is ON DELETE CASCADE. Recall that earlier we decided foreign keys.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does migrations fit with migrations?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, migrations should use Alembic, forward-only. Key decision: migrations = Alembic, forward-only.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address migrations for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for migrations is Alembic, forward-only. Recall that earlier we decided migrations.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address foreign keys for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, foreign keys should use ON DELETE CASCADE. Key decision: foreign keys = ON DELETE CASCADE.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address soft deletes for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for soft deletes is deleted_at column. Recall that earlier we decided soft deletes.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for soft deletes in our order schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, soft deletes should use deleted_at column. Key decision: soft deletes = deleted_at column.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does normalization fit with normalization?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for normalization is 3NF with a denormalized read model. Recall that earlier we decided normalization.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for foreign keys in our order schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set foreign keys to ON DELETE CASCADE for the order schema. This keeps foreign keys consistent.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the order schema. How should we handle soft deletes?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, soft deletes should use deleted_at column. Key decision: soft deletes = deleted_at column.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does session store fit with session store?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set session store to Redis with TTL for the auth service. This keeps session store consistent.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address OAuth2 scopes for the auth service. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set OAuth2 scopes to read/write split for the auth service. This keeps OAuth2 scopes consistent.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does bcrypt hashing fit with order schema: normalization=3NF with a denormalized read model?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set bcrypt hashing to cost factor 12 for the auth service. This keeps order schema: normalization=3NF with a denormalized read model consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address OAuth2 scopes for the auth service. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set OAuth2 scopes to read/write split for the auth service. This keeps OAuth2 scopes consistent.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how OAuth2 scopes works in the auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided OAuth2 scopes.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for OAuth2 scopes in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided order schema: normalization=3NF with a denormalized read model.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for session store in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set session store to Redis with TTL for the auth service. This keeps session store consistent.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for refresh-token rotation in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set refresh-token rotation to rotate on every refresh for the auth service. This keeps refresh-token rotation consistent.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how OAuth2 scopes works in the auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, OAuth2 scopes should use read/write split. Key decision: OAuth2 scopes = read/write split.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how pagination works in the REST API?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set pagination to cursor-based for the REST API. This keeps order schema: normalization=3NF with a denormalized read model consistent.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does error envelope fit with auth service: JWT expiry=15 minutes?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, error envelope should use problem+json. Key decision: error envelope = problem+json.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for error envelope in our REST API?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, error envelope should use problem+json. Key decision: error envelope = problem+json.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for pagination in our REST API?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, pagination should use cursor-based. Key decision: pagination = cursor-based.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how idempotency works in the REST API?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, idempotency should use Idempotency-Key header. Key decision: idempotency = Idempotency-Key header.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address rate limits for the REST API. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for rate limits is 100 req/min per key. Recall that earlier we decided rate limits.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for idempotency in the REST API."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for idempotency is Idempotency-Key header. Recall that earlier we decided idempotency.\n```python\nasync def process_REST_API(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the REST API. How should we handle rate limits?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for rate limits is 100 req/min per key. Recall that earlier we decided order schema: normalization=3NF with a denormalized read model.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does idempotency fit with idempotency?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the REST API, idempotency should use Idempotency-Key header. Key decision: idempotency = Idempotency-Key header.\n```python\ndef handle_REST_API():\n    return {\"ok\": True}\n\n```"
+    }
+  ]
+}

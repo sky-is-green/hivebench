@@ -1,0 +1,426 @@
+{
+  "conversation_id": "prose_horizon_004",
+  "profile": "longhorizon",
+  "domain": "prose",
+  "topic": "workspace_culture",
+  "establish_turns": 32,
+  "recap_turns": 20,
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle hours for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, hours should use core collaboration hours. Key decision: hours = core collaboration hours. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle hybrid rhythm for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, hybrid rhythm should use three-day hybrid rhythm. Key decision: hybrid rhythm = three-day hybrid rhythm. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle rituals for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, rituals should use weekly gratitude rituals. Key decision: rituals = weekly gratitude rituals. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle wellness for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, wellness should use monthly wellness stipends. Key decision: wellness = monthly wellness stipends. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle recognition for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, recognition should use peer nomination awards. Key decision: recognition = peer nomination awards. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle learning for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, learning should use lunchtime skill workshops. Key decision: learning = lunchtime skill workshops. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle planning for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, planning should use quarterly offsite retreats. Key decision: planning = quarterly offsite retreats. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle transparency for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, transparency should use open decision digests. Key decision: transparency = open decision digests. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle meeting cadence for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, meeting cadence should use daily standup huddles. Key decision: meeting cadence = daily standup huddles. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle status updates for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, status updates should use written async status posts. Key decision: status updates = written async status posts. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle decision log for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, decision log should use shared choice ledger. Key decision: decision log = shared choice ledger. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle feedback for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, feedback should use semiannual feedback circles. Key decision: feedback = semiannual feedback circles. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle knowledge sharing for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, knowledge sharing should use rotating demo showcases. Key decision: knowledge sharing = rotating demo showcases. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle oncall for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, oncall should use staggered oncall rotations. Key decision: oncall = staggered oncall rotations. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle documentation for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, documentation should use living handbook pages. Key decision: documentation = living handbook pages. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle conflict resolution for the team communication."
+    },
+    {
+      "role": "assistant",
+      "content": "For the team communication, conflict resolution should use facilitated mediation sessions. Key decision: conflict resolution = facilitated mediation sessions. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle interview format for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, interview format should use structured panel interviews. Key decision: interview format = structured panel interviews. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle candidate experience for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, candidate experience should use same-week review letters. Key decision: candidate experience = same-week review letters. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle scorecards for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, scorecards should use calibrated rubric scorecards. Key decision: scorecards = calibrated rubric scorecards. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle referrals for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, referrals should use double-sided referral bonuses. Key decision: referrals = double-sided referral bonuses. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle onboarding for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, onboarding should use mentored first-month plans. Key decision: onboarding = mentored first-month plans. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle diversity for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, diversity should use slate diversity targets. Key decision: diversity = slate diversity targets. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle offers for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, offers should use team-vetted offer packages. Key decision: offers = team-vetted offer packages. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle retention pulse for the hiring."
+    },
+    {
+      "role": "assistant",
+      "content": "For the hiring, retention pulse should use annual retention checkins. Key decision: retention pulse = annual retention checkins. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle calendar for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, calendar should use seasonal content calendars. Key decision: calendar = seasonal content calendars. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle voice for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, voice should use plainspoken brand voice. Key decision: voice = plainspoken brand voice. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle distribution for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, distribution should use newsletter and social distribution. Key decision: distribution = newsletter and social distribution. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle analytics for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, analytics should use readership cohort analytics. Key decision: analytics = readership cohort analytics. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle keyword research for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, keyword research should use keyword research cycles. Key decision: keyword research = keyword research cycles. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle community for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, community should use moderated community forums. Key decision: community = moderated community forums. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle partnerships for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, partnerships should use cross-promotion partnership deals. Key decision: partnerships = cross-promotion partnership deals. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle licensing for the content strategy."
+    },
+    {
+      "role": "assistant",
+      "content": "For the content strategy, licensing should use syndicated reprint licensing. Key decision: licensing = syndicated reprint licensing. That arrangement is settled for now. We can revisit it later if the situation changes."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for hours in the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The hours for the workspace culture is core collaboration hours. Key decision: hours = core collaboration hours."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on hybrid rhythm for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The hybrid rhythm for the workspace culture is three-day hybrid rhythm. Key decision: hybrid rhythm = three-day hybrid rhythm."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the rituals decision for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The rituals for the workspace culture is weekly gratitude rituals. Key decision: rituals = weekly gratitude rituals."
+    },
+    {
+      "role": "user",
+      "content": "I need the wellness decision for the workspace culture again."
+    },
+    {
+      "role": "assistant",
+      "content": "The wellness for the workspace culture is monthly wellness stipends. Key decision: wellness = monthly wellness stipends."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for recognition in the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The recognition for the workspace culture is peer nomination awards. Key decision: recognition = peer nomination awards."
+    },
+    {
+      "role": "user",
+      "content": "Restate the learning policy for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The learning for the workspace culture is lunchtime skill workshops. Key decision: learning = lunchtime skill workshops."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for planning in the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The planning for the workspace culture is quarterly offsite retreats. Key decision: planning = quarterly offsite retreats."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on transparency for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The transparency for the workspace culture is open decision digests. Key decision: transparency = open decision digests."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the meeting cadence decision for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The meeting cadence for the workspace culture is daily standup huddles. Key decision: meeting cadence = daily standup huddles."
+    },
+    {
+      "role": "user",
+      "content": "I need the status updates decision for the workspace culture again."
+    },
+    {
+      "role": "assistant",
+      "content": "The status updates for the workspace culture is written async status posts. Key decision: status updates = written async status posts."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for decision log in the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The decision log for the workspace culture is shared choice ledger. Key decision: decision log = shared choice ledger."
+    },
+    {
+      "role": "user",
+      "content": "Restate the feedback policy for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The feedback for the workspace culture is semiannual feedback circles. Key decision: feedback = semiannual feedback circles."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for knowledge sharing in the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The knowledge sharing for the workspace culture is rotating demo showcases. Key decision: knowledge sharing = rotating demo showcases."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on oncall for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The oncall for the workspace culture is staggered oncall rotations. Key decision: oncall = staggered oncall rotations."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the documentation decision for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The documentation for the workspace culture is living handbook pages. Key decision: documentation = living handbook pages."
+    },
+    {
+      "role": "user",
+      "content": "I need the conflict resolution decision for the workspace culture again."
+    },
+    {
+      "role": "assistant",
+      "content": "The conflict resolution for the workspace culture is facilitated mediation sessions. Key decision: conflict resolution = facilitated mediation sessions."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for interview format in the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The interview format for the workspace culture is structured panel interviews. Key decision: interview format = structured panel interviews."
+    },
+    {
+      "role": "user",
+      "content": "Restate the candidate experience policy for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The candidate experience for the workspace culture is same-week review letters. Key decision: candidate experience = same-week review letters."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for scorecards in the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "The scorecards for the workspace culture is calibrated rubric scorecards. Key decision: scorecards = calibrated rubric scorecards."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on referrals for the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "The referrals for the workspace culture is double-sided referral bonuses. Key decision: referrals = double-sided referral bonuses."
+    }
+  ]
+}

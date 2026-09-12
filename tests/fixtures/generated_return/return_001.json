@@ -1,0 +1,275 @@
+{
+  "conversation_id": "return_001",
+  "profile": "return",
+  "domain": "prose",
+  "establish_topic": "workspace_culture",
+  "filler_topic": "product_planning",
+  "establish_turns": 4,
+  "filler_turns": 22,
+  "return_queries": [
+    "What did we settle for learning on the workspace culture?",
+    "What did we settle for rituals on the workspace culture?",
+    "What did we settle for planning on the workspace culture?",
+    "What did we settle for hours on the workspace culture?",
+    "Which decisions did we settle for learning and rituals on the workspace culture?"
+  ],
+  "abstain_query": "What did we settle for hybrid rhythm on the workspace culture?",
+  "turns": [
+    {
+      "role": "user",
+      "content": "Let's settle learning for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, learning should use lunchtime skill workshops. Key decision: learning = lunchtime skill workshops."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle rituals for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, rituals should use weekly gratitude rituals. Key decision: rituals = weekly gratitude rituals."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle planning for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, planning should use quarterly offsite retreats. Key decision: planning = quarterly offsite retreats."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle hours for the workspace culture."
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, hours should use core collaboration hours. Key decision: hours = core collaboration hours."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle success metrics for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, success metrics should use adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle prioritization for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, prioritization should use impact scoring boards. Key decision: prioritization = impact scoring boards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle prioritization for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, prioritization should use impact scoring boards. Key decision: prioritization = impact scoring boards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle roadmap for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, roadmap should use two-quarter horizon roadmaps. Key decision: roadmap = two-quarter horizon roadmaps."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle discovery for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, discovery should use customer discovery sprints. Key decision: discovery = customer discovery sprints."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle roadmap for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, roadmap should use two-quarter horizon roadmaps. Key decision: roadmap = two-quarter horizon roadmaps."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle roadmap for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, roadmap should use two-quarter horizon roadmaps. Key decision: roadmap = two-quarter horizon roadmaps."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle postmortems for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle prioritization for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, prioritization should use impact scoring boards. Key decision: prioritization = impact scoring boards."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle postmortems for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle postmortems for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle stakeholder updates for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, stakeholder updates should use fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle success metrics for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, success metrics should use adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle postmortems for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle roadmap for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, roadmap should use two-quarter horizon roadmaps. Key decision: roadmap = two-quarter horizon roadmaps."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle stakeholder updates for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, stakeholder updates should use fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings."
+    },
+    {
+      "role": "user",
+      "content": "What did we settle for learning on the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, learning should use lunchtime skill workshops. Key decision: learning = lunchtime skill workshops."
+    },
+    {
+      "role": "user",
+      "content": "What did we settle for rituals on the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, rituals should use weekly gratitude rituals. Key decision: rituals = weekly gratitude rituals."
+    },
+    {
+      "role": "user",
+      "content": "What did we settle for planning on the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, planning should use quarterly offsite retreats. Key decision: planning = quarterly offsite retreats."
+    },
+    {
+      "role": "user",
+      "content": "What did we settle for hours on the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, hours should use core collaboration hours. Key decision: hours = core collaboration hours."
+    },
+    {
+      "role": "user",
+      "content": "Which decisions did we settle for learning and rituals on the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the workspace culture, learning should use lunchtime skill workshops. For the workspace culture, rituals should use weekly gratitude rituals. Key decisions: learning = lunchtime skill workshops; rituals = weekly gratitude rituals."
+    },
+    {
+      "role": "user",
+      "content": "What did we settle for hybrid rhythm on the workspace culture?"
+    },
+    {
+      "role": "assistant",
+      "content": "There is no information regarding hybrid rhythm for the workspace culture."
+    }
+  ]
+}

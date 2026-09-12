@@ -1,0 +1,162 @@
+{
+  "conversation_id": "p9_003",
+  "profile": "p9",
+  "domain": "prose",
+  "topic": "product_planning",
+  "order": "control",
+  "aspects_per_conv": 6,
+  "aspects": [
+    "prioritization",
+    "stakeholder updates",
+    "experiments",
+    "success metrics",
+    "postmortems",
+    "launch reviews"
+  ],
+  "turns": [
+    {
+      "role": "user",
+      "content": "Confirm again that prioritization is still the right call for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, prioritization should use impact scoring boards. Key decision: prioritization = impact scoring boards. Key decision: prioritization = impact scoring boards. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle prioritization for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, prioritization should use impact scoring boards. Key decision: prioritization = impact scoring boards."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that stakeholder updates is still the right call for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, stakeholder updates should use fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle stakeholder updates for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, stakeholder updates should use fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that experiments is still the right call for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, experiments should use bounded experiment windows. Key decision: experiments = bounded experiment windows. Key decision: experiments = bounded experiment windows. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle experiments for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, experiments should use bounded experiment windows. Key decision: experiments = bounded experiment windows."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that success metrics is still the right call for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, success metrics should use adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle success metrics for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, success metrics should use adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that postmortems is still the right call for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups. Key decision: postmortems = blameless incident writeups. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle postmortems for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, postmortems should use blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Confirm again that launch reviews is still the right call for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews. We noted this in the notes. This stays for now."
+    },
+    {
+      "role": "user",
+      "content": "Let's settle launch reviews for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "For the product planning, launch reviews should use prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    },
+    {
+      "role": "user",
+      "content": "Remind me what we decided for prioritization in the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The prioritization for the product planning is impact scoring boards. Key decision: prioritization = impact scoring boards."
+    },
+    {
+      "role": "user",
+      "content": "What was the final decision on stakeholder updates for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The stakeholder updates for the product planning is fortnightly stakeholder briefings. Key decision: stakeholder updates = fortnightly stakeholder briefings."
+    },
+    {
+      "role": "user",
+      "content": "Can you restate the experiments decision for the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The experiments for the product planning is bounded experiment windows. Key decision: experiments = bounded experiment windows."
+    },
+    {
+      "role": "user",
+      "content": "I need the success metrics decision for the product planning again."
+    },
+    {
+      "role": "assistant",
+      "content": "The success metrics for the product planning is adoption and stickiness metrics. Key decision: success metrics = adoption and stickiness metrics."
+    },
+    {
+      "role": "user",
+      "content": "What did we agree for postmortems in the product planning?"
+    },
+    {
+      "role": "assistant",
+      "content": "The postmortems for the product planning is blameless incident writeups. Key decision: postmortems = blameless incident writeups."
+    },
+    {
+      "role": "user",
+      "content": "Restate the launch reviews policy for the product planning."
+    },
+    {
+      "role": "assistant",
+      "content": "The launch reviews for the product planning is prelaunch readiness reviews. Key decision: launch reviews = prelaunch readiness reviews."
+    }
+  ]
+}

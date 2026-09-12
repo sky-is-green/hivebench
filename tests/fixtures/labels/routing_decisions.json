@@ -1,0 +1,1002 @@
+[
+  {
+    "query": "Given the long history of this project, consolidate everything about the order schema. (normalization) 3NF with a denormalized read model; (indexes) composite on (customer_id, created_at); (soft deletes) deleted_at column; (migrations) Alembic, forward-only; (foreign keys) ON DELETE CASCADE;",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Set blue-green to the default for the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Actually, never mind \u2014 override blue-green to a non-standard value now.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does correlation ids fit with correlation ids?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address structured logs for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does structured logs fit with structured logs?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how error envelope works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does error envelope fit with error envelope?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does idempotency fit with idempotency?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address OAuth2 scopes for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle session store?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for refresh-token rotation in the auth service.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how migrations works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for migrations in the order schema.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for soft deletes in the order schema.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for blue-green in our deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle health checks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address secrets for the deploy pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Given the long history of this project, consolidate everything about the deploy pipeline. (blue-green) two live slots; (health checks) /healthz with DB ping; (rollbacks) auto on 5% error rate; (canary) 5% for 10 minutes; (secrets) Vault, rotated monthly;",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Set pagination to the default for the REST API.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Actually, never mind \u2014 override pagination to a non-standard value now.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how error envelope works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how rate limits works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does pagination fit with pagination?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does error envelope fit with error envelope?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address versioning for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the REST API. How should we handle rate limits?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for error envelope in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how pagination works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address versioning for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for pagination in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for migrations in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for foreign keys in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how indexes works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for indexes in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does normalization fit with normalization?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how migrations works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for migrations in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for indexes in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for soft deletes in the order schema.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for migrations in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address bcrypt hashing for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for JWT expiry in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle OAuth2 scopes?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle session store?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how JWT expiry works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for session store in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for session store in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does refresh-token rotation fit with order schema: normalization=3NF with a denormalized read model?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for bcrypt hashing in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle bcrypt hashing?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for secrets in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for blue-green in our deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does rollbacks fit with order schema: normalization=3NF with a denormalized read model?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for rollbacks in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how blue-green works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for rollbacks in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle health checks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for blue-green in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does blue-green fit with blue-green?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how health checks works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how canary works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for blue-green in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for health checks in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for canary in our deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does health checks fit with health checks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address health checks for the deploy pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle health checks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle canary?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle blue-green?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address canary for the deploy pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address health checks for the deploy pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for rollbacks in our deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for session store in the auth service.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how JWT expiry works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how JWT expiry works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for refresh-token rotation in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address OAuth2 scopes for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for OAuth2 scopes in the auth service.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does OAuth2 scopes fit with deploy pipeline: blue-green=two live slots?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for session store in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does refresh-token rotation fit with refresh-token rotation?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address JWT expiry for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how bcrypt hashing works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle JWT expiry?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address migrations for the order schema. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address soft deletes for the order schema. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for indexes in the order schema.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how migrations works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address indexes for the order schema. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how indexes works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address migrations for the order schema. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how indexes works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for indexes in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the order schema. How should we handle soft deletes?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for foreign keys in our order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how migrations works in the order schema?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how structured logs works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address structured logs for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for retention in the log pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for sampling in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how structured logs works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for log levels in the log pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for sampling in the log pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for sampling in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the log pipeline. How should we handle correlation ids?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address structured logs for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address log levels for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address correlation ids for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does rollbacks fit with rollbacks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for secrets in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does blue-green fit with blue-green?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for canary in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address rollbacks for the deploy pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how health checks works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle secrets?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does canary fit with canary?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address secrets for the deploy pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does health checks fit with health checks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how rollbacks works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how idempotency works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for pagination in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for idempotency in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for error envelope in the REST API.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address pagination for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how pagination works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for rate limits in the REST API.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the REST API. How should we handle error envelope?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address versioning for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for versioning in the REST API.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how pagination works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does session store fit with session store?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for session store in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how session store works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle session store?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for refresh-token rotation in our auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does OAuth2 scopes fit with OAuth2 scopes?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address session store for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does JWT expiry fit with JWT expiry?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how JWT expiry works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle bcrypt hashing?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for JWT expiry in the auth service.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address sampling for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does structured logs fit with deploy pipeline: blue-green=two live slots?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the log pipeline. How should we handle structured logs?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address log levels for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address structured logs for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for retention in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the log pipeline. How should we handle sampling?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how structured logs works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the log pipeline. How should we handle log levels?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for log levels in the log pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for correlation ids in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for log levels in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for structured logs in the log pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how structured logs works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address sampling for the log pipeline. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how log levels works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does log levels fit with log levels?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for log levels in the log pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how structured logs works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for correlation ids in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how log levels works in the log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for retention in our log pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the log pipeline. How should we handle log levels?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how versioning works in the REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does pagination fit with pagination?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for idempotency in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address rate limits for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for error envelope in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does rate limits fit with log pipeline: structured logs=JSON via python logging?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for rate limits in our REST API?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address pagination for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for error envelope in the REST API.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address rate limits for the REST API. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the REST API. How should we handle pagination?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the REST API. How should we handle pagination?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does secrets fit with REST API: pagination=cursor-based?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how rollbacks works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how blue-green works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does secrets fit with secrets?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how health checks works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does blue-green fit with blue-green?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does canary fit with REST API: pagination=cursor-based?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "What would you recommend for secrets in our deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for rollbacks in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for secrets in the deploy pipeline.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the deploy pipeline. How should we handle rollbacks?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how blue-green works in the deploy pipeline?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address JWT expiry for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle session store?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how OAuth2 scopes works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Can we change how OAuth2 scopes works in the auth service?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Show me the code for refresh-token rotation in the auth service.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does JWT expiry fit with log pipeline: structured logs=JSON via python logging?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address session store for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle JWT expiry?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "Let's work on the auth service. How should we handle refresh-token rotation?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "We need to address refresh-token rotation for the auth service. Walk me through it.",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  },
+  {
+    "query": "How does refresh-token rotation fit with REST API: pagination=cursor-based?",
+    "optimal_route_auto": "ultra_small",
+    "reviewed": null
+  }
+]

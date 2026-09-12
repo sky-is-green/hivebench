@@ -1,0 +1,295 @@
+{
+  "conversation_id": "medium_012",
+  "profile": "medium",
+  "topic": "authentication",
+  "turns": [
+    {
+      "role": "user",
+      "content": "What would you recommend for OAuth2 scopes in our auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, OAuth2 scopes should use read/write split. Key decision: OAuth2 scopes = read/write split.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address refresh-token rotation for the auth service. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, refresh-token rotation should use rotate on every refresh. Key decision: refresh-token rotation = rotate on every refresh.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does bcrypt hashing fit with bcrypt hashing?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for bcrypt hashing is cost factor 12. Recall that earlier we decided bcrypt hashing.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does bcrypt hashing fit with bcrypt hashing?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for bcrypt hashing is cost factor 12. Recall that earlier we decided bcrypt hashing.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how refresh-token rotation works in the auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for refresh-token rotation is rotate on every refresh. Recall that earlier we decided refresh-token rotation.\n```python\nclass AuthServiceService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for JWT expiry in our auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for JWT expiry is 15 minutes. Recall that earlier we decided JWT expiry.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for OAuth2 scopes in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, OAuth2 scopes should use read/write split. Key decision: OAuth2 scopes = read/write split.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the auth service. How should we handle refresh-token rotation?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for refresh-token rotation is rotate on every refresh. Recall that earlier we decided refresh-token rotation.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address OAuth2 scopes for the auth service. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for OAuth2 scopes is read/write split. Recall that earlier we decided OAuth2 scopes.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for session store in our auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set session store to Redis with TTL for the auth service. This keeps session store consistent.\n```python\nasync def process_auth_service(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how JWT expiry works in the auth service?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for JWT expiry is 15 minutes. Recall that earlier we decided JWT expiry.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for JWT expiry in the auth service."
+    },
+    {
+      "role": "assistant",
+      "content": "For the auth service, JWT expiry should use 15 minutes. Key decision: JWT expiry = 15 minutes.\n```python\ndef handle_auth_service():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Let's work on the deploy pipeline. How should we handle secrets?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set secrets to Vault, rotated monthly for the deploy pipeline. This keeps auth service: JWT expiry=15 minutes consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address rollbacks for the deploy pipeline. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set rollbacks to auto on 5% error rate for the deploy pipeline. This keeps auth service: JWT expiry=15 minutes consistent.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for rollbacks in our deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, rollbacks should use auto on 5% error rate. Key decision: rollbacks = auto on 5% error rate.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for rollbacks in the deploy pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for rollbacks is auto on 5% error rate. Recall that earlier we decided rollbacks.\n```python\nclass DeployPipelineService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for canary in the deploy pipeline."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set canary to 5% for 10 minutes for the deploy pipeline. This keeps canary consistent.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does rollbacks fit with rollbacks?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for rollbacks is auto on 5% error rate. Recall that earlier we decided rollbacks.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address secrets for the deploy pipeline. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set secrets to Vault, rotated monthly for the deploy pipeline. This keeps secrets consistent.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address blue-green for the deploy pipeline. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for blue-green is two live slots. Recall that earlier we decided blue-green.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address blue-green for the deploy pipeline. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, blue-green should use two live slots. Key decision: blue-green = two live slots.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how canary works in the deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "For the deploy pipeline, canary should use 5% for 10 minutes. Key decision: canary = 5% for 10 minutes.\n```python\ndef handle_deploy_pipeline():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for health checks in our deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for health checks is /healthz with DB ping. Recall that earlier we decided auth service: JWT expiry=15 minutes.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for blue-green in our deploy pipeline?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for blue-green is two live slots. Recall that earlier we decided auth service: JWT expiry=15 minutes.\n```python\nasync def process_deploy_pipeline(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does indexes fit with indexes?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for indexes is composite on (customer_id, created_at). Recall that earlier we decided indexes.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address indexes for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for indexes is composite on (customer_id, created_at). Recall that earlier we decided deploy pipeline: blue-green=two live slots.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address foreign keys for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for foreign keys is ON DELETE CASCADE. Recall that earlier we decided auth service: JWT expiry=15 minutes.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does indexes fit with indexes?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set indexes to composite on (customer_id, created_at) for the order schema. This keeps indexes consistent.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "What would you recommend for migrations in our order schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set migrations to Alembic, forward-only for the order schema. This keeps deploy pipeline: blue-green=two live slots consistent.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for soft deletes in the order schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for soft deletes is deleted_at column. Recall that earlier we decided soft deletes.\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for indexes in the order schema."
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, indexes should use composite on (customer_id, created_at). Key decision: indexes = composite on (customer_id, created_at).\n```python\ndef handle_order_schema():\n    return {\"ok\": True}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address soft deletes for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "For the order schema, soft deletes should use deleted_at column. Key decision: soft deletes = deleted_at column.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Can we change how soft deletes works in the order schema?"
+    },
+    {
+      "role": "assistant",
+      "content": "We'll set soft deletes to deleted_at column for the order schema. This keeps soft deletes consistent.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "We need to address normalization for the order schema. Walk me through it."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for normalization is 3NF with a denormalized read model. Recall that earlier we decided normalization.\n```python\nasync def process_order_schema(request):\n    await request.accept()\n    return request\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "How does normalization fit with normalization?"
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for normalization is 3NF with a denormalized read model. Recall that earlier we decided normalization.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    },
+    {
+      "role": "user",
+      "content": "Show me the code for soft deletes in the order schema."
+    },
+    {
+      "role": "assistant",
+      "content": "The right approach for soft deletes is deleted_at column. Recall that earlier we decided auth service: JWT expiry=15 minutes.\n```python\nclass OrderSchemaService:\n    def __init__(self):\n        self._cache = {}\n\n```"
+    }
+  ]
+}
