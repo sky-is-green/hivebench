@@ -55,7 +55,6 @@ from harness.trainer import (
     summarize_evidence,
 )
 
-from backend.cache_manager import KVCacheManager
 from backend.engines import (
     EngineProfile,
     EngineRegistry,
@@ -85,14 +84,7 @@ from harness.reports import (
 )
 from logs.event_logger import EventLogger
 from retention.store import ContextStore
-from retention.hygiene import (
-    DEFAULT_MAX_CHUNK_CHARS,
-    content_fingerprint,
-    prepare_for_storage,
-)
-from strata.mcp.server import McpContext, handle_message
-from strata.mcp.tools import remember as mcp_remember
-from strata.mcp.tools import search as mcp_search
+from strata.server import create_app as create_strata_app
 
 
 def _list_runs(runs_root: Path) -> list[dict]:
@@ -1062,31 +1054,6 @@ class _State:
 # ---------------------------------------------------------------------------
 # Request / response models
 # ---------------------------------------------------------------------------
-class TurnRequest(BaseModel):
-    query: str
-    conversation_id: str = "default"
-    model: Optional[str] = None  # override the provider's model for this turn's strata
-    provider: Optional[str] = None  # per-conversation inference target (multi-model)
-    engine: Optional[str] = None  # engine profile name (sampling defaults apply)
-    config: Optional[dict] = None  # StrataConfig overrides (applied on creation)
-
-
-class ResetRequest(BaseModel):
-    conversation_id: str
-
-
-class CurateRequest(BaseModel):
-    query: str
-    conversation_id: str = "default"
-    engine: Optional[str] = None
-    config: Optional[dict] = None
-
-
-class ObserveRequest(BaseModel):
-    conversation_id: str
-    reply: str
-
-
 class ProtocolRunRequest(BaseModel):
     mode: str = "mock"  # live | mock
     args: dict = {}
@@ -1191,13 +1158,6 @@ class HubDownloadRequest(BaseModel):
 
 class ServerUnloadRequest(BaseModel):
     key: str
-
-
-class StreamTurnRequest(BaseModel):
-    query: str
-    conversation_id: str = "default"
-    engine: Optional[str] = None
-    config: Optional[dict] = None
 
 
 class AgentMessageRequest(BaseModel):
@@ -1646,269 +1606,6 @@ def create_app(
         return result
 
     # ------------------------------------------------------------------
-    @app.post("/v1/strata/turn")
-    def strata_turn(req: TurnRequest):
-        query = (req.query or "").strip()
-        if not query:
-            raise HTTPException(422, "query must not be empty")
-        strata = st.strata_for(req.conversation_id, req.config, engine=req.engine)
-        # Per-conversation inference target: provider and/or model override
-        # swaps the conversation's backend (multi-model: pick any loaded one).
-        current_provider = st._conv_provider.get(req.conversation_id)
-        wants_backend = (req.provider and req.provider != current_provider) \
-            or (req.model and isinstance(strata.backend, OpenAICompatBackend)
-                and req.model != strata.backend.model)
-        if wants_backend and isinstance(strata.backend, OpenAICompatBackend):
-            new_backend = st.backend_factory(req.model, provider=req.provider)
-            strata.backend = new_backend
-            strata.cache = KVCacheManager(new_backend)
-            st._conv_provider[req.conversation_id] = req.provider \
-                or st.registry.default
-        st.begin(req.conversation_id)
-        with st.lock_for(req.conversation_id):
-            result = strata.process_turn(req.query, conversation_id=req.conversation_id)
-            st.save_conversation(req.conversation_id, strata)
-        st.end(req.conversation_id)
-        assembled = result.assembled
-        return {
-            "conversation_id": req.conversation_id,
-            "turn": result.turn,
-            "reply": result.reply,
-            "assembled_content": assembled.content if assembled is not None else "",
-            "token_count": result.token_count,
-            "budget": result.budget,
-            "mode": result.mode,
-            "error": result.error,
-            "timings": result.timings,
-            "pes": result.pes,
-            "degradation_level": result.degradation_level,
-            "inspection": strata.inspect_turn(result),
-        }
-
-    @app.get("/v1/strata/inspect/{conversation_id}")
-    def strata_inspect(conversation_id: str):
-        """Last turn's full curation detail for the prompt inspector."""
-        with st.global_lock:
-            strata = st.hives.get(conversation_id)
-        if strata is None:
-            raise HTTPException(404, f"no such conversation: {conversation_id}")
-        if not hasattr(strata, "_last_turn_result") or strata._last_turn_result is None:
-            raise HTTPException(404, "no turn has been processed yet")
-        return strata.inspect_turn(strata._last_turn_result)
-
-    @app.post("/v1/strata/reset")
-    def strata_reset(req: ResetRequest):
-        st.drop(req.conversation_id)
-        return {"ok": True}
-
-    # ------------------------------------------------------------------
-    # Curate / observe (Seam A, dsh-strata flow): the caller's own shell
-    # generates â€” the sidecar only assembles context and ingests replies.
-    @app.post("/v1/strata/curate")
-    def strata_curate(req: CurateRequest):
-        query = (req.query or "").strip()
-        if not query:
-            raise HTTPException(422, "query must not be empty")
-        strata = st.strata_for(req.conversation_id, req.config, with_backend=False,
-                           engine=req.engine)
-        with st.lock_for(req.conversation_id):
-            result = strata.process_turn(query, conversation_id=req.conversation_id)
-            st.save_conversation(req.conversation_id, strata)
-        assembled = result.assembled
-        return {
-            "conversation_id": req.conversation_id,
-            "turn": result.turn,
-            "assembled_content": assembled.content if assembled is not None else "",
-            "token_count": result.token_count,
-            "budget": result.budget,
-            "mode": result.mode,
-            "error": result.error,
-            "timings": result.timings,
-            "pes": result.pes,
-            "degradation_level": result.degradation_level,
-        }
-
-    @app.post("/v1/strata/observe")
-    def strata_observe(req: ObserveRequest):
-        # lazily create: external integrators may observe before ever calling
-        # curate (e.g. feeding back a reply for a session the studio has
-        # never seen); the conversation materializes here.
-        strata = st.strata_for(req.conversation_id, None, with_backend=False)
-        reply = (req.reply or "").strip()
-        stored = False
-        if reply and not (
-            strata.config.filter_hedge_replies and Strata._is_hedge_reply(reply)
-        ):
-            st.begin(req.conversation_id)
-            with st.lock_for(req.conversation_id):
-                stored = strata.store.add_chunk(strata.turn, reply) is not None
-                if stored:
-                    st.save_conversation(req.conversation_id, strata)
-            st.end(req.conversation_id)
-        return {"ok": True, "stored": stored, "turn": strata.turn}
-
-    # ------------------------------------------------------------------
-    # Streaming chat (LM-Studio-style token stream) THROUGH the strata:
-    # curate -> stream the provider's SSE -> observe the reply back into
-    # the store. Events: {type: meta|delta|done|error}.
-    @app.post("/v1/strata/stream")
-    async def strata_stream(req: StreamTurnRequest):
-        query = (req.query or "").strip()
-        if not query:
-            raise HTTPException(422, "query must not be empty")
-        try:
-            provider = st.registry.resolve(None)
-        except LookupError:
-            raise HTTPException(502, "no provider configured; start a local "
-                                     "server or configure one")
-        base_url = provider.base_url.rstrip("/")
-        headers = {"Authorization": f"Bearer {provider.api_key or 'lm-studio'}",
-                   **provider.extra_headers}
-        strata = st.strata_for(req.conversation_id, req.config, with_backend=False)
-        st.begin(req.conversation_id)
-        with st.lock_for(req.conversation_id):
-            result = strata.process_turn(query, conversation_id=req.conversation_id)
-            st.save_conversation(req.conversation_id, strata)
-        st.end(req.conversation_id)
-        assembled = result.assembled
-        curated = assembled.content if assembled is not None else ""
-        payload = {
-            "model": provider.model or "local",
-            "messages": [
-                {"role": "system", "content": curated or "You are a helpful assistant."},
-                {"role": "user", "content": query},
-            ],
-            "stream": True,
-            "stream_options": {"include_usage": True},
-            **(strata.config.sampling or {}),
-        }
-        if strata.config.max_tokens:
-            payload["max_tokens"] = strata.config.max_tokens
-
-        def sse():
-            yield "data: " + json.dumps({
-                "type": "meta", "turn": result.turn,
-                "token_count": result.token_count, "budget": result.budget,
-                "curated_chars": len(curated), "mode": result.mode,
-            }) + "\n\n"
-
-            started = time.time()
-            parts: list[str] = []
-            usage: dict = {}
-            try:
-                resp = _upstream_stream(
-                    f"{base_url}/v1/chat/completions", json=payload,
-                    headers=headers, stream=True, timeout=600,
-                )
-                resp.raise_for_status()
-                for raw in resp.iter_lines(decode_unicode=True):
-                    if not raw:
-                        continue
-                    line = raw[6:].strip() if raw.startswith("data:") else raw.strip()
-                    if not line or line == "[DONE]":
-                        continue
-                    try:
-                        chunk = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    usage = chunk.get("usage") or usage
-                    for choice in chunk.get("choices") or []:
-                        delta = choice.get("delta") or {}
-                        text = delta.get("content")
-                        if text:
-                            parts.append(text)
-                            yield "data: " + json.dumps({
-                                "type": "delta", "text": text}) + "\n\n"
-            except Exception as exc:  # noqa: BLE001 - surfaced as an event
-                yield "data: " + json.dumps({
-                    "type": "error", "error": str(exc)}) + "\n\n"
-
-            reply = "".join(parts)
-            stored = False
-            if reply.strip() and not (
-                strata.config.filter_hedge_replies
-                and Strata._is_hedge_reply(reply)
-            ):
-                stored = strata.store.add_chunk(strata.turn, reply) is not None
-                if stored:
-                    st.save_conversation(req.conversation_id, strata)
-            elapsed = max(time.time() - started, 1e-6)
-            completion_tokens = (usage or {}).get("completion_tokens") or 0
-            yield "data: " + json.dumps({
-                "type": "done", "stored": stored,
-                "tokens": completion_tokens,
-                "seconds": round(elapsed, 2),
-                "tokens_per_sec": round(completion_tokens / elapsed, 1)
-                if completion_tokens else None,
-            }) + "\n\n"
-
-        return StreamingResponse(sse(), media_type="text/event-stream")
-
-    @app.get("/v1/strata/defaults")
-    def strata_defaults():
-        """StrataConfig defaults â€” the source for the UI tuning form. Overrides
-        ride each turn request's `config` and apply when a conversation is
-        created (reset to re-tune)."""
-        return StrataConfig().to_dict()
-
-    @app.get("/v1/strata/state")
-    def strata_state(conversation_id: Optional[str] = Query(default=None)):
-        def snapshot(h: Strata) -> dict:
-            return {
-                "turn": h.turn,
-                "store_chunks": len(h.store.all_chunks()),
-                "comb_stats": dict(h.comb_stats),
-            }
-
-        if conversation_id:
-            with st.global_lock:
-                strata = st.hives.get(conversation_id)
-            if strata is None and st.state_dir is not None \
-                    and st._conv_path(conversation_id).exists():
-                # lazy-restore a persisted conversation so state survives restarts
-                strata = st.strata_for(conversation_id, None)
-            if strata is None:
-                raise HTTPException(404, f"no such conversation: {conversation_id}")
-            return {**snapshot(strata), "conversation_id": conversation_id}
-        with st.global_lock:
-            items = {cid: snapshot(h) for cid, h in st.hives.items()}
-        return {"count": len(items), "conversations": items}
-
-    # ------------------------------------------------------------------
-    # MCP server (S2, Streamable HTTP): strata_search / strata_remember.
-    # Stateless JSON responses on POST /v1/mcp (no SSE sessions); GET/DELETE
-    # fall through to FastAPI's automatic 405. conversation_id is a required
-    # tool argument on every call — never implied from headers or defaults.
-    # The /v1/ token guard applies here too (pass it via the MCP `headers`
-    # option when HARNESS_TOKEN is set).
-    @app.post("/v1/mcp")
-    async def mcp_endpoint(request: Request):
-        try:
-            body = await request.json()
-        except Exception:
-            raise HTTPException(400, "invalid JSON body")
-
-        def do_remember(conversation_id: str, text: str) -> dict:
-            strata = st.strata_for(conversation_id, None, with_backend=False)
-            with st.lock_for(conversation_id):
-                payload = mcp_remember(strata, text)
-                st.save_conversation(conversation_id, strata)
-            return {"conversation_id": conversation_id, **payload}
-
-        def do_search(conversation_id: str, query: str, top_k: int) -> dict:
-            strata = st.strata_for(conversation_id, None, with_backend=False)
-            with st.lock_for(conversation_id):
-                payload = mcp_search(strata, query, top_k)
-                st.save_conversation(conversation_id, strata)
-            return {"conversation_id": conversation_id, **payload}
-
-        response = handle_message(body, McpContext(
-            remember=do_remember, search=do_search))
-        if response is None:  # notifications only — nothing to answer
-            return Response(status_code=202)
-        return response
-
-    # ------------------------------------------------------------------
     @app.get("/v1/models")
     def models(
         probe: bool = Query(default=False),
@@ -2108,181 +1805,6 @@ def create_app(
     # (Unsloth Studio's connection test) when pointed at the curated
     # /v1/openai passthrough. /v1/models above is the setup tooling shape;
     # this one is the wire shape external clients expect.
-    @app.get("/v1/openai/models")
-    def openai_models():
-        try:
-            provider = st.registry.resolve(None)
-        except LookupError:
-            raise HTTPException(502, "no provider configured")
-        try:
-            ids = _list_models(provider.base_url.rstrip("/"))
-        except Exception as exc:  # noqa: BLE001 - surfaced to the caller
-            raise HTTPException(502, f"cannot list models from upstream: {exc}")
-        if not ids and getattr(provider, "model", None):
-            ids = [provider.model]
-        return {"object": "list",
-                "data": [{"id": m, "object": "model"} for m in ids]}
-
-    @app.post("/v1/openai/chat/completions")
-    async def openai_chat_completions(request: Request):
-        payload = await request.json()
-        messages = payload.get("messages") or []
-        if not messages:
-            raise HTTPException(422, "messages must not be empty")
-        query = ""
-        for m in reversed(messages):
-            content = m.get("content") if m.get("role") == "user" else None
-            if isinstance(content, str) and content.strip():
-                query = content
-                break
-        if not query.strip():
-            raise HTTPException(422, "no user message with text content")
-        cid = (request.headers.get("X-Strata-Conversation")
-               or (payload.get("user") or "") or "default")
-        try:
-            provider = st.registry.resolve(None)
-        except LookupError:
-            raise HTTPException(
-                502, "no provider configured; configure one via /v1/provider/config "
-                     "or providers.local.json")
-        base_url = provider.base_url.rstrip("/")
-        headers = {"Authorization": f"Bearer {provider.api_key or 'lm-studio'}",
-                   **provider.extra_headers}
-        strata = st.strata_for(cid, payload.get("config"), with_backend=False)
-        # Budget guard / forward window: Unsloth Studio proxies its ENTIRE
-        # thread history, which can exceed the upstream context (observed:
-        # 1.04M tokens vs 74k available -> llama.cpp 400). Curation carries
-        # the memory, so oversized payloads are trimmed to the last few
-        # turns; small payloads pass through untouched (dsh/opencode manage
-        # their own windows and are unaffected). The trim runs BEFORE the
-        # echo fingerprints below: only content actually forwarded may
-        # suppress a stored chunk from curation — a fact trimmed off the
-        # tail must stay retrievable.
-        _MAX_FWD_CHARS = 60_000
-        system_msg = (
-            messages[0]
-            if messages and messages[0].get("role") == "system"
-            else None
-        )
-        body_msgs = messages[1:]
-        if sum(len(str(m.get("content") or "")) for m in body_msgs) > _MAX_FWD_CHARS:
-            body_msgs = body_msgs[-8:]
-        # RC2: fingerprint the SAME normalized form the store persists —
-        # prepare_for_storage is the store's own write pipeline (boilerplate
-        # strip + secret sanitization with the conversation's own ingest
-        # settings), so sanitized/truncated stored chunks can no longer
-        # escape echo-dedup.
-        _store = getattr(strata, "store", None)
-        _prefixes = getattr(_store, "ingest_block_prefixes", None)
-        _max_chars = getattr(_store, "max_chunk_chars", None) or DEFAULT_MAX_CHUNK_CHARS
-        payload_fingerprints = set()
-        forwarded_texts = (
-            ([system_msg] if system_msg is not None else []) + body_msgs
-        )
-        for m in forwarded_texts:
-            text = m.get("content")
-            if not isinstance(text, str) or not text:
-                continue
-            prepared = prepare_for_storage(text, _max_chars, _prefixes)
-            if prepared is not None:
-                payload_fingerprints.add(content_fingerprint(prepared))
-        with st.lock_for(cid):
-            result = strata.process_turn(
-                query, conversation_id=cid,
-                payload_fingerprints=payload_fingerprints,
-            )
-            st.save_conversation(cid, strata)
-        curated = result.assembled.content if result.assembled is not None else ""
-        merged_sys = curated or "You are a helpful assistant."
-        if system_msg is not None and system_msg.get("content"):
-            merged_sys = merged_sys + "\n\n" + system_msg["content"]
-        stream = bool(payload.get("stream"))
-        upstream = {
-            **payload,
-            "model": provider.model or payload.get("model") or "local",
-            "stream": stream,
-            "messages": [{"role": "system", "content": merged_sys}] + body_msgs,
-        }
-        upstream.setdefault("stream_options", {"include_usage": True})
-
-        def observe(reply: str) -> bool:
-            stored = False
-            if reply.strip() and not (
-                strata.config.filter_hedge_replies
-                and Strata._is_hedge_reply(reply)
-            ):
-                stored = strata.store.add_chunk(strata.turn, reply) is not None
-                if stored:
-                    st.save_conversation(cid, strata)
-            return stored
-
-        if not stream:
-            resp = _upstream_stream(
-                f"{base_url}/v1/chat/completions", json=upstream,
-                headers=headers, timeout=600,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            try:
-                observe(data["choices"][0]["message"]["content"] or "")
-            except (KeyError, IndexError):
-                pass
-            return data
-
-        def sse():
-            parts: list[str] = []
-            try:
-                resp = _upstream_stream(
-                    f"{base_url}/v1/chat/completions", json=upstream,
-                    headers=headers, stream=True, timeout=600,
-                )
-                resp.raise_for_status()
-                for raw in resp.iter_lines(decode_unicode=True):
-                    if not raw:
-                        continue
-                    line = raw[6:].strip() if raw.startswith("data:") else raw.strip()
-                    if not line:
-                        continue
-                    if line == "[DONE]":
-                        yield "data: [DONE]\n\n"
-                        break
-                    try:
-                        chunk = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    for choice in chunk.get("choices") or []:
-                        delta = choice.get("delta") or {}
-                        if delta.get("content"):
-                            parts.append(delta["content"])
-                    yield "data: " + json.dumps(chunk) + "\n\n"
-            except Exception as exc:  # noqa: BLE001 - surfaced as an SSE error event
-                yield "data: " + json.dumps({
-                    "error": {"message": str(exc), "type": "strata_upstream_error"},
-                }) + "\n\n"
-            observe("".join(parts))
-
-        return StreamingResponse(sse(), media_type="text/event-stream")
-        reg = ProviderRegistry(default=req.default)
-        for entry in req.providers:
-            data = entry.model_dump()
-            if data.get("api_key") == MASK:
-                # the UI echoes the mask back for untouched keys â€” keep the
-                # stored secret instead of overwriting it with "***"
-                previous = [p for p in st.registry.providers
-                            if p.name.lower() == str(data.get("name", "")).lower()]
-                data["api_key"] = previous[0].api_key if previous else ""
-            try:
-                reg.providers.append(Provider.from_dict(data))
-            except ValueError as exc:
-                raise HTTPException(422, str(exc))
-        st.registry = reg
-        persisted = None
-        if req.persist:
-            path = save_registry(reg, st.providers_file)
-            persisted = str(path)
-        return {"ok": True, "default": reg.default,
-                "providers": reg.redacted(), "persisted_to": persisted}
-
     @app.post("/v1/provider/config")
     def set_providers(req: ProviderConfigRequest):
         reg = ProviderRegistry(default=req.default)
@@ -3817,5 +3339,12 @@ def create_app(
     @app.get("/", response_class=HTMLResponse)
     def index():
         return RedirectResponse("/runs")
+
+    # ------------------------------------------------------------------
+    # Strata conversation loop (Phase 2 plug-in): attach the standalone
+    # strata server LAST - host routes above keep precedence, and strata's
+    # paths (/v1/strata/*, /v1/openai/*, /v1/mcp) fall through to it. The
+    # shared registry means one conversation store for host + strata.
+    app.mount("/", create_strata_app(app_state=st))
 
     return app
