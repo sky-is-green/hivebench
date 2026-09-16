@@ -204,6 +204,153 @@ def test_openai_curated_context_feeds_next_turn(tmp_path, monkeypatch):
             })
             assert r.status_code == 200
         assert "JWT tokens" in fake.payload["messages"][0]["content"]
+
+
+# ---------------------------------------------------------------------------
+# /v1/openai/responses (Responses API shim over the same curated code path)
+# ---------------------------------------------------------------------------
+def test_openai_responses_non_stream_translates_and_observes(client, monkeypatch):
+    c, _app = client
+    _configure_lm_provider(c)
+    fake = _FakeUpstream()
+    monkeypatch.setattr("strata.server.requests.post", fake)
+    r = c.post("/v1/openai/responses", json={
+        "model": "prism-ml/bonsai-27b",
+        "input": "Which tokens do I use for auth expiry?",
+        "instructions": "be terse",
+        "max_output_tokens": 128,
+    })
+    assert r.status_code == 200
+    body = r.json()
+    assert body["object"] == "response"
+    assert body["id"].startswith("resp_")
+    assert body["model"] == "prism-ml/bonsai-27b"
+    assert body["output"] == [{
+        "type": "message", "role": "assistant",
+        "content": [{"type": "output_text",
+                     "text": "JWT tokens with rotation"}],
+    }]
+    assert body["usage"] == {"input_tokens": 10, "output_tokens": 6}
+    # translated upstream request: string input -> one user message,
+    # instructions -> the (curated) system message, max_output_tokens -> max_tokens
+    assert fake.payload["messages"][-1] == {
+        "role": "user", "content": "Which tokens do I use for auth expiry?"}
+    assert fake.payload["messages"][0]["role"] == "system"
+    assert "be terse" in fake.payload["messages"][0]["content"]
+    assert fake.payload["max_tokens"] == 128
+    assert fake.payload["stream"] is False
+    # reply observed back into the store (2 chunks: query + reply)
+    st = c.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    assert st["turn"] == 1
+    assert st["store_chunks"] >= 2
+
+
+def test_openai_responses_list_input_and_conversation_header(client, monkeypatch):
+    c, _app = client
+    _configure_lm_provider(c)
+    fake = _FakeUpstream()
+    monkeypatch.setattr("strata.server.requests.post", fake)
+    r = c.post("/v1/openai/responses", json={
+        "model": "m",
+        "input": [
+            {"type": "message", "role": "user", "content": "first question"},
+            {"type": "message", "role": "assistant", "content": "first answer"},
+            {"type": "message", "role": "user", "content": "second question"},
+        ],
+    }, headers={"X-Strata-Conversation": "proj-resp"})
+    assert r.status_code == 200
+    assert r.json()["model"] == "m"
+    roles = [(m["role"], m["content"]) for m in fake.payload["messages"]]
+    assert roles[-1] == ("user", "second question")
+    assert ("assistant", "first answer") in roles
+    # conversation keyed by the X-Strata-Conversation header
+    st = c.get("/v1/strata/state", params={"conversation_id": "proj-resp"}).json()
+    assert st["turn"] == 1
+
+
+def test_openai_responses_stream_emits_deltas_and_completed(client, monkeypatch):
+    c, _app = client
+    _configure_lm_provider(c)
+    chunks = [
+        'data: {"id":"u","object":"chat.completion.chunk","created":1,"model":"m1",'
+        '"choices":[{"index":0,"delta":{"role":"assistant","content":"JWT tokens "},"finish_reason":null}]}',
+        'data: {"id":"u","object":"chat.completion.chunk","created":1,"model":"m1",'
+        '"choices":[{"index":0,"delta":{"content":"with rotation"},"finish_reason":null}]}',
+        'data: {"id":"u","object":"chat.completion.chunk","created":1,"model":"m1",'
+        '"choices":[{"index":0,"delta":{},"finish_reason":"stop"}],'
+        '"usage":{"completion_tokens":6}}',
+        "data: [DONE]",
+    ]
+    fake = _FakeUpstream(sse_chunks=chunks)
+    monkeypatch.setattr("strata.server.requests.post", fake)
+    r = c.post("/v1/openai/responses", json={
+        "model": "m", "stream": True,
+        "input": "Which tokens do I use for auth expiry?",
+    })
+    assert r.status_code == 200
+    assert "text/event-stream" in r.headers["content-type"]
+    events: dict = {}
+    event_name = None
+    for line in r.text.splitlines():
+        if line.startswith("event: "):
+            event_name = line[len("event: "):]
+        elif line.startswith("data: ") and event_name:
+            events.setdefault(event_name, []).append(json.loads(line[len("data: "):]))
+    # Responses SSE: typed named events with JSON payloads
+    deltas = "".join(e["delta"] for e in events["response.output_text.delta"])
+    assert deltas == "JWT tokens with rotation"
+    completed = events["response.completed"][-1]
+    assert completed["type"] == "response.completed"
+    resp = completed["response"]
+    assert resp["object"] == "response"
+    assert resp["id"].startswith("resp_")
+    assert resp["model"] == "m"
+    assert resp["output"][0]["content"][0]["text"] == deltas
+    assert resp["usage"] == {"input_tokens": 0, "output_tokens": 6}
+    # reply observed back (non-hedge, stored)
+    st = c.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    assert st["store_chunks"] >= 2
+
+
+def test_openai_responses_stream_error_emits_failed(client, monkeypatch):
+    c, _app = client
+    _configure_lm_provider(c)
+
+    class _BoomUpstream:
+        def __call__(self, *args, **kwargs):
+            raise RuntimeError("upstream down")
+
+    monkeypatch.setattr("strata.server.requests.post", _BoomUpstream())
+    r = c.post("/v1/openai/responses", json={
+        "model": "m", "stream": True, "input": "hi"})
+    assert r.status_code == 200
+    assert "event: response.failed" in r.text
+    assert "strata_upstream_error" in r.text
+    assert "event: response.completed" not in r.text
+
+
+def test_openai_responses_validation_and_chat_endpoint_intact(client, monkeypatch):
+    c, _app = client
+    fake = _FakeUpstream()
+    monkeypatch.setattr("strata.server.requests.post", fake)
+    # no provider configured -> 502
+    assert c.post("/v1/openai/responses",
+                  json={"input": "hi"}).status_code == 502
+    _configure_lm_provider(c)
+    # empty input -> 422 (no messages to translate)
+    assert c.post("/v1/openai/responses",
+                  json={"input": []}).status_code == 422
+    # no user message with text content -> 422
+    assert c.post("/v1/openai/responses", json={
+        "input": [{"type": "message", "role": "assistant", "content": "yo"}],
+    }).status_code == 422
+    # the shared path still serves chat/completions unchanged
+    r = c.post("/v1/openai/chat/completions", json={
+        "messages": [{"role": "user", "content": "hi"}]})
+    assert r.status_code == 200
+    assert r.json()["choices"][0]["message"]["content"] == "JWT tokens with rotation"
+
+
 def test_health_reports_zero_conversations(client):
     c, _app = client
     r = c.get("/health")
