@@ -10,6 +10,9 @@
 # the Python env (torch/fastapi/...) and the live conversation store live in the
 # sibling strata-memory checkout. We run strata's venv python from THIS CWD so
 # `harness`/`experiments` resolve locally and `strata` resolves via STRATA_HOME.
+#
+# Settings: reads strata_port and strata_state_dir from Unsloth Studio's
+# app_settings table (if available), falling back to env vars or defaults.
 set -euo pipefail
 cd "$(dirname "$0")"
 export OMP_NUM_THREADS=1            # encoder is 12M params; 1 thread ~5ms
@@ -20,14 +23,35 @@ WORK_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 STRATA_HOME="${STRATA_HOME:-$WORK_DIR/strata-memory}"
 export STRATA_HOME
 PY="$STRATA_HOME/venv/bin/python"
-STATE_DIR="${STRATA_STATE_DIR:-$STRATA_HOME/harness_state}"
+
+# --- Read settings from Unsloth Studio app_settings (if available) ---
+STUDIO_DB="${HOME}/.unsloth/studio/studio.db"
+studio_setting() {
+    local key="$1" default="$2"
+    if command -v sqlite3 >/dev/null 2>&1 && [ -f "$STUDIO_DB" ]; then
+        local val
+        val=$(sqlite3 "$STUDIO_DB" "SELECT value_json FROM app_settings WHERE key='$key';" 2>/dev/null | tr -d '"')
+        if [ -n "$val" ]; then
+            echo "$val"
+            return
+        fi
+    fi
+    echo "$default"
+}
+
+PORT="$(studio_setting strata_port "${STRATA_PORT:-8765}")"
+STATE_DIR="$(studio_setting strata_state_dir "${STRATA_STATE_DIR:-$STRATA_HOME/harness_state}")"
 
 if [ ! -x "$PY" ]; then
     echo "strata venv python not found at: $PY" >&2
     exit 1
 fi
-if "$PY" -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=2)" 2>/dev/null; then
-    echo "Something already answers on :8765 - stop it first."
+
+# Check if port is already in use
+if "$PY" -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:$PORT/health', timeout=2)" 2>/dev/null; then
+    echo "Something already answers on :$PORT - stop it first."
     exit 1
 fi
-exec "$PY" -m harness --no-open --state-dir "$STATE_DIR"
+
+echo "Starting strata sidecar on port $PORT (state: $STATE_DIR)"
+exec "$PY" -m harness --no-open --port "$PORT" --state-dir "$STATE_DIR"
