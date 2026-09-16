@@ -1006,3 +1006,44 @@ def test_report_blocks_path_traversal(client, tmp_path):
     (outside / "run_report.json").write_text("{}", encoding="utf-8")
     r = c.get("/v1/report/../outside")
     assert r.status_code in (400, 404)  # never serves outside runs/
+
+
+def test_openai_model_name_prefix_sets_conversation_id(client, monkeypatch):
+    """S5: model name with ':' prefix pins conversation ID (opencode workaround)."""
+    c, _app = client
+    _configure_lm_provider(c)
+
+    fake = _FakeUpstream(content="ok")
+    monkeypatch.setattr("strata.server.requests.post", fake)
+
+    # Model name with project prefix -> conversation ID = prefix
+    r = c.post("/v1/openai/chat/completions", json={
+        "model": "my-project:m1",
+        "messages": [{"role": "user", "content": "hello"}],
+    })
+    assert r.status_code == 200, r.text[:300]
+
+    # Upstream should receive the stripped model name
+    assert fake.payload["model"] == "m1"
+
+    # Conversation state should be stored under "my-project"
+    st = c.get("/v1/strata/state", params={"conversation_id": "my-project"}).json()
+    assert st["store_chunks"] >= 1
+
+
+def test_openai_model_name_no_colon_uses_default_cid(client, monkeypatch):
+    """S5: model name without ':' prefix falls through to default CID logic."""
+    c, _app = client
+    _configure_lm_provider(c)
+
+    fake = _FakeUpstream(content="ok")
+    monkeypatch.setattr("strata.server.requests.post", fake)
+
+    r = c.post("/v1/openai/chat/completions", json={
+        "model": "m1",
+        "messages": [{"role": "user", "content": "hello"}],
+    })
+    assert r.status_code == 200, r.text[:300]
+
+    # No prefix -> model name unchanged, CID falls back to "default"
+    assert fake.payload["model"] == "m1"
