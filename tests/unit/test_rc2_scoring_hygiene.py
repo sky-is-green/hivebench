@@ -248,7 +248,7 @@ def test_openai_passthrough_skips_sanitized_echo(tmp_path, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream(SECRET_REPLY)
-    monkeypatch.setattr(appmod, "_upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
 
     # turn 1: the query itself is pure harness boilerplate, so the ingest
     # filter stores nothing for it — the ONLY chunk persisted is the observed
@@ -324,7 +324,7 @@ def test_openai_long_thread_trim_keeps_fact_in_curation(tmp_path, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream(TRIMMED_FACT)
-    monkeypatch.setattr(appmod, "_upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
     _store_only_fact_via_boilerplate_turn(client)
 
     messages = (
@@ -361,7 +361,7 @@ def test_openai_short_thread_echo_skip_unchanged(tmp_path, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream(TRIMMED_FACT)
-    monkeypatch.setattr(appmod, "_upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
     _store_only_fact_via_boilerplate_turn(client)
 
     r = client.post("/v1/openai/chat/completions", json={

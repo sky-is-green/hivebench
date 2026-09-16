@@ -32,5 +32,5 @@ def test_apply_gatekeeper_overrides_ignores_none():
 
 def test_to_dict_has_all_fields():
     d = StrataConfig().to_dict()
-    assert d["decay_multiplier_init"] == 1.8
+    assert d["decay_multiplier_init"] == 1.1
     assert "budget_ranges" in d

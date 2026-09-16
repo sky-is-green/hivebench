@@ -84,7 +84,7 @@ def test_openai_chat_completions_non_stream(client, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream()
-    monkeypatch.setattr(appmod, "_upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
     r = c.post("/v1/openai/chat/completions", json={
         "model": "prism-ml/bonsai-27b",
         "messages": [
@@ -123,7 +123,7 @@ def test_openai_chat_completions_stream_relays_and_observes(client, monkeypatch)
         "data: [DONE]",
     ]
     fake = _FakeUpstream(sse_chunks=chunks)
-    monkeypatch.setattr(appmod, "_upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
     r = c.post("/v1/openai/chat/completions", json={
         "model": "x",
         "stream": True,
@@ -143,7 +143,7 @@ def test_openai_chat_completions_conversation_header_and_errors(client, monkeypa
     import harness.app as appmod
 
     fake = _FakeUpstream()
-    monkeypatch.setattr(appmod, "_upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
     # no provider configured -> 502
     r = c.post("/v1/openai/chat/completions", json={
         "messages": [{"role": "user", "content": "hi"}],
@@ -192,7 +192,7 @@ def test_openai_curated_context_feeds_next_turn(tmp_path, monkeypatch):
         state_dir=str(tmp_path / "state"),
     )
     fake = _FakeUpstream()
-    monkeypatch.setattr("harness.app._upstream_stream", fake)
+    monkeypatch.setattr("strata.server.requests.post", fake)
     with TestClient(app) as c:
         c.post("/v1/provider/config", json={
             "providers": [{"name": "lm", "base_url": "http://mock-llama",

@@ -64,7 +64,7 @@ def _fill_store(strata, n=450):
 
 
 def test_stale_out_archives_unselected_old_chunks(tmp_path):
-    strata = _hive(tmp_path)
+    strata = _hive(tmp_path, stale_threshold=20)
     old = strata.store.add_chunk(1, "the HOTTERM spec says refresh every hour")
     _curate(strata, old)
     _fill_store(strata)
@@ -79,7 +79,7 @@ def test_stale_out_archives_unselected_old_chunks(tmp_path):
 
 
 def test_gate_consults_comb_only_when_store_is_weak(tmp_path):
-    strata = _hive(tmp_path)
+    strata = _hive(tmp_path, stale_threshold=20)
     # strong store match: gate must NOT fire, comb never consulted
     strata.store.add_chunk(2, "the HOTTERM details are in the api docs")
     strata.process_turn("what is the HOTTERM", record_exchange=False)
@@ -103,7 +103,7 @@ def test_gate_consults_comb_only_when_store_is_weak(tmp_path):
 
 
 def test_comb_stats_finalized_per_conversation(tmp_path):
-    strata = _hive(tmp_path)
+    strata = _hive(tmp_path, stale_threshold=20)
     strata.store.add_chunk(1, "unrelated database migration notes")
     strata.process_turn("what is the HOTTERM refresh policy", record_exchange=False)
     strata.reset_conversation()
@@ -129,7 +129,7 @@ def test_comb_prunes_unreferenced_records_by_age(tmp_path):
 
 
 def test_stale_out_skips_never_curated_chunks(tmp_path):
-    strata = _hive(tmp_path)
+    strata = _hive(tmp_path, stale_threshold=20)
     # a chunk too large to ever fit the budget is never selected - and
     # selection-as-curation means it never carries relevance history, so it is
     # never archived even when it ages past the stale wall. (The greedy budget

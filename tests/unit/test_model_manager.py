@@ -274,7 +274,7 @@ def test_stream_turn_emits_events_and_stores(client, monkeypatch):
         captured["payload"] = json
         return FakeSSEResponse(sse_lines)
 
-    monkeypatch.setattr(harness_stream_module(), "_upstream_stream", fake_upstream)
+    monkeypatch.setattr("strata.server.requests.post", fake_upstream)
     events = []
     with c.stream("POST", "/v1/strata/stream", json={
         "query": "Say hello.", "conversation_id": "stream-1",
@@ -311,7 +311,7 @@ def test_stream_error_is_an_event_not_a_500(client, monkeypatch):
     def boom(*a, **kw):
         raise RuntimeError("connection refused")
 
-    monkeypatch.setattr(harness_stream_module(), "_upstream_stream", boom)
+    monkeypatch.setattr("strata.server.requests.post", boom)
     events = []
     with c.stream("POST", "/v1/strata/stream", json={
         "query": "hi", "conversation_id": "stream-err",

@@ -83,3 +83,4 @@ Thumbs.db
 
 # runtime transcripts from suite/demo runs
 transcripts/
+dep_scan.py
