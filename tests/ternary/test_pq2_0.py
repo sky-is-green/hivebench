@@ -149,3 +149,52 @@ def test_writer_rejects_wrong_payload_size(tmp_path: Path) -> None:
     writer = pq.PQ2_0GGUFWriter()
     with pytest.raises(ValueError, match="expected"):
         writer.add_tensor("t", (128, 1), pq.GGML_TYPE_PQ2_0, b"\x00")
+
+
+def test_build_artifact_pq2_0_round_trip(tmp_path: Path) -> None:
+    from experiments.ternary import run_quant as rq
+
+    rng = np.random.default_rng(4)
+    codes = rng.integers(-1, 2, size=(3, 128)).astype(np.int8)
+    scales = rng.uniform(0.1, 0.9, size=(3, 1)).astype(np.float32)
+    f16 = rng.standard_normal((2, 4)).astype(np.float16)
+    run_dir = tmp_path / "run"
+    rq._write_checkpoint(rq._checkpoint_path(run_dir, "blk.0.attn_qkv.weight"),
+                         {"kind": rq.CHECKPOINT_KIND_TERNARY, "codes": codes, "scales": scales})
+    rq._write_checkpoint(rq._checkpoint_path(run_dir, "blk.0.input_layernorm.weight"),
+                         {"kind": rq.CHECKPOINT_KIND_F16, "data": f16})
+
+    path = rq.build_artifact(
+        run_dir, ["blk.0.attn_qkv.weight", "blk.0.input_layernorm.weight"],
+        tmp_path / "pq2.gguf", ternary_type="pq2_0",
+    )
+    table = oracle.parse_gguf_table(path)
+    info = table.tensors["blk.0.attn_qkv.weight"]
+    assert info.ggml_type == pq.GGML_TYPE_PQ2_0
+    assert info.shape == (128, 3)
+    decoded = oracle.read_tensor(table, "blk.0.attn_qkv.weight")
+    assert np.allclose(decoded, pq.dequantize_pq2_0(codes, scales), atol=1e-3)
+    assert table.tensors["blk.0.input_layernorm.weight"].ggml_type == 1
+    assert table.metadata["general.file_type"] == rq.PQ2_0_FILE_TYPE == 141
+
+
+def test_build_artifact_default_stays_tq2_0(tmp_path: Path) -> None:
+    from experiments.ternary import run_quant as rq
+
+    rng = np.random.default_rng(5)
+    codes = rng.integers(-1, 2, size=(2, 256)).astype(np.int8)
+    scales = rng.uniform(0.1, 0.9, size=(2, 1)).astype(np.float32)
+    run_dir = tmp_path / "run"
+    rq._write_checkpoint(rq._checkpoint_path(run_dir, "blk.0.ffn_down.weight"),
+                         {"kind": rq.CHECKPOINT_KIND_TERNARY, "codes": codes, "scales": scales})
+    path = rq.build_artifact(run_dir, ["blk.0.ffn_down.weight"], tmp_path / "tq.gguf")
+    table = oracle.parse_gguf_table(path)
+    assert table.tensors["blk.0.ffn_down.weight"].ggml_type == 35
+    assert "general.file_type" not in table.metadata
+
+
+def test_build_artifact_rejects_unknown_ternary_type(tmp_path: Path) -> None:
+    from experiments.ternary import run_quant as rq
+
+    with pytest.raises(ValueError, match="unknown ternary type"):
+        rq.build_artifact(tmp_path, [], tmp_path / "x.gguf", ternary_type="q4_0")

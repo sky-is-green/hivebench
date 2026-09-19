@@ -37,7 +37,7 @@ import numpy as np
 import torch
 import yaml
 
-from experiments.ternary import gptq, pack_gguf, quant, rotation
+from experiments.ternary import gptq, pack_gguf, pq2_0, quant, rotation
 
 SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
@@ -298,15 +298,37 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+TERNARY_TYPE_IDS = {
+    "tq2_0": pack_gguf.GGML_TYPE_TQ2_0,
+    "pq2_0": pq2_0.GGML_TYPE_PQ2_0,
+}
+# Prism sets this LLAMA_FTYPE value on released PQ2_0 files (verified from the
+# 1.7B/27B GGUFs); the tensor type itself is 142 / QK_PQ2_0.
+PQ2_0_FILE_TYPE = 141
+
+
 def build_artifact(
     run_dir: Path,
     names: Iterable[str],
     artifact_path: Path,
     metadata: Mapping | None = None,
     alignment: int = 32,
+    ternary_type: str = "tq2_0",
 ) -> Path:
-    writer = pack_gguf.GGUFWriter(alignment=alignment)
-    for key, value in (metadata or {}).items():
+    if ternary_type not in TERNARY_TYPE_IDS:
+        raise ValueError(
+            f"unknown ternary type {ternary_type!r}; known: {sorted(TERNARY_TYPE_IDS)}"
+        )
+    if ternary_type == "pq2_0":
+        writer = pq2_0.PQ2_0GGUFWriter(alignment=alignment)
+        pack_ternary = pq2_0.pack_pq2_0
+    else:
+        writer = pack_gguf.GGUFWriter(alignment=alignment)
+        pack_ternary = pack_gguf.pack_tq2_0
+    metadata = dict(metadata or {})
+    if ternary_type == "pq2_0":
+        metadata.setdefault("general.file_type", PQ2_0_FILE_TYPE)
+    for key, value in metadata.items():
         writer.add_metadata(key, value)
     for name in names:
         payload = _load_checkpoint(_checkpoint_path(run_dir, name))
@@ -315,7 +337,8 @@ def build_artifact(
             codes = payload["codes"]
             scales = payload["scales"]
             shape = codes.shape[::-1]
-            writer.add_tensor(name, shape, pack_gguf.GGML_TYPE_TQ2_0, pack_gguf.pack_tq2_0(codes, scales))
+            writer.add_tensor(name, shape, TERNARY_TYPE_IDS[ternary_type],
+                              pack_ternary(codes, scales))
         elif kind == CHECKPOINT_KIND_F16:
             data = payload["data"]
             shape = data.shape[::-1]
@@ -339,6 +362,12 @@ def run_quant(
     run_dir = Path(run_dir)
     run_log_path = run_dir / "run_log.json"
     digest = config_hash(config)
+
+    ternary_type = str(config.get("output", {}).get("ternary_type", "tq2_0"))
+    if ternary_type not in TERNARY_TYPE_IDS:
+        raise ValueError(
+            f"unknown ternary type {ternary_type!r}; known: {sorted(TERNARY_TYPE_IDS)}"
+        )
 
     sign_sets = None
     manifest_digest = None
@@ -428,6 +457,7 @@ def run_quant(
                 "general.name": config.get("model", {}).get("name", "tbr-artifact"),
             },
             alignment=int(config.get("output", {}).get("alignment", 32)),
+            ternary_type=ternary_type,
         )
         state.artifact_sha256 = _sha256(artifact_path)
 
@@ -447,6 +477,7 @@ def _compose_log(config: Mapping, digest: str, state: RunState) -> dict:
         "cost_usd": float(config.get("output", {}).get("cost_usd", 0.0)),
         "calib_kind": config.get("calibration", {}).get("kind", ""),
         "seed": config.get("calibration", {}).get("seed"),
+        "ternary_type": config.get("output", {}).get("ternary_type", "tq2_0"),
         "spec_hash": SPEC_SHA256,
     }
     log.update(state.as_dict())
