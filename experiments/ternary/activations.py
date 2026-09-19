@@ -63,6 +63,7 @@ def capture_hessians(
     out_dir: str | Path | None = None,
     dtype: torch.dtype = torch.float64,
     max_batches: int | None = None,
+    device: torch.device | str | None = None,
 ) -> dict[str, np.ndarray]:
     """Run `model` over `batches` and accumulate `XᵀX/N` per `nn.Linear`.
 
@@ -70,6 +71,11 @@ def capture_hessians(
     keyword arguments. `names` restricts capture to those weight keys;
     `None` captures every `nn.Linear`. Returns float32 arrays keyed by weight
     name, and also writes `<out_dir>/<name>.hessian.npy` when `out_dir` is set.
+
+    `device` overrides where input batches are placed (default: the model's
+    input device). Sharded teachers (`device_map="auto"`, e.g. 4x24 GB consumer
+    cards) move activations internally, and the float64 accumulators live on
+    CPU, so capture adds only per-batch activation memory.
     """
     wanted = set(names) if names is not None else None
     accumulators: dict[str, torch.Tensor] = {}
@@ -100,7 +106,8 @@ def capture_hessians(
     for key, module in targets.items():
         handles.append(module.register_forward_hook(make_hook(key)))
 
-    device = next(model.parameters()).device
+    if device is None:
+        device = getattr(model, "device", None) or next(model.parameters()).device
     model.eval()
     try:
         with torch.no_grad():

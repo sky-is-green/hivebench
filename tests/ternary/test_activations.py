@@ -107,6 +107,20 @@ def test_hessian_for_matches_capture() -> None:
     assert np.allclose(expected, manual, atol=1e-6)
 
 
+def test_capture_accepts_explicit_device_override() -> None:
+    model = TinyModel()
+    default = act.capture_from_ids(model, _batches())
+    explicit = act.capture_from_ids(model, _batches(), device="cpu")
+    assert np.allclose(default[LAYER0_Q], explicit[LAYER0_Q], atol=1e-12)
+
+
+def test_capture_prefers_model_input_device_attribute() -> None:
+    model = TinyModel()
+    model.device = torch.device("cpu")  # HF-style input-device attribute
+    hessians = act.capture_from_ids(model, _batches())
+    assert np.isfinite(hessians[LAYER0_Q]).all()
+
+
 def test_capture_from_mapping_batches_uses_keywords() -> None:
     model = TinyModel()
     token_batches = [b[0] for b in _batches(n=2)]
