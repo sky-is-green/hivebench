@@ -219,9 +219,10 @@ def test_cli_live_mode_requires_gguf() -> None:
 
 def test_serve_gguf_through_real_model_manager(tmp_path: Path) -> None:
     try:
-        import harness.models  # noqa: F401
+        from harness import models as hm
     except ImportError:
         pytest.skip("harness package needs the F6 STRATA_HOME pin")
+    assert hm._FILE_TYPE_NAMES.get(141) == "PQ2_0"
     spawned: list[list[str]] = []
 
     class _FakeProc:
