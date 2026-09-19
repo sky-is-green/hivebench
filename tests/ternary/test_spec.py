@@ -22,7 +22,7 @@ SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "s
 
 # Pinned canonical hash (spec.md §0): sha256 of the machine-readable constants
 # block, serialized sort_keys=True, separators=(",", ":") — *not* the raw file.
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 
 REQUIRED_RUN_LOG_FIELDS = {
     "task_id",
@@ -65,7 +65,7 @@ def test_spec_hash_is_pinned(constants: dict, spec_text: str) -> None:
 
 
 def test_spec_version(constants: dict) -> None:
-    assert constants["spec_version"] == "tbr-1.0"
+    assert constants["spec_version"] == "tbr-1.1"
 
 
 def test_rotation_constants(constants: dict) -> None:
@@ -147,11 +147,40 @@ def test_f16_exemptions_match_prism_table_2(constants: dict) -> None:
     assert "*.linear_attn.conv1d.weight" in exemptions
     assert "*.linear_attn.A_log" in exemptions
     assert "*.linear_attn.dt_bias" in exemptions
+    assert "*.linear_attn.norm.weight" in exemptions  # T22
     assert "*.input_layernorm.weight" in exemptions
     assert "*.post_attention_layernorm.weight" in exemptions
     assert "*.q_norm.weight" in exemptions
     assert "*.k_norm.weight" in exemptions
     assert "norm.weight" in exemptions
+
+
+def test_roles_constants_and_precision_only_exemption(constants: dict, spec_text: str) -> None:
+    roles = constants["roles"]
+    assert roles["hidden_norms_stored_as"] == "ones"
+    assert roles["fold_hessian_rule"] == "unfold_then_rotate"
+    assert set(roles["exempt_absorb_input_suffixes"]) == {"in_proj_a.weight", "in_proj_b.weight"}
+    assert "out_proj.weight" in roles["output_rotated_suffixes"]
+    # Exemption must not be a basis decision (T22 finding F1b).
+    assert "precision" in spec_text and "basis decision" in spec_text
+    assert "all ones" in spec_text
+    # Hidden norms and head norms must be disjoint.
+    hidden = set(roles["hidden_norm_suffixes"])
+    head = set(roles["head_axis_norm_patterns"])
+    assert hidden.isdisjoint(head)
+    assert "*.linear_attn.norm.weight" in head
+
+
+def test_spec_hash_module_recomputes_the_pinned_hash() -> None:
+    from experiments.ternary import spec_hash
+
+    assert spec_hash.canonical_sha256() == SPEC_SHA256
+
+
+def test_changelog_documents_the_t22_contract_change(spec_text: str) -> None:
+    assert "## 7. Change log" in spec_text
+    assert "tbr-1.0 → tbr-1.1" in spec_text
+    assert "3.99e-01" in spec_text or "3.99e-01" in spec_text.lower() or "relative error" in spec_text
 
 
 def test_calibration_abc_constants(constants: dict, spec_text: str) -> None:

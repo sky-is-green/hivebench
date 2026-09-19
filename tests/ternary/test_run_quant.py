@@ -17,7 +17,7 @@ from experiments.ternary import run_quant as rq
 
 SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "spec.md"
 CONFIG_PATH = Path(__file__).resolve().parents[2] / "configs" / "ternary" / "0.6b.yaml"
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 
 REQUIRED_RUN_LOG_FIELDS = {
     "task_id",
@@ -93,14 +93,29 @@ def test_config_validation(tmp_path: Path) -> None:
         ("model.embed_tokens.weight", 2, "rot_output"),
         ("model.layers.0.self_attn.o_proj.weight", 2, "rot_output"),
         ("model.layers.0.mlp.down_proj.weight", 2, "rot_output"),
-        ("model.norm.weight", 1, "exempt"),
-        ("model.layers.0.input_layernorm.weight", 1, "exempt"),
-        ("model.layers.0.linear_attn.in_proj_a.weight", 2, "exempt"),
-        ("model.layers.0.linear_attn.conv1d.weight", 2, "exempt"),
+        # T22 hybrid roles
+        ("model.layers.0.linear_attn.out_proj.weight", 2, "rot_output"),
+        ("model.layers.0.linear_attn.in_proj_a.weight", 2, "exempt_rot_input"),
+        ("model.layers.0.linear_attn.in_proj_b.weight", 2, "exempt_rot_input"),
+        ("model.layers.0.linear_attn.norm.weight", 1, "exempt"),
+        ("model.norm.weight", 1, "hidden_norm"),
+        ("model.layers.0.input_layernorm.weight", 1, "hidden_norm"),
+        ("model.layers.0.post_attention_layernorm.weight", 1, "hidden_norm"),
+        ("model.layers.0.linear_attn.conv1d.weight", 3, "exempt"),
     ],
 )
 def test_classify_tensor(name: str, ndim: int, expected: str) -> None:
     assert rq.classify_tensor(name, ndim) == expected
+
+
+def test_code_roles_match_spec_sets() -> None:
+    spec = _spec_constants()
+    roles = spec["roles"]
+    assert set(rq.EXEMPTION_PATTERNS) == set(spec["exemptions_f16"])
+    assert set(rq.OUTPUT_ROTATED_SUFFIXES) == set(roles["output_rotated_suffixes"])
+    assert set(rq.INPUT_ABSORBED_SUFFIXES) == set(roles["input_absorbed_suffixes"])
+    assert set(rq.EXEMPT_ABSORB_SUFFIXES) == set(roles["exempt_absorb_input_suffixes"])
+    assert set(rq.HIDDEN_NORM_SUFFIXES) == set(roles["hidden_norm_suffixes"])
 
 
 def test_unknown_tensor_is_refused() -> None:
@@ -153,6 +168,9 @@ def test_full_run_checkpoints_and_artifact(tmp_path: Path) -> None:
     assert reader.tensors["model.norm.weight"].type_name == "F16"
     assert reader.tensors["model.layers.0.self_attn.q_proj.weight"].type_name == "TQ2_0"
     assert reader.tensors["model.embed_tokens.weight"].shape == (512, 16)
+    # T22: hidden norms are stored as all ones (γ folded into consumers).
+    norm_payload = rq._load_checkpoint(rq._checkpoint_path(run_dir, "model.norm.weight"))
+    assert np.array_equal(norm_payload["data"], np.ones(512, dtype=np.float16))
 
 
 def test_run_requires_resume_for_existing_dir(tmp_path: Path) -> None:

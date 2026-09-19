@@ -20,7 +20,7 @@ import pytest
 from experiments.ternary import eval_kld as ek
 
 SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "spec.md"
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 
 KLD_FIXTURE = """\
 llama_perf_context_print:        load time =    1234.56 ms

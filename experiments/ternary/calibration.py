@@ -23,7 +23,7 @@ from typing import Callable, Mapping, Sequence
 import numpy as np
 import yaml
 
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 
 DEFAULT_SEED = 1337
 DEFAULT_SAMPLES = 512
@@ -61,7 +61,7 @@ class CalibrationConfig:
 
     def __post_init__(self) -> None:
         if self.entropy_metric != ENTROPY_METRIC or self.entropy_selection != ENTROPY_SELECTION:
-            raise ValueError("entropy metric/selection are frozen by spec tbr-1.0")
+            raise ValueError("entropy metric/selection are frozen by spec tbr-1.1")
         if self.kind not in KINDS:
             raise ValueError(f"kind must be one of {KINDS}, got {self.kind!r}")
         if self.seed < 0:

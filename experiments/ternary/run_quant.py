@@ -1,9 +1,11 @@
 """T9 — end-to-end ternary quantization orchestrator (ADR-1/3/4).
 
 Pipeline per tensor: classify (spec §1.3 absorption table, §3.3 exemptions) →
-rotate/absorb (T2) → GPTQ error compensation when a Hessian is available (T4),
-else plain absmean+LS codec (T3) → atomic per-tensor checkpoint → GGUF pack
-(T6) with F16 exemptions on completion.
+fold hidden-norm γ into the consumer (T22) → rotate/absorb (T2) → GPTQ error
+compensation when a Hessian is available (T4), else plain absmean+LS codec (T3)
+→ atomic per-tensor checkpoint → GGUF pack (T6) with F16 exemptions on
+completion. Hidden norms are emitted as all-ones F16; F16-exempt hidden
+consumers (`in_proj_a/b`) still absorb `Rᵀ`.
 
 Kill-safety: every checkpoint is written to a temp file and `os.replace`d, and
 the run log is rewritten after each tensor, so `run(..., resume=True)` continues
@@ -32,7 +34,7 @@ import yaml
 
 from experiments.ternary import gptq, pack_gguf, quant, rotation
 
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 
 EXEMPTION_PATTERNS = (
     "*.linear_attn.in_proj_a.weight",
@@ -40,6 +42,7 @@ EXEMPTION_PATTERNS = (
     "*.linear_attn.conv1d.weight",
     "*.linear_attn.A_log",
     "*.linear_attn.dt_bias",
+    "*.linear_attn.norm.weight",
     "*.input_layernorm.weight",
     "*.post_attention_layernorm.weight",
     "*.q_norm.weight",
@@ -50,6 +53,7 @@ OUTPUT_ROTATED_SUFFIXES = (
     "embed_tokens.weight",
     "token_embd.weight",
     "o_proj.weight",
+    "out_proj.weight",
     "attn_output.weight",
     "down_proj.weight",
     "ffn_down.weight",
@@ -68,6 +72,21 @@ INPUT_ABSORBED_SUFFIXES = (
     "lm_head.weight",
     "output.weight",
 )
+# T22 / spec tbr-1.1 §1.3–§3.3: hidden norms are stored as ones, their γ folds
+# into every hidden-axis consumer; F16 exemption is precision-only, so exempt
+# hidden consumers (`in_proj_a/b`) still absorb Rᵀ.
+HIDDEN_NORM_SUFFIXES = (
+    "input_layernorm.weight",
+    "post_attention_layernorm.weight",
+    "norm.weight",
+)
+HEAD_NORM_SUFFIXES = ("linear_attn.norm.weight",)
+EXEMPT_ABSORB_SUFFIXES = ("in_proj_a.weight", "in_proj_b.weight")
+ROLE_EXEMPT = "exempt"
+ROLE_HIDDEN_NORM = "hidden_norm"
+ROLE_EXEMPT_ROT_INPUT = "exempt_rot_input"
+ROLE_ROT_INPUT = "rot_input"
+ROLE_ROT_OUTPUT = "rot_output"
 CHECKPOINT_KIND_TERNARY = "tq2_0"
 CHECKPOINT_KIND_F16 = "f16"
 
@@ -115,16 +134,54 @@ def config_hash(config: Mapping) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def is_hidden_norm(name: str) -> bool:
+    """Hidden-axis RMSNorm (γ folds into consumers, stored as ones)."""
+    if name.endswith(HEAD_NORM_SUFFIXES):
+        return False
+    return any(name.endswith(suffix) for suffix in HIDDEN_NORM_SUFFIXES)
+
+
+def norm_fold_map(names: Sequence[str]) -> dict[str, str]:
+    """Consumer weight -> hidden norm whose γ folds into it (spec §1.3).
+
+    Layer-scoped for `input_layernorm` (attention/linear-attn projections) and
+    `post_attention_layernorm` (MLP gate/up); global for the final norm.
+    """
+    names = list(names)
+    folds: dict[str, str] = {}
+    for name in names:
+        if not is_hidden_norm(name):
+            continue
+        if name.endswith("input_layernorm.weight"):
+            prefix = name[: -len("input_layernorm.weight")]
+            suffixes = ("q_proj.weight", "k_proj.weight", "v_proj.weight",
+                        "in_proj_a.weight", "in_proj_b.weight")
+            consumers = [n for n in names if n.startswith(prefix) and n.endswith(suffixes)]
+        elif name.endswith("post_attention_layernorm.weight"):
+            prefix = name[: -len("post_attention_layernorm.weight")]
+            consumers = [n for n in names
+                         if n.startswith(prefix) and n.endswith(("gate_proj.weight", "up_proj.weight"))]
+        else:  # final norm
+            consumers = [n for n in names if n.endswith(("lm_head.weight", "output.weight"))]
+        for consumer in consumers:
+            folds[consumer] = name
+    return folds
+
+
 def classify_tensor(name: str, ndim: int) -> str:
-    """Return `exempt`, `rot_input`, or `rot_output` (spec §1.3/§3.3)."""
+    """Return the spec §1.3/§3.3 role of a tensor (T22 roles included)."""
+    if is_hidden_norm(name):
+        return ROLE_HIDDEN_NORM
     if ndim == 1:
-        return "exempt"
+        return ROLE_EXEMPT
     if any(fnmatch.fnmatch(name, pattern) for pattern in EXEMPTION_PATTERNS):
-        return "exempt"
+        if any(name.endswith(suffix) for suffix in EXEMPT_ABSORB_SUFFIXES):
+            return ROLE_EXEMPT_ROT_INPUT
+        return ROLE_EXEMPT
     if any(name.endswith(suffix) for suffix in OUTPUT_ROTATED_SUFFIXES):
-        return "rot_output"
+        return ROLE_ROT_OUTPUT
     if any(name.endswith(suffix) for suffix in INPUT_ABSORBED_SUFFIXES):
-        return "rot_input"
+        return ROLE_ROT_INPUT
     raise ValueError(f"tensor {name!r} matches no spec role; refusing to guess")
 
 
@@ -139,15 +196,27 @@ def _process_tensor(
     tensor: np.ndarray,
     hessian: np.ndarray | None,
     config: Mapping,
+    gamma: np.ndarray | None = None,
 ) -> dict:
     tensor = np.asarray(tensor, dtype=np.float64)
     role = classify_tensor(name, tensor.ndim)
-    if role == "exempt":
+    if role == ROLE_HIDDEN_NORM:
+        # γ is folded into every consumer; the runtime norm becomes identity.
+        return {"kind": CHECKPOINT_KIND_F16, "data": np.ones_like(tensor, dtype=np.float16)}
+    if role == ROLE_EXEMPT:
         return {"kind": CHECKPOINT_KIND_F16, "data": tensor.astype(np.float16)}
 
     seed = int(config["rotation"]["seed"])
     group_size = int(config["quant"]["group_size"])
-    if role == "rot_input":
+    if gamma is not None:
+        tensor = rotation.fold_norm_scale(tensor, gamma)
+        if hessian is not None:
+            hessian = rotation.unfold_norm_scale(hessian, gamma)
+    if role == ROLE_EXEMPT_ROT_INPUT:
+        rots = rotation.rotations_for(tensor.shape[1], seed)
+        rotated = rotation.absorb_input(tensor, rots)
+        return {"kind": CHECKPOINT_KIND_F16, "data": np.asarray(rotated, dtype=np.float16)}
+    if role == ROLE_ROT_INPUT:
         rots = rotation.rotations_for(tensor.shape[1], seed)
         rotated = rotation.absorb_input(tensor, rots)
         h = rotate_hessian(hessian, rots) if hessian is not None else None
@@ -252,6 +321,8 @@ def run_quant(
             raise ValueError("config hash mismatch: refusing to resume a run with a different config")
 
     names = list(source.names())
+    folds = norm_fold_map(source.names())
+    gamma_cache: dict[str, np.ndarray] = {}
     if tensor_filter:
         names = [name for name in names if name in set(tensor_filter)]
     if max_tensors is not None:
@@ -281,7 +352,13 @@ def run_quant(
         started = time.time()
         tensor = source.tensor(name)
         hessian = source.hessian(name)
-        payload = _process_tensor(name, tensor, hessian, config)
+        gamma = None
+        norm_name = folds.get(name)
+        if norm_name is not None:
+            if norm_name not in gamma_cache:
+                gamma_cache[norm_name] = np.asarray(source.tensor(norm_name), dtype=np.float64)
+            gamma = gamma_cache[norm_name]
+        payload = _process_tensor(name, tensor, hessian, config, gamma=gamma)
         path = _checkpoint_path(run_dir, name)
         _write_checkpoint(path, payload)
         state.tensors[name] = {

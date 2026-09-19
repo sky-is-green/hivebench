@@ -1,6 +1,8 @@
 # TBR — Ternary 27B Replication: Format & Recipe Spec (wire contract)
 
-**Spec version:** `tbr-1.0` — **FROZEN** on first consumer (T2 pins it in
+**Spec version:** `tbr-1.1` — supersedes `tbr-1.0` (T22: hidden-norm fold,
+hybrid-attention tensor roles, F16 exemptions are precision-only). **FROZEN** on
+first consumer (T2 pins it in
 `tests/ternary/test_rotation.py`; every later consumer pins the same canonical
 hash).
 **Owner:** QUEEN (hotspot: single-commit, `HIVE-PLAN.md` §6). **Author:** T1 /
@@ -13,11 +15,12 @@ BEE-BETA. **Plan:** `HIVE-PLAN.md` §4.
 this literal in their test:
 
 ```
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 ```
 
-(Recompute after any edit with `python -m experiments.ternary.spec_hash` once
-T2 lands; until then the value in `tests/ternary/test_spec.py` is authoritative.)
+(Recompute after any edit with `python -m experiments.ternary.spec_hash`; the
+module parses this file, serializes the block canonically, and `--check` compares
+against the literal above. Consumer tests pin the same literal.)
 
 ---
 
@@ -71,6 +74,8 @@ Convention: `y = x Wᵀ` (torch), `W: (out, in)`, hidden axis is the last axis.
 | `token_embd.weight` | `W' = W Rᵀ` | emitted hidden state is rotated: `R·E[x]` |
 | `attn_q/k/v.weight`, `ffn_gate/up.weight` | `W' = W Rᵀ` | input rotated, output unrotated (`W Rᵀ · R x = W x`) |
 | `attn_output.weight`, `ffn_down.weight` | `W' = R W` | input unrotated, output rotated (`R W · z`) |
+| `*.linear_attn.out_proj.weight` | `W' = R W` | hybrid linear-attention output projection (same edge as `o_proj`) |
+| `*.linear_attn.in_proj_a/b.weight` | `W' = W diag(γ) Rᵀ`, stored F16 | hidden-stream consumer; the F16 exemption is a *precision* decision only (T22) |
 | `output.weight` (lm_head) | `W' = W diag(γ_final) Rᵀ` | final norm γ folded, then input rotated |
 | linear bias `b` on an output-rotated edge | `b' = R b` | output lives in rotated space |
 | linear bias on an input-absorbed edge | `b' = b` | output is unrotated |
@@ -81,10 +86,25 @@ computes bit-comparable logits. MLP: `down(R·(act(gate(x̃)) ⊙ up(x̃)))` wit
 `gate/up` absorbing `Rᵀ` and `down` absorbing `R` — no rotation touches `act`.
 
 **Norms.** Hidden-axis RMSNorm with learnable `γ` does *not* commute with `R`.
-Rule: strip `γ` from every hidden-axis RMSNorm and fold it into the consuming
-linear (`W ← W diag(γ)`); the remaining γ-free RMSNorm commutes exactly with
-`R` because `rms(Rx) = rms(x)` and `R x / rms(Rx) = R (x/rms(x))`. Head-axis
-norms (`q_norm`, `k_norm`) are unrotated and exempt F16 — they stay unchanged.
+Rule (T22): strip `γ` from every hidden-axis RMSNorm, fold it into **every**
+consuming hidden-axis linear (`W ← W diag(γ)`, including the F16-exempt
+`in_proj_a/b`), and store the norm tensor itself as **all ones** in F16. The
+remaining γ-free RMSNorm then commutes exactly with `R` because
+`rms(Rx) = rms(x)` and `R x / rms(Rx) = R (x/rms(x))`. Head-axis norms
+(`q_norm`, `k_norm`, `linear_attn.norm`) are in unrotated head space and stay
+byte-unchanged F16.
+
+Hidden norms and their consumers:
+
+| Norm | Consumers (fold `γ` into each) |
+|---|---|
+| `*.input_layernorm.weight` | `q/k/v_proj`, `linear_attn.in_proj_a/b` in the same layer |
+| `*.post_attention_layernorm.weight` | `mlp.gate_proj`, `mlp.up_proj` in the same layer |
+| `norm.weight` / `model.norm.weight` (final) | `lm_head.weight` / `output.weight` |
+
+A calibration Hessian for a folded consumer is captured on the **original**
+norm output `(γ ⊙ x/rms(x))`; the pipeline removes `γ` (`unfold_norm_scale`)
+before `rotate_hessian` (rule `unfold_then_rotate`).
 
 **Head-dim rotations are out of scope in v1.** Q/K head rotations must commute
 with RoPE to stay exact, and the Hadamard basis does not preserve RoPE's 2-D
@@ -173,19 +193,28 @@ Prism's `PQ2_0` g128 layout and ggml type id are **not** public. Until R2
 returns a verified layout, no code writes `PQ2_0`; `oracle.py` degrades to
 KLD-only mode (`HIVE-PLAN.md` §10, T7). Writing a guessed layout is forbidden.
 
-### 3.3 F16 exemption tensors
+### 3.3 F16 exemption tensors (precision-only rule, T22)
 
 Prism Table 2 (0.0976 % of params full precision), mapped to Qwen3.8 names.
-Patterns are fnmatch-style against tensor names; exempt tensors are stored as
-`GGML_TYPE_F16` byte-identically to the BF16 source cast (no rotation applied
-to 1-D params, rotation folded around them where needed):
+Patterns are fnmatch-style against tensor names. **Exemption is a precision
+decision, never a basis decision:** a 2-D hidden-axis consumer that is F16-exempt
+(`in_proj_a/b`) still absorbs `Rᵀ`; head-space tensors (`conv1d`, head norms,
+per-head scalars) stay raw; 1-D params stay raw. Hidden-axis norms are stored as
+**all ones** (their `γ` is folded into consumers per §1.3).
 
-```
+| Class | Patterns | Storage |
+|---|---|---|
+| Hidden norms | `*.input_layernorm.weight`, `*.post_attention_layernorm.weight`, `norm.weight` | F16, **all ones** (`γ` folded) |
+| F16 hidden consumer | `*.linear_attn.in_proj_a.weight`, `*.linear_attn.in_proj_b.weight` | F16, `W diag(γ) Rᵀ` |
+| Head space / scalars | `*.linear_attn.conv1d.weight`, `*.linear_attn.A_log`, `*.linear_attn.dt_bias`, `*.q_norm.weight`, `*.k_norm.weight`, `*.linear_attn.norm.weight` | F16, raw |
+
+```text
 *.linear_attn.in_proj_a.weight
 *.linear_attn.in_proj_b.weight
 *.linear_attn.conv1d.weight
 *.linear_attn.A_log
 *.linear_attn.dt_bias
+*.linear_attn.norm.weight
 *.input_layernorm.weight
 *.post_attention_layernorm.weight
 *.q_norm.weight
@@ -195,6 +224,8 @@ norm.weight
 
 Everything else is ternary. Embeddings and `output.weight` are ternary
 (ADR-2); if a live load fails on either, that is a hotspot-level spec change.
+The v1.0 blocker this fixes: the old list stored hidden norms byte-identically
+with their `γ`, which breaks `R`-absorption by construction (`R(γ⊙z) ≠ γ⊙(Rz)`).
 
 ## 4. Calibration A/B/C (§4.4, §9)
 
@@ -251,7 +282,7 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
     "seed": 1337,
     "seq_len": 2048
   },
-  "exemptions_f16": ["*.linear_attn.in_proj_a.weight", "*.linear_attn.in_proj_b.weight", "*.linear_attn.conv1d.weight", "*.linear_attn.A_log", "*.linear_attn.dt_bias", "*.input_layernorm.weight", "*.post_attention_layernorm.weight", "*.q_norm.weight", "*.k_norm.weight", "norm.weight"],
+  "exemptions_f16": ["*.linear_attn.in_proj_a.weight", "*.linear_attn.in_proj_b.weight", "*.linear_attn.conv1d.weight", "*.linear_attn.A_log", "*.linear_attn.dt_bias", "*.linear_attn.norm.weight", "*.input_layernorm.weight", "*.post_attention_layernorm.weight", "*.q_norm.weight", "*.k_norm.weight", "norm.weight"],
   "gptq": {
     "act_order_default": false,
     "block_size": 128,
@@ -261,6 +292,15 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
   "pq2_0": {
     "group_size": 128,
     "status": "deferred_until_R2"
+  },
+  "roles": {
+    "exempt_absorb_input_suffixes": ["in_proj_a.weight", "in_proj_b.weight"],
+    "fold_hessian_rule": "unfold_then_rotate",
+    "head_axis_norm_patterns": ["*.q_norm.weight", "*.k_norm.weight", "*.linear_attn.norm.weight"],
+    "hidden_norm_suffixes": ["input_layernorm.weight", "post_attention_layernorm.weight", "norm.weight"],
+    "hidden_norms_stored_as": "ones",
+    "input_absorbed_suffixes": ["q_proj.weight", "k_proj.weight", "v_proj.weight", "gate_proj.weight", "up_proj.weight", "attn_q.weight", "attn_k.weight", "attn_v.weight", "ffn_gate.weight", "ffn_up.weight", "lm_head.weight", "output.weight"],
+    "output_rotated_suffixes": ["embed_tokens.weight", "token_embd.weight", "o_proj.weight", "out_proj.weight", "attn_output.weight", "down_proj.weight", "ffn_down.weight"]
   },
   "quant": {
     "group_sizes": [128, 256],
@@ -279,7 +319,7 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
     "signs": "pm1",
     "version": 1
   },
-  "spec_version": "tbr-1.0",
+  "spec_version": "tbr-1.1",
   "tq1_0": {
     "block_bytes": 54,
     "block_size": 256,
@@ -297,3 +337,21 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
   }
 }
 ```
+
+## 7. Change log
+
+### tbr-1.0 → tbr-1.1 (T22, 2026-09-19)
+
+- **Hidden-norm `γ` fold made normative and implemented** (§1.3): γ is folded into
+  every hidden-axis consumer, hidden norms stored as all-ones F16. Fixes the v1.0
+  correctness hole (measured 3.99e-01 relative error on a γ≠1 block; 1.59e-15 folded).
+- **F16 exemption is precision-only** (§3.3): `in_proj_a/b` absorb `Rᵀ` while
+  remaining F16; added `*.linear_attn.norm.weight` to the exempt list.
+- **Hybrid-attention tensor roles** (§1.3, constants `roles`):
+  `*.linear_attn.out_proj.weight` → output-rotated; suffix sets moved into the
+  machine-readable contract and pinned by tests.
+- **Hessian rule** (`fold_hessian_rule = unfold_then_rotate`): calibration Hessians
+  are captured on the original norm output `(γ⊙x/rms(x))`;
+  `rotation.unfold_norm_scale` removes γ before `rotate_hessian`.
+- **`spec_hash.py` shipped** (was referenced in v1.0 but missing).
+- Breaking by design: `SPEC_SHA256` changed; every consumer re-pins `tbr-1.1`.

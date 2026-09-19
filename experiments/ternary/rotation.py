@@ -1,6 +1,6 @@
 """T2 — Walsh–Hadamard rotation `R = (1/√n)·H_n·diag(S)` and its absorption.
 
-Contract: `experiments/ternary/spec.md` §1 (spec tbr-1.0, pinned by
+Contract: `experiments/ternary/spec.md` §1 (spec tbr-1.1, pinned by
 `tests/ternary/test_rotation.py::test_spec_hash_is_pinned`). ADR-3: `R` is
 folded into adjacent weights, no mainline kernel pays a runtime Hadamard.
 
@@ -22,7 +22,7 @@ import math
 
 import numpy as np
 
-SPEC_SHA256 = "c3ef601e399058ddc3dd5012a495f867f78863f53182a49ea80ca786c95309bf"
+SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
 
 TBR_N = 1024
 DEFAULT_DOMAIN = "hidden"
@@ -156,3 +156,19 @@ def fold_norm_scale(w: np.ndarray, gamma: np.ndarray) -> np.ndarray:
     if gamma.shape[-1] != w.shape[-1]:
         raise ValueError(f"gamma {gamma.shape} does not match linear input {w.shape[-1]}")
     return w * gamma
+
+
+def unfold_norm_scale(hessian: np.ndarray, gamma: np.ndarray) -> np.ndarray:
+    """Remove `γ` from a Hessian captured on the original norm output (T22).
+
+    `H = E[xᵀx]` with `x = γ ⊙ z` gives `H = D H_z D` (`D = diag(γ)`), so the
+    Hessian of the γ-stripped stream is `H_z = D⁻¹ H D⁻¹ = H / outer(γ, γ)`.
+    Apply before `rotate_hessian` (spec rule `unfold_then_rotate`).
+    """
+    hessian = np.asarray(hessian, dtype=np.float64)
+    gamma = np.asarray(gamma, dtype=np.float64)
+    if hessian.ndim != 2 or hessian.shape[0] != hessian.shape[1]:
+        raise ValueError(f"hessian must be square, got {hessian.shape}")
+    if gamma.shape[-1] != hessian.shape[-1]:
+        raise ValueError(f"gamma {gamma.shape} does not match hessian {hessian.shape}")
+    return hessian / np.outer(gamma, gamma)
