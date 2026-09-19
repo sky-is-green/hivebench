@@ -204,9 +204,14 @@ def test_chat_completion_parses_openai_response() -> None:
     assert call["json"]["model"] == "mock-ternary"
 
 
+def test_no_thinking_args_are_llama_server_flags() -> None:
+    assert te.NO_THINKING_ARGS[0] == "--chat-template-kwargs"
+    assert json.loads(te.NO_THINKING_ARGS[1]) == {"enable_thinking": False}
+
+
 def test_cli_mock_mode_writes_report(tmp_path: Path) -> None:
     output = tmp_path / "report.json"
-    assert te.main(["--mock", "--output", str(output)]) == 0
+    assert te.main(["--mock", "--no-thinking", "--output", str(output)]) == 0
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["task"] == "T11"
     assert report["smoke"]["passed"] == 5
@@ -255,12 +260,14 @@ def test_serve_gguf_through_real_model_manager(tmp_path: Path) -> None:
         spawner=fake_spawner, prober=fake_prober, startup_timeout=5,
     )
     manager.binary.write_bytes(b"")
-    instance = te.serve_gguf(gguf, manager=manager, ctx_size=4096, ngl=99)
+    instance = te.serve_gguf(gguf, manager=manager, ctx_size=4096, ngl=99,
+                             extra_args=list(te.NO_THINKING_ARGS))
 
     cmd = spawned[0]
     assert cmd[cmd.index("-m") + 1] == str(gguf)
     assert cmd[cmd.index("--port") + 1] == str(manager.port)
     assert cmd[cmd.index("-ngl") + 1] == "99"
+    assert cmd[-2:] == list(te.NO_THINKING_ARGS)
     assert instance["key"] == "mock-ternary"
     assert instance["base_url"] == f"http://127.0.0.1:{manager.port}"
     assert manager.unload(instance["key"])["unloaded"] == "mock-ternary"

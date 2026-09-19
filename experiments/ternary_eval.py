@@ -42,6 +42,14 @@ DEFAULT_CTX = 8192
 DEFAULT_MAX_TOKENS = 64
 CHAT_TIMEOUT = 180.0
 
+# Reasoning models (Bonsai/Qwen templates) otherwise burn the reply budget on
+# hidden thoughts and return empty visible content; the Prism fork takes this
+# as a spawn-time llama-server flag.
+NO_THINKING_ARGS: tuple[str, ...] = (
+    "--chat-template-kwargs",
+    '{"enable_thinking": false}',
+)
+
 SMOKE_PROMPTS: tuple[str, ...] = (
     "Reply with the single word: ok",
     "Name the capital of France.",
@@ -324,6 +332,10 @@ def main(argv: list[str] | None = None) -> int:
                         help="skip the paired_ab subset")
     parser.add_argument("--keep-loaded", action="store_true",
                         help="leave llama-server running after the eval")
+    parser.add_argument("--no-thinking", action="store_true",
+                        help="disable template thinking (reasoning models return "
+                             "empty visible replies otherwise); passed to "
+                             "llama-server as --chat-template-kwargs")
     parser.add_argument("--output", default="", help="report JSON path")
     parser.add_argument("--mock", action="store_true",
                         help="offline wiring check (stub manager/chat/paired)")
@@ -362,6 +374,7 @@ def main(argv: list[str] | None = None) -> int:
             gguf=gguf, manager=manager, chat_fn=chat_fn, paired_fn=paired_fn,
             max_tokens=args.max_tokens, ctx_size=args.ctx_size, ngl=args.ngl,
             backend=(None if args.fork_bin else (args.backend or None)),
+            extra_args=list(NO_THINKING_ARGS) if args.no_thinking else None,
             keep_loaded=args.keep_loaded,
         )
     except (FileNotFoundError, RuntimeError, OSError) as exc:
