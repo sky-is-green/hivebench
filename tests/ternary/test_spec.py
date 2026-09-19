@@ -22,7 +22,7 @@ SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "s
 
 # Pinned canonical hash (spec.md §0): sha256 of the machine-readable constants
 # block, serialized sort_keys=True, separators=(",", ":") — *not* the raw file.
-SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
+SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
 REQUIRED_RUN_LOG_FIELDS = {
     "task_id",
@@ -65,7 +65,7 @@ def test_spec_hash_is_pinned(constants: dict, spec_text: str) -> None:
 
 
 def test_spec_version(constants: dict) -> None:
-    assert constants["spec_version"] == "tbr-1.1"
+    assert constants["spec_version"] == "tbr-1.2"
 
 
 def test_rotation_constants(constants: dict) -> None:
@@ -165,10 +165,13 @@ def test_roles_constants_and_precision_only_exemption(constants: dict, spec_text
     assert "precision" in spec_text and "basis decision" in spec_text
     assert "all ones" in spec_text
     # Hidden norms and head norms must be disjoint.
-    hidden = set(roles["hidden_norm_suffixes"])
+    hidden = set(roles["hidden_norm_suffixes"]) | set(roles["hidden_norm_exact"])
     head = set(roles["head_axis_norm_patterns"])
     assert hidden.isdisjoint(head)
     assert "*.linear_attn.norm.weight" in head
+    assert set(roles["hidden_norm_exact"]) == {"norm.weight", "model.norm.weight"}
+    joined = " ".join(head)
+    assert "q_norm.weight" in joined and "k_norm.weight" in joined
 
 
 def test_spec_hash_module_recomputes_the_pinned_hash() -> None:

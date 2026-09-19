@@ -82,7 +82,10 @@ def test_norm_fold_map_covers_all_hidden_norms() -> None:
     assert input_norm not in folds
     # Head-axis norms must never be treated as hidden norms.
     assert not rq.is_hidden_norm("model.layers.0.linear_attn.norm.weight")
+    assert not rq.is_hidden_norm("model.layers.0.self_attn.q_norm.weight")
+    assert not rq.is_hidden_norm("model.layers.0.self_attn.k_norm.weight")
     assert rq.is_hidden_norm("model.norm.weight")
+    assert rq.is_hidden_norm("norm.weight")
 
 
 def test_hidden_norms_are_stored_as_ones(tmp_path: Path) -> None:

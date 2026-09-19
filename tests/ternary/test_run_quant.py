@@ -17,7 +17,7 @@ from experiments.ternary import run_quant as rq
 
 SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "spec.md"
 CONFIG_PATH = Path(__file__).resolve().parents[2] / "configs" / "ternary" / "0.6b.yaml"
-SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
+SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
 REQUIRED_RUN_LOG_FIELDS = {
     "task_id",
@@ -98,6 +98,8 @@ def test_config_validation(tmp_path: Path) -> None:
         ("model.layers.0.linear_attn.in_proj_a.weight", 2, "exempt_rot_input"),
         ("model.layers.0.linear_attn.in_proj_b.weight", 2, "exempt_rot_input"),
         ("model.layers.0.linear_attn.norm.weight", 1, "exempt"),
+        ("model.layers.0.self_attn.q_norm.weight", 1, "exempt"),
+        ("model.layers.0.self_attn.k_norm.weight", 1, "exempt"),
         ("model.norm.weight", 1, "hidden_norm"),
         ("model.layers.0.input_layernorm.weight", 1, "hidden_norm"),
         ("model.layers.0.post_attention_layernorm.weight", 1, "hidden_norm"),
@@ -116,6 +118,7 @@ def test_code_roles_match_spec_sets() -> None:
     assert set(rq.INPUT_ABSORBED_SUFFIXES) == set(roles["input_absorbed_suffixes"])
     assert set(rq.EXEMPT_ABSORB_SUFFIXES) == set(roles["exempt_absorb_input_suffixes"])
     assert set(rq.HIDDEN_NORM_SUFFIXES) == set(roles["hidden_norm_suffixes"])
+    assert set(rq.HIDDEN_NORM_EXACT) == set(roles["hidden_norm_exact"])
 
 
 def test_unknown_tensor_is_refused() -> None:

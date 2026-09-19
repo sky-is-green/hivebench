@@ -15,7 +15,7 @@ from experiments.ternary import calibration as cal
 
 SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "spec.md"
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "configs" / "ternary"
-SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
+SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
 
 def _spec_constants() -> dict:

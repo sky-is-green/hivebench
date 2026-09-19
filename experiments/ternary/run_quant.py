@@ -34,7 +34,7 @@ import yaml
 
 from experiments.ternary import gptq, pack_gguf, quant, rotation
 
-SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
+SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
 EXEMPTION_PATTERNS = (
     "*.linear_attn.in_proj_a.weight",
@@ -78,9 +78,9 @@ INPUT_ABSORBED_SUFFIXES = (
 HIDDEN_NORM_SUFFIXES = (
     "input_layernorm.weight",
     "post_attention_layernorm.weight",
-    "norm.weight",
 )
-HEAD_NORM_SUFFIXES = ("linear_attn.norm.weight",)
+HIDDEN_NORM_EXACT = ("norm.weight", "model.norm.weight")
+HEAD_NORM_SUFFIXES = ("q_norm.weight", "k_norm.weight", "linear_attn.norm.weight")
 EXEMPT_ABSORB_SUFFIXES = ("in_proj_a.weight", "in_proj_b.weight")
 ROLE_EXEMPT = "exempt"
 ROLE_HIDDEN_NORM = "hidden_norm"
@@ -135,10 +135,15 @@ def config_hash(config: Mapping) -> str:
 
 
 def is_hidden_norm(name: str) -> bool:
-    """Hidden-axis RMSNorm (γ folds into consumers, stored as ones)."""
+    """Hidden-axis RMSNorm (γ folds into consumers, stored as ones).
+
+    Head-axis norms (`q_norm`, `k_norm`, `linear_attn.norm`) also end with
+    `norm.weight` and must be excluded first — T10 canary caught them being
+    silently zeroed to ones by the v1.1 suffix rule (spec tbr-1.2).
+    """
     if name.endswith(HEAD_NORM_SUFFIXES):
         return False
-    return any(name.endswith(suffix) for suffix in HIDDEN_NORM_SUFFIXES)
+    return name in HIDDEN_NORM_EXACT or name.endswith(HIDDEN_NORM_SUFFIXES)
 
 
 def norm_fold_map(names: Sequence[str]) -> dict[str, str]:
@@ -186,9 +191,16 @@ def classify_tensor(name: str, ndim: int) -> str:
 
 
 def rotate_hessian(hessian: np.ndarray, rots: Sequence[np.ndarray]) -> np.ndarray:
-    """`R H Rᵀ` for an input-absorbed linear."""
-    right = rotation.apply_rotation(hessian, rots, transpose=True)
-    return rotation.apply_rotation(right.T, rots, transpose=True).T
+    """`R H Rᵀ` for an input-absorbed linear (`H = E[xᵀx]`, input becomes `R x`).
+
+    `apply_rotation(X, transpose=False)` computes `X Rᵀ`, so
+    `R H Rᵀ = apply_rotation(apply_rotation(H)ᵀ)`. The T10 canary caught the
+    v1.1 implementation returning `Rᵀ H R` instead (they differ because `R` is
+    not symmetric when `S ≠ 1`), which left GPTQ optimizing against the wrong
+    Hessian in the rotated basis.
+    """
+    right = rotation.apply_rotation(hessian, rots, transpose=False)  # H Rᵀ
+    return rotation.apply_rotation(right.T, rots, transpose=False)   # R H Rᵀ
 
 
 def _process_tensor(
@@ -465,17 +477,18 @@ class SafetensorsTensorSource:
         self._names: list[str] = []
         self._shard_of: dict[str, Path] = {}
         for path in self._files:
-            with safe_open(str(path), framework="np") as handle:
+            # framework="pt": numpy cannot represent bf16, and Qwen3.8 ships bf16.
+            with safe_open(str(path), framework="pt") as handle:
                 for name in handle.keys():
                     self._names.append(name)
                     self._shard_of[name] = path
 
     def names(self) -> list[str]:
-        return list(self._names)
+        return self._names
 
     def tensor(self, name: str) -> np.ndarray:
-        with self._safe_open(str(self._shard_of[name]), framework="np") as handle:
-            return np.asarray(handle.get_tensor(name), dtype=np.float32)
+        with self._safe_open(str(self._shard_of[name]), framework="pt") as handle:
+            return handle.get_tensor(name).to(torch.float32).numpy()
 
     def hessian(self, name: str) -> np.ndarray | None:
         return None

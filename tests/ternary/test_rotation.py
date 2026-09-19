@@ -18,7 +18,7 @@ import pytest
 from experiments.ternary import rotation as rot
 
 SPEC_PATH = Path(__file__).resolve().parents[2] / "experiments" / "ternary" / "spec.md"
-SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
+SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
 SEED = 1337
 
@@ -32,6 +32,20 @@ def _spec_constants() -> dict:
 def test_spec_hash_is_pinned() -> None:
     canon = json.dumps(_spec_constants(), sort_keys=True, separators=(",", ":"))
     assert hashlib.sha256(canon.encode()).hexdigest() == SPEC_SHA256 == rot.SPEC_SHA256
+
+
+def test_rotate_hessian_is_r_h_r_transpose() -> None:
+    """T10 canary: the absorbed input is `R x`, so `H' = R H Rᵀ`, not `Rᵀ H R`."""
+    from experiments.ternary import run_quant as rq
+
+    rng = np.random.default_rng(3)
+    d = 128
+    a = rng.standard_normal((d, d))
+    hessian = a @ a.T / d
+    rots = rot.rotations_for(d, SEED)
+    matrix = rot.materialize_rotation(d, SEED)
+    assert not np.allclose(matrix, matrix.T)  # S != 1 makes R asymmetric
+    assert np.allclose(rq.rotate_hessian(hessian, rots), matrix @ hessian @ matrix.T, atol=1e-10)
 
 
 @pytest.mark.parametrize(

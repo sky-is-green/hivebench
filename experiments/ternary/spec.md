@@ -1,10 +1,11 @@
 # TBR — Ternary 27B Replication: Format & Recipe Spec (wire contract)
 
-**Spec version:** `tbr-1.1` — supersedes `tbr-1.0` (T22: hidden-norm fold,
-hybrid-attention tensor roles, F16 exemptions are precision-only). **FROZEN** on
-first consumer (T2 pins it in
-`tests/ternary/test_rotation.py`; every later consumer pins the same canonical
-hash).
+**Spec version:** `tbr-1.2` — supersedes `tbr-1.1` (T10 canary: `q_norm`/
+`k_norm` are head-axis, not hidden; `norm.weight` suffix was over-matching).
+`tbr-1.1` superseded `tbr-1.0` (T22: hidden-norm fold, hybrid-attention tensor
+roles, F16 exemptions are precision-only). **FROZEN** on first consumer (T2 pins
+it in `tests/ternary/test_rotation.py`; every later consumer pins the same
+canonical hash).
 **Owner:** QUEEN (hotspot: single-commit, `HIVE-PLAN.md` §6). **Author:** T1 /
 BEE-BETA. **Plan:** `HIVE-PLAN.md` §4.
 **Provenance:** PrismML Bonsai 2 27B whitepaper §2.1–2.4 (format + disclosures);
@@ -15,7 +16,7 @@ BEE-BETA. **Plan:** `HIVE-PLAN.md` §4.
 this literal in their test:
 
 ```
-SPEC_SHA256 = "9fe182ad37729ed730442d10e5e6184e14287acd4985ce1cc9cac9157de9463b"
+SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 ```
 
 (Recompute after any edit with `python -m experiments.ternary.spec_hash`; the
@@ -297,7 +298,8 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
     "exempt_absorb_input_suffixes": ["in_proj_a.weight", "in_proj_b.weight"],
     "fold_hessian_rule": "unfold_then_rotate",
     "head_axis_norm_patterns": ["*.q_norm.weight", "*.k_norm.weight", "*.linear_attn.norm.weight"],
-    "hidden_norm_suffixes": ["input_layernorm.weight", "post_attention_layernorm.weight", "norm.weight"],
+    "hidden_norm_exact": ["norm.weight", "model.norm.weight"],
+    "hidden_norm_suffixes": ["input_layernorm.weight", "post_attention_layernorm.weight"],
     "hidden_norms_stored_as": "ones",
     "input_absorbed_suffixes": ["q_proj.weight", "k_proj.weight", "v_proj.weight", "gate_proj.weight", "up_proj.weight", "attn_q.weight", "attn_k.weight", "attn_v.weight", "ffn_gate.weight", "ffn_up.weight", "lm_head.weight", "output.weight"],
     "output_rotated_suffixes": ["embed_tokens.weight", "token_embd.weight", "o_proj.weight", "out_proj.weight", "attn_output.weight", "down_proj.weight", "ffn_down.weight"]
@@ -319,7 +321,7 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
     "signs": "pm1",
     "version": 1
   },
-  "spec_version": "tbr-1.1",
+  "spec_version": "tbr-1.2",
   "tq1_0": {
     "block_bytes": 54,
     "block_size": 256,
@@ -339,6 +341,17 @@ Sidecars are append-only; reruns write `-r2` suffixes rather than overwriting.
 ```
 
 ## 7. Change log
+
+### tbr-1.1 → tbr-1.2 (T10 canary, 2026-09-19)
+
+- **Head norms are never hidden norms** (§1.3, constants `roles`): `q_norm.weight`
+  and `k_norm.weight` end with the `norm.weight` suffix, so the v1.1 hidden-norm
+  rule silently stored them as all-ones — a real-model breaker caught before the
+  first canary run. Hidden norms are now `*.input_layernorm.weight`,
+  `*.post_attention_layernorm.weight` plus the exact final-norm names
+  (`norm.weight`, `model.norm.weight`); `hidden_norm_exact` splits the exact
+  names from the suffixes.
+- Breaking by design: `SPEC_SHA256` changed; every consumer re-pins `tbr-1.2`.
 
 ### tbr-1.0 → tbr-1.1 (T22, 2026-09-19)
 
