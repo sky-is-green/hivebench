@@ -160,6 +160,54 @@ def test_dry_run_verifies_without_writing(tmp_path: Path) -> None:
     assert not out.exists()
 
 
+def test_resolve_device_map_defaults() -> None:
+    assert kd.resolve_device_map("cuda", None) == "auto"
+    assert kd.resolve_device_map("cpu", None) == "cpu"
+    assert kd.resolve_device_map("cuda:1", None) == {"": "cuda:1"}
+    assert kd.resolve_device_map("cuda", "balanced") == "balanced"
+    assert kd.resolve_device_map("cuda", '{"0": "22GiB", "1": "22GiB"}') == {
+        "0": "22GiB", "1": "22GiB"}
+
+
+def test_parse_max_memory_accepts_json_and_mapping() -> None:
+    assert kd.parse_max_memory(None) is None
+    assert kd.parse_max_memory({"0": "22GiB"}) == {"0": "22GiB"}
+    assert kd.parse_max_memory('{"0": "22GiB", "cpu": "60GiB"}') == {
+        "0": "22GiB", "cpu": "60GiB"}
+    with pytest.raises(ValueError):
+        kd.parse_max_memory("[1, 2]")
+
+
+def test_hf_teacher_passes_sharding_kwargs(monkeypatch) -> None:
+    import sys
+    import types
+
+    captured: dict = {}
+
+    class FakeModel:
+        def eval(self):
+            return self
+
+    class FakeAutoModel:
+        @staticmethod
+        def from_pretrained(*args, **kwargs):
+            captured.update(kwargs)
+            return FakeModel()
+
+    fake = types.ModuleType("transformers")
+    fake.AutoModelForCausalLM = FakeAutoModel
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+
+    kd.HFTeacher("model-dir", top_k=8, device="cuda",
+                 device_map='{"0": "22GiB", "1": "22GiB"}',
+                 max_memory='{"0": "22GiB", "1": "22GiB", "cpu": "60GiB"}',
+                 offload_folder="/tmp/offload")
+    assert captured["device_map"] == {"0": "22GiB", "1": "22GiB"}
+    assert captured["max_memory"] == {"0": "22GiB", "1": "22GiB", "cpu": "60GiB"}
+    assert captured["offload_folder"] == "/tmp/offload"
+    assert captured["torch_dtype"] == "float16"
+
+
 def test_teacher_shape_validation(tmp_path: Path) -> None:
     entry = _corpus_entry(tmp_path)
 

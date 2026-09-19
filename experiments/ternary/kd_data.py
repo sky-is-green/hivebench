@@ -104,6 +104,42 @@ def config_hash(config: Mapping) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def resolve_device_map(device: str = "cuda", device_map: str | Mapping | None = None):
+    """Map the `--device`/`--device-map` CLI surface onto `from_pretrained`.
+
+    Default `"auto"` spreads a 55.6 GB BF16 27B across every visible GPU (3-4x
+    24 GB consumer cards beat one 80 GB card on price for forward-only passes);
+    `cuda:N` pins a single card; a JSON mapping (or `"balanced"`) passes through
+    for explicit per-device budgets with `max_memory`."""
+    if device_map:
+        if isinstance(device_map, Mapping):
+            return dict(device_map)
+        text = str(device_map).strip()
+        if text.startswith("{"):
+            parsed = json.loads(text)
+            if not isinstance(parsed, dict):
+                raise ValueError("device_map JSON must be an object")
+            return parsed
+        return text
+    if device == "cpu":
+        return "cpu"
+    if ":" in device:
+        return {"": device}
+    return "auto"
+
+
+def parse_max_memory(value: str | Mapping | None):
+    """`None`, a mapping, or a JSON object of `{"0": "22GiB", ..., "cpu": "60GiB"}`."""
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        return dict(value)
+    parsed = json.loads(str(value))
+    if not isinstance(parsed, dict):
+        raise ValueError('max_memory must be a JSON object like {"0": "22GiB", "cpu": "60GiB"}')
+    return parsed
+
+
 class Teacher(Protocol):
     def topk(self, input_ids: np.ndarray) -> tuple[np.ndarray, np.ndarray]: ...
 
@@ -112,7 +148,10 @@ class HFTeacher:
     """Top-k next-token logits from a local HF causal LM (lazy imports)."""
 
     def __init__(self, model_dir: str | Path, *, top_k: int, device: str = "cuda",
-                 dtype: str = "float16", revision: str = "") -> None:
+                 dtype: str = "float16", revision: str = "",
+                 device_map: str | Mapping | None = None,
+                 max_memory: str | Mapping | None = None,
+                 offload_folder: str | Path | None = None) -> None:
         import torch
         from transformers import AutoModelForCausalLM
 
@@ -120,7 +159,9 @@ class HFTeacher:
         self.torch = torch
         self.model = AutoModelForCausalLM.from_pretrained(
             str(model_dir), revision=revision or None, torch_dtype=dtype,
-            device_map=device if device != "cpu" else None,
+            device_map=resolve_device_map(device, device_map),
+            max_memory=parse_max_memory(max_memory),
+            offload_folder=str(offload_folder) if offload_folder else None,
         )
         self.model.eval()
 
@@ -273,6 +314,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--model-dir", default="")
     parser.add_argument("--out", default="")
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--device-map", default="",
+                        help='from_pretrained map: "auto" (default spread over visible '
+                             'GPUs), "balanced", "cuda:1", or JSON like {"0":"22GiB"}')
+    parser.add_argument("--max-memory", default="",
+                        help='per-device ceilings, JSON like '
+                             '{"0":"22GiB","1":"22GiB","cpu":"60GiB"}')
+    parser.add_argument("--offload-folder", default="",
+                        help="disk folder for CPU-offloaded layers")
     parser.add_argument("--revision", default="")
     parser.add_argument("--no-resume", action="store_true")
     parser.add_argument("--max-shards", type=int, default=None)
@@ -302,7 +351,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     teacher = HFTeacher(args.model_dir, top_k=int(config["top_k"]),
                         device=args.device, dtype=str(config.get("dtype", "float16")),
-                        revision=revision)
+                        revision=revision,
+                        device_map=args.device_map or None,
+                        max_memory=args.max_memory or None,
+                        offload_folder=args.offload_folder or None)
     manifest = cache_topk_logits(
         config, args.out or config.get("output", "artifacts/ternary/kd-cache"),
         teacher, tokenize_fn, resume=not args.no_resume, max_shards=args.max_shards,
