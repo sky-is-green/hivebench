@@ -28,6 +28,7 @@ hivebench-diagnostic = "experiments.retrieval_diagnostic:main"
 hivebench-gate-ab = "experiments.confirmation_gate_ab:main"
 hivebench-compare = "experiments.run_compare:main"
 hivebench-ab = "experiments.paired_ab:main"
+hivebench-ternary = "experiments.ternary_eval:main"
 hivebench-harness = "harness.__main__:main"
 
 # All package roots live at the repo top level, flat import names preserved:
