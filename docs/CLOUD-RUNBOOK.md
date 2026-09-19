@@ -13,6 +13,15 @@ provider-agnostic (any Ubuntu + CUDA box reachable over SSH).
 | Image | Ubuntu 22.04+, CUDA driver >= 12.4, passwordless `sudo` (auto-shutdown) |
 | Network | HF access for the pinned teacher download; SSH from the workstation |
 
+Multi-card alternative: the only >48 GB stage is the forward-only teacher pass
+(T17 logits cache / T13 activation capture). 3-4x 24 GB consumer cards
+(3090/4090) shard the 55.6 GB BF16 teacher exactly via
+`--device-map auto --max-memory '{"0":"22GiB","1":"22GiB","2":"22GiB","cpu":"60GiB"}'`
+(`kd_data`/`capture_hessians` accumulate on CPU), at roughly half the hourly
+price of one 80 GB card. Recovery and eval fit a single consumer card; budget
+~60 GB system RAM on the multi-card box and remember the logits cache is
+~384 B/token (~115 GB for 300 M tokens).
+
 ## 2. Environment contract (workstation)
 
 ```sh
