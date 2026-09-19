@@ -7,6 +7,11 @@ compensation when a Hessian is available (T4), else plain absmean+LS codec (T3)
 completion. Hidden norms are emitted as all-ones F16; F16-exempt hidden
 consumers (`in_proj_a/b`) still absorb `Rᵀ`.
 
+T26: `rotation.signs_manifest` (optional config path) swaps the SHA-256 PRF
+signs for Prism's extracted `prism.hadamard.*` sign sets, resolved per rotated
+axis width and recorded by content hash in the run log; a width the manifest
+does not cover is a hard error (strict), never a silent mixed basis.
+
 Kill-safety: every checkpoint is written to a temp file and `os.replace`d, and
 the run log is rewritten after each tensor, so `run(..., resume=True)` continues
 from the last committed tensor. The config hash is recorded in the run log and
@@ -118,6 +123,7 @@ class RunState:
     artifact_sha256: str | None = None
     ended_utc: str | None = None
     status: str = "running"
+    signs_manifest_sha256: str | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -125,6 +131,7 @@ class RunState:
             "started_utc": self.started_utc,
             "ended_utc": self.ended_utc,
             "artifact_sha256": self.artifact_sha256,
+            "signs_manifest_sha256": self.signs_manifest_sha256,
             "tensors": self.tensors,
         }
 
@@ -209,6 +216,8 @@ def _process_tensor(
     hessian: np.ndarray | None,
     config: Mapping,
     gamma: np.ndarray | None = None,
+    *,
+    sign_sets: Mapping[str, list[np.ndarray]] | None = None,
 ) -> dict:
     tensor = np.asarray(tensor, dtype=np.float64)
     role = classify_tensor(name, tensor.ndim)
@@ -219,21 +228,26 @@ def _process_tensor(
         return {"kind": CHECKPOINT_KIND_F16, "data": tensor.astype(np.float16)}
 
     seed = int(config["rotation"]["seed"])
+    strict = sign_sets is not None
+
+    def rots_for(width: int) -> list[np.ndarray]:
+        return rotation.resolve_rotations(width, sign_sets, seed, strict=strict)
+
     group_size = int(config["quant"]["group_size"])
     if gamma is not None:
         tensor = rotation.fold_norm_scale(tensor, gamma)
         if hessian is not None:
             hessian = rotation.unfold_norm_scale(hessian, gamma)
     if role == ROLE_EXEMPT_ROT_INPUT:
-        rots = rotation.rotations_for(tensor.shape[1], seed)
+        rots = rots_for(tensor.shape[1])
         rotated = rotation.absorb_input(tensor, rots)
         return {"kind": CHECKPOINT_KIND_F16, "data": np.asarray(rotated, dtype=np.float16)}
     if role == ROLE_ROT_INPUT:
-        rots = rotation.rotations_for(tensor.shape[1], seed)
+        rots = rots_for(tensor.shape[1])
         rotated = rotation.absorb_input(tensor, rots)
         h = rotate_hessian(hessian, rots) if hessian is not None else None
     else:
-        rots = rotation.rotations_for(tensor.shape[0], seed)
+        rots = rots_for(tensor.shape[0])
         rotated = rotation.absorb_output(tensor, rots)
         h = hessian
 
@@ -326,12 +340,24 @@ def run_quant(
     run_log_path = run_dir / "run_log.json"
     digest = config_hash(config)
 
+    sign_sets = None
+    manifest_digest = None
+    manifest_setting = config.get("rotation", {}).get("signs_manifest")
+    if manifest_setting:
+        manifest_path = Path(manifest_setting)
+        sign_sets = rotation.load_sign_manifest(manifest_path)
+        manifest_digest = _sha256(manifest_path)
+
     if run_log_path.exists() and not resume:
         raise FileExistsError(f"{run_log_path} exists; pass resume=True to continue it")
     if resume and run_log_path.exists():
         previous = json.loads(run_log_path.read_text(encoding="utf-8"))
         if previous.get("config_hash") != digest:
             raise ValueError("config hash mismatch: refusing to resume a run with a different config")
+        if previous.get("signs_manifest_sha256") != manifest_digest:
+            raise ValueError(
+                "signs manifest mismatch: refusing to resume with a different sign source"
+            )
 
     names = list(source.names())
     folds = norm_fold_map(source.names())
@@ -341,7 +367,8 @@ def run_quant(
     if max_tensors is not None:
         names = names[: max(0, int(max_tensors))]
 
-    state = RunState(started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+    state = RunState(started_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                     signs_manifest_sha256=manifest_digest)
     if resume and run_log_path.exists():
         previous = json.loads(run_log_path.read_text(encoding="utf-8"))
         state.started_utc = previous.get("started_utc", state.started_utc)
@@ -371,7 +398,8 @@ def run_quant(
             if norm_name not in gamma_cache:
                 gamma_cache[norm_name] = np.asarray(source.tensor(norm_name), dtype=np.float64)
             gamma = gamma_cache[norm_name]
-        payload = _process_tensor(name, tensor, hessian, config, gamma=gamma)
+        payload = _process_tensor(name, tensor, hessian, config, gamma=gamma,
+                                  sign_sets=sign_sets)
         path = _checkpoint_path(run_dir, name)
         _write_checkpoint(path, payload)
         state.tensors[name] = {

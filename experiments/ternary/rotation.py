@@ -12,13 +12,23 @@ Conventions (torch-style linear `y = x Wᵀ`, hidden axis last):
 - `absorb_output(W)` → `R W`   (unrotated activations feed a rotated output).
 
 Float64 reference implementation; production casts per the spec error budget.
-No RNG anywhere: signs come from the SHA-256 counter PRF in spec §1.4.
+The default sign source is the SHA-256 counter PRF in spec §1.4 (no RNG).
+
+T26 adds Prism's **explicit** sign vectors as an alternative source: the
+released 27B GGUF carries `prism.hadamard.*` metadata (block 1024, dims
+5120/6144/17408) with sign files on disk. `load_sign_manifest` /
+`load_sign_file` parse them and `resolve_rotations` selects explicit signs per
+width, falling back to the PRF only when asked. The frozen spec hash is
+unchanged — the manifest is a run-level basis override, not a new contract.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+from pathlib import Path
+from typing import Mapping
 
 import numpy as np
 
@@ -61,6 +71,85 @@ def rotations_for(d: int, seed: int, domain: str = DEFAULT_DOMAIN) -> list[np.nd
     """Per-block sign vectors for a dimension `d` (spec §1.2)."""
     g = block_size(d)
     return [sign_vector(seed, domain, k, g) for k in range(d // g)]
+
+
+def load_sign_file(path: str | Path) -> list[np.ndarray]:
+    """Load one Prism `hadamard-signs-<d>.npy` vector as per-block ±1 signs (T26).
+
+    Accepts a flat `(d,)` or `(blocks, g)` array; blocks follow the spec §1.2
+    rule, so the file's width is the full rotated dimension."""
+    arr = np.asarray(np.load(Path(path)), dtype=np.float64)
+    if arr.ndim == 1:
+        flat = arr
+    elif arr.ndim == 2:
+        flat = arr.reshape(-1)
+    else:
+        raise ValueError(f"sign vector must be 1-D or 2-D, got shape {arr.shape}")
+    if flat.size == 0:
+        raise ValueError("sign vector is empty")
+    if not np.all(np.isin(flat, (-1.0, 1.0))):
+        raise ValueError("sign vectors must be ±1")
+    g = block_size(int(flat.size))
+    if flat.size % g:
+        raise ValueError(f"sign vector width {flat.size} is not a multiple of block {g}")
+    return [flat[k * g : (k + 1) * g].copy() for k in range(flat.size // g)]
+
+
+def load_sign_manifest(path: str | Path) -> dict[str, list[np.ndarray]]:
+    """Load Prism's `hadamard-manifest.json` → `{width: per-block signs}` (T26).
+
+    Validates the disclosed transform (normalized Sylvester Walsh–Hadamard,
+    block 1024) and cross-checks `sign_files` against `sign_widths`; a mismatch
+    in either direction is an error, never a silent partial basis."""
+    manifest_path = Path(path)
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    block = int(data.get("block_size", TBR_N))
+    if block != TBR_N:
+        raise ValueError(f"manifest block_size {block} != spec n {TBR_N}")
+    transform = data.get("transform")
+    if transform not in (None, "normalized-sylvester-walsh-hadamard"):
+        raise ValueError(f"unsupported manifest transform {transform!r}")
+    declared = {str(int(w)) for w in data.get("sign_widths", [])}
+    files = data.get("sign_files")
+    if not files:
+        raise ValueError("manifest has no sign_files")
+    out: dict[str, list[np.ndarray]] = {}
+    for name in files:
+        signs = load_sign_file(manifest_path.parent / name)
+        width = str(len(signs) * len(signs[0]))
+        if int(width) % block:
+            raise ValueError(f"sign file {name!r} width {width} is not a multiple of block {block}")
+        if declared and width not in declared:
+            raise ValueError(f"sign file {name!r} width {width} not declared in sign_widths")
+        out[width] = signs
+    missing = sorted(declared - set(out), key=int)
+    if missing:
+        raise ValueError(f"sign_widths declared without sign files: {missing}")
+    return out
+
+
+def resolve_rotations(
+    d: int,
+    sign_sets: Mapping[str, list[np.ndarray]] | None = None,
+    seed: int | None = None,
+    domain: str = DEFAULT_DOMAIN,
+    *,
+    strict: bool = False,
+) -> list[np.ndarray]:
+    """Per-block signs for width `d`: explicit `sign_sets[str(d)]` first, else
+    the spec §1.4 PRF (`seed`/`domain`).
+
+    `strict=True` refuses the PRF fallback when a sign manifest is supplied but
+    lacks this width — mixing bases mid-pipeline is a correctness bug, not a
+    default."""
+    key = str(int(d))
+    if sign_sets is not None and key in sign_sets:
+        return sign_sets[key]
+    if strict:
+        raise ValueError(f"signs manifest has no sign set for width {d}")
+    if seed is None:
+        raise ValueError(f"no explicit signs for width {d} and no seed given")
+    return rotations_for(d, seed, domain)
 
 
 def rotation_matrix(signs: np.ndarray) -> np.ndarray:
