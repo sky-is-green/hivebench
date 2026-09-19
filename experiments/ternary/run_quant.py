@@ -246,6 +246,7 @@ def _process_tensor(
             act_order=bool(config["quant"]["act_order"]),
             block_size=int(config["quant"]["block_size"]),
             refine_iters=int(config["quant"]["refine_iters"]),
+            device=config.get("device") if config.get("device") not in (None, "cpu") else None,
         )
         codes = result.codes.numpy()
         scales = result.scales.numpy()

@@ -225,6 +225,7 @@ def run(args) -> dict:
     _log("quantizing (rotation + fold + GPTQ -> TQ2_0)")
     config = rq.load_config(Path(__file__).resolve().parents[2] / "configs" / "ternary" / "0.6b.yaml")
     config["model"] = {"name": "Qwen/Qwen3-1.7B", "revision": "main", "architecture": "qwen3"}
+    config["device"] = args.device  # GPTQ runs on the GPU when selected
     config["output"] = dict(config["output"], run_dir=str(run_dir), artifact=str(work / "canary-tq2_0.gguf"))
     base = rq.SafetensorsTensorSource(args.model_dir)
     folds = rq.norm_fold_map(base.names())

@@ -116,10 +116,20 @@ def gptq_quantize(
     act_order: bool = False,
     block_size: int = DEFAULT_BLOCK_SIZE,
     refine_iters: int = REFINE_ITERS,
+    device: str | torch.device | None = None,
 ) -> GptqResult:
-    """Quantize `W: (out, in)` with GPTQ error compensation using `H: (in, in)`."""
+    """Quantize `W: (out, in)` with GPTQ error compensation using `H: (in, in)`.
+
+    `device` moves the whole computation (Cholesky, inverts, error propagation)
+    to GPU when available; the T10 canary runs GPTQ on the RX 7900 XT and the
+    CPU path stays the deterministic default for tests.
+    """
     w = torch.as_tensor(w)
     hessian = torch.as_tensor(hessian)
+    if device is not None:
+        target = torch.device(device)
+        w = w.to(target)
+        hessian = hessian.to(target)
     if w.ndim != 2:
         raise ValueError(f"W must be 2-D, got shape {tuple(w.shape)}")
     if hessian.shape != (w.shape[1], w.shape[1]):
