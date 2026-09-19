@@ -41,6 +41,9 @@ _FILE_TYPE_NAMES: dict[int, str] = {
     20: 'IQ2_XS', 21: 'Q2_K_S', 22: 'IQ3_XXS', 23: 'IQ1_S', 24: 'IQ4_NL', 25: 'IQ3_S',
     26: 'IQ2_S', 27: 'IQ4_XS', 28: 'IQ1_M', 29: 'BF16', 30: 'Q4_0_4_4', 31: 'Q4_0_4_8',
     32: 'Q4_0_8_8', 33: 'TQ1_0', 34: 'TQ2_0',
+    # Prism fork: released Bonsai PQ2_0 files set general.file_type 141 (the
+    # ggml tensor type is 142 / QK_PQ2_0); verified on the 1.7B/27B GGUFs.
+    141: 'PQ2_0',
 }
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
