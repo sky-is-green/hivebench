@@ -84,3 +84,6 @@ Thumbs.db
 # runtime transcripts from suite/demo runs
 transcripts/
 dep_scan.py
+
+# TBR ternary artifacts (HIVE-PLAN.md §3: GGUFs, run logs, oracle JSON)
+artifacts/ternary/
