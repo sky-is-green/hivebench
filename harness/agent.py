@@ -26,7 +26,7 @@ from typing import Callable, Optional
 # The vendored dsh Python SDK ships inside this repo (vendor/deepseek_harness)
 # so the sidecar runs from a clean checkout without an editable install of the
 # fork's SDK. Inserted before the import below.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "vendor"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "vendor"))
 
 from deepseek_harness import DeepSeekHarness  # noqa: E402
 

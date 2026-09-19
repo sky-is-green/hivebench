@@ -10,10 +10,6 @@ Run::
     python -m harness --mock          # offline (fake drone + mock backend)
 """
 
-from harness.app import create_app
-
-__all__ = ["create_app"]
-
 # --- strata system path bootstrap -------------------------------------------
 # Non-pytest entry points (console scripts, `python -m ...`) need the sibling
 # strata-memory checkout on sys.path: flat names (cortex, retention, backend,
@@ -25,7 +21,13 @@ import sys as _sys
 from pathlib import Path as _Path
 
 _REPO_ROOT = _Path(__file__).resolve().parents[2]
-_STRATA = _Path(_os.environ.get("STRATA_HOME", _REPO_ROOT.parent / "strata-memory"))
+
+_STRATA = _Path(_os.environ.get("STRATA_HOME", _REPO_ROOT / "strata-memory"))
+
 for _p in (_STRATA, _STRATA / "strata"):
     if str(_p) not in _sys.path:
         _sys.path.insert(0, str(_p))
+from harness.app import create_app
+
+__all__ = ["create_app"]
+
