@@ -67,8 +67,8 @@ Two tracks were considered:
 - **Track A — build our own artifact** (PTQ → QAT/KD). Closed for parity:
   the quantizer reverse-engineering track is closed (F2, F3), local
   rotate+absmean RTN of the base collapses to 23,606 PPL vs their 18.5851
-  (1,270×; F4), and the 1.7B QAT/KD proof reached 1.103× but only 90.6%
-  retention, short of the ≥97% mission target and corpus-limited (F5).
+  (1,270×; F4), and the 1.7B QAT/KD proof reached 1.103× / 90.6% retention,
+  short of the ≥97% mission target and corpus-limited (F5).
 - **Track B — run Prism's released `PQ2_0` on the Prism ROCm fork and evaluate
   it in hivebench.** This is the pragmatic end-state and the shipped result.
 
@@ -77,6 +77,18 @@ Track B is the deliverable: the released 27B runs on **one** RX 7900 XT at
 over a FIFO baseline (§5). Track A is not abandoned as a *research* direction —
 it is simply a training problem, not a quantization one, and no local per-layer
 KD variant solved it (F6, F7).
+
+**Why the last 8% was not chased.** Gate 2 showed the ~8% trit residual carries
+the entire quality gap (F4); Gate 3 showed that residual is *trained weight
+movement*, not a quantizer trick (F2, F3); local per-layer KD cannot control
+global compounding (F6, F7). That leaves **end-to-end QAT/KD at 27B as the only
+remaining route** to Prism's exact acceptance. The programme stopped there *by
+decision*: the fix is now known and priced, the mission's non-goal is the
+recipe, the result is public, and Track B already ships it. The defensible claim
+this supports is **"the gap is localized and reachable"** — *not* "replication
+is proven". Gate 3 established that *some* training moved their weights, not
+that QAT/KD specifically reproduces their numbers, and the 1.7B QAT run was
+itself short of target. See F5.
 
 ---
 
@@ -94,8 +106,10 @@ Full entries, evidence and revisit costs are in [`FAILURES.md`](FAILURES.md).
 - **F4** rotate+absmean RTN of the public base = **23,606 PPL** vs their
   **18.5851** (1,270×) in the same binary/corpus/settings → no-rental RTN parity
   is dead.
-- **F5** 1.7B QAT/KD reached **1.103×** (better than the 1.44× Prism bar) but
-  only **90.6% retention**, below the mission's ≥97%, and was corpus-limited.
+- **F5** The last ~8% was localized to end-to-end QAT — every cheaper route was
+  eliminated (F1–F4, F6, F7) and the 1.7B proof reached **1.103× / 90.6%**
+  retention, short of the ≥97% target; the 27B proof-run was priced and
+  **deliberately not funded** because the result is public and Track B ships it.
 - **F6** Student-stream block-wise KD = **1.25 M PPL**, worse than RTN
   (per-layer compounding).
 - **F7** Teacher-forced block-wise KD = **1.06 M PPL**, still worse than RTN;
@@ -123,7 +137,7 @@ Full entries, evidence and revisit costs are in [`FAILURES.md`](FAILURES.md).
 | **T30 / Gate 1** | Does rotate+RTN in Prism's basis reproduce their trits? | Basis **cracked**: 0.920 mean / 0.885 min agreement. Residual is *structural* (non-monotone within groups, denser codes, ~10% lower weight-space error than RTN) — fingerprinted as error-compensated or QAT weights. |
 | **T31 / Gate 2** | What does the residual cost? | A byte-controlled swap of all **402** `PQ2_0` payloads for rotate+absmean RTN of the public base collapses PPL **18.5851 → 23,606 (1,270×)**. Metadata/exemptions stay byte-identical; 402/402 post-patch SHA-256 verified. |
 | **T32 / Gate 3** | Quantizer trick or trained weights? | **Trained weights.** SCR +0.003 pp (F3); GPTQ/H-variants all move codes away (RTN 0.9145 vs 0.8086–0.8497, F2); their codes' activation-weighted error is 1.072× RTN's. The reverse-engineering track is closed. |
-| **T28** | Can local QAT/KD close the gap? | 1.7B reached **1.103×** held-out (bar 1.44×) — 90.6% retention; run3 overfit at 7k steps on a 301k-token corpus (F5). Promising machinery, not a closed quality path. |
+| **T28** | Can local QAT/KD close the gap? | 1.7B reached **1.103×** held-out (bar 1.44×) — 90.6% retention; run3 overfit at 7k steps on a 301k-token corpus. This is the last lever: the ~8% residual is trained weights (Gates 2–3), so end-to-end QAT is the only route to Prism's exact acceptance — known, priced, deliberately not run (F5). |
 | **T29** | Ship the released model. | Served on the Prism fork, smoke **5/5**, hivebench eval below. |
 
 ---
@@ -160,9 +174,14 @@ excluded):
 1. **The released weights are the product.** Track B is verified and shipped:
    7.2 GB, one RX 7900 XT, 39.6 t/s generation, PPL 18.5851 under the controlled
    protocol.
-2. **Our own ternary artifact is a training problem.** No PTQ route reproduces
-   Prism's assignment; the only viable local path is end-to-end QAT/KD at 27B
-   (1.7B reached 1.103× but was corpus-limited), which was not attempted here.
+2. **Our own ternary artifact is a training problem — fully localized,
+   deliberately not chased.** Every non-training route was eliminated
+   (F1–F4, F6, F7); the ~8% residual that carries the quality is trained weight
+   movement, so end-to-end QAT/KD at 27B is the only remaining lever. It is
+   known and priced (a real corpus plus a 1×48–80 GB rental or a large local
+   pilot) and was not funded, because the result it would reproduce is already
+   public and shipped via Track B. What is proven is *where* the gap is, not
+   that the recipe reproduces Prism's numbers (F5).
 3. **The rotation basis and format are fully mapped** and reusable (F1–F4 do
    not invalidate the container facts in §2 — they invalidate the shortcut of
    filling that container with public PTQ weights).
@@ -213,6 +232,10 @@ series `abe76d3 · 773490e · 0bce5d6 · d242f81 · a52aace · b8d18df · 7b0199
 - **F11:** T23 durable sibling-compat fix still pending; live harness imports
   currently require the F6 pin.
 - **F12:** ROCm single-context policy is a workaround, not a root fix.
+- **Artifact dependency (Track B):** the shipped capability relies on Prism's
+  released `PQ2_0` weights and their terms; if that artifact were withdrawn or
+  restricted, the capability would have to be rebuilt. F5 is the map for that
+  rebuild (end-to-end QAT/KD at 27B), but it has not been demonstrated.
 - **Pending, out of scope here:** head-to-head A/B (`scripts/run_ab.sh`), the
   50-conversation eval, LoRA adaptation around the released weights, and the
   BF16 reference download.

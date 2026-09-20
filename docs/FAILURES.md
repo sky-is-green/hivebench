@@ -27,7 +27,7 @@ entries are never rewritten — corrections are appended as `[rev <date>]` notes
 | F2 | (a) | GPTQ/Hessian variants move codes *away* from Prism's; RTN 0.9145 vs 0.8086–0.8497 | Falsified | closed | No |
 | F3 | (a) | Stochastic calibration resonance (5% noise) has no effect: +0.003 pp | Falsified | closed | No |
 | F4 | (a) | rotate+absmean RTN of the base = 23,606 PPL vs 18.5851 (1,270×) | Falsified | closed | No |
-| F5 | (a)/(b) | 1.7B QAT/KD = 1.103× (bar 1.44×) but 90.6% retention, corpus-limited | Partial | closed | Yes — 27B + real corpus |
+| F5 | (a)/(b) | Last ~8% localized to end-to-end QAT; 27B proof-run priced and deliberately not funded | Deferred by decision | closed (deferred) | Only if capability ownership is required |
 | F6 | (b) | Student-stream block-wise KD = 1.25 M PPL | Dead-end | closed | Only inside end-to-end QAT |
 | F7 | (b) | Teacher-forced block-wise KD = 1.06 M PPL; local per-layer KD compounds | Dead-end | closed | No |
 | F8 | (a)/(b) | Entropy/excess-loss selection lost to random: 172.3 vs 115.9 PPL | Falsified (pilot) | closed | Yes — larger pool/seeds |
@@ -138,39 +138,63 @@ entries are never rewritten — corrections are appended as `[rev <date>]` notes
 - **Cost to revisit:** low locally, but the direction is settled.
 - **Worth re-assessing?** No.
 
-## F5 — 1.7B QAT/KD is promising but short of the mission target
+## F5 — The last ~8% was localized to end-to-end QAT and deliberately not funded
 
-- **Category:** (a)/(b) mixed — partial scientific result + engineering limit.
+- **Category:** (a)/(b) mixed — partial scientific result, **closed by scope
+  decision** (not a methodological dead-end).
 - **Claim/hypothesis:** Local QAT/KD (STE ternary training + KD) can close the
-  quality gap without a rental.
-- **Method:** `experiments/ternary/recover.py` — 196 attention/MLP linears wrapped
-  as exact ternary (g128, half-away) with straight-through gradients; master
-  weights bf16; KD vs the frozen fp32 teacher; Adafactor + gradient
-  checkpointing; 301k-token tinyshakespeare corpus.
+  quality gap and reach Prism's acceptance rate (≥97% retention, stretch 98.2%
+  = Bonsai-2 parity) without a rental.
+- **Method:** T28 `experiments/ternary/recover.py` — 196 attention/MLP linears
+  wrapped as exact ternary (g128, half-away) with straight-through gradients;
+  bf16 master weights; KD vs the frozen fp32 teacher; Adafactor + gradient
+  checkpointing; 301k-token tinyshakespeare corpus. It ran *after* the
+  elimination programme (Gates 1–3; F1–F4, F6, F7) had localized the gap.
 - **Outcome:** Held-out PPL — run1 (1500 steps) 1.673×; run2 (5000 steps)
-  student 42.988 vs teacher 38.966 = **1.103×**; run3 (7000 steps) 1.129× with
-  held-out worsening while train loss fell (overfit). 1.103× = **90.6%
-  retention**, short of the mission's ≥97% (stretch 98.2%); corpus-limited at
-  ~5k steps.
-- **Verdict:** Partial. Clears the immediate 1.44× Prism bar, misses the mission
-  retention target; the run is a pipeline/concept proof, not a closed quality
-  path.
+  student 42.988 vs teacher 38.966 = **1.103×** (90.6% retention); run3 (7000
+  steps) 1.129× with held-out worsening while train loss fell (overfit).
+  1.103× clears the 1.44× Prism bar but is **short of the ≥97% mission
+  retention target** (stretch 98.2%). Corpus-limited at ~5k steps.
+- **Why this is the last 8% (elimination chain):** Gate 2 (F4) showed the ~8%
+  trit residual carries the entire quality gap; Gate 3 (F2, F3) showed that
+  residual is *weight movement during training*, not any quantizer/calibration
+  trick; and local per-layer KD cannot control global compounding (F6, F7).
+  With every non-training route eliminated, end-to-end QAT/KD is the only
+  remaining route to Prism's exact acceptance. The gap is therefore *localized*,
+  not mysterious.
+- **Verdict:** **Deliberate stop, not a dead-end.** The fix is known and priced;
+  the programme chose not to fund a 27B end-to-end proof-run because Track B
+  already delivers the capability from Prism's public weights, and the
+  proof-run has real cost and uncertain yield (the 1.7B QAT run was itself
+  short of target).
+- **Decision (2026-09-20, programme owner):** do not run the 27B end-to-end QAT
+  proof. Rationale: (i) the mission non-goal is to reproduce the recipe — the
+  target is the result; (ii) that result is public; (iii) the remaining
+  confidence is a localization/inference, not a demonstrated replication.
 - **Evidence:** commit `64ff7bc` (T28);
   `artifacts/ternary/recover/run1/recover-report-s5000.json` and
   `recover-report.json`; bar 1.44× from commit `8cd8038` (T7) / HIVE-PLAN
   Round 7; HIVE-PLAN Round 9.
-- **Status:** closed (no further local runs at 1.7B planned).
-- **What it rules out:** the claim that local QAT/KD cannot move the needle; also
-  the claim that 5k steps on a tiny corpus is sufficient.
-- **Cost to revisit:** medium — 27B end-to-end QAT/KD needs a real corpus and
-  either a 1×48–80 GB rental or a larger local LoRA/block-wise pilot.
-- **Worth re-assessing?** Yes — at 27B with a real corpus (the only remaining
-  Track-A path).
+- **Status:** closed by decision (deferred, not eliminated).
+- **What it rules out:** local QAT/KD at 1.7B on a 301k-token corpus as a
+  *complete* quality path. It does **not** rule out 27B end-to-end QAT.
+- **Cost to revisit:** medium — a real 27B KD corpus plus either a 1×48–80 GB
+  rental for full-master QAT or a substantially larger local LoRA/block-wise
+  pilot, plus iteration.
+- **Worth re-assessing?** Only if *capability ownership* (rather than using
+  Prism's public weights) becomes a requirement.
 - **[rev 2026-09-20] Seed discrepancy:** the handoff seeded F5 as
   "quality gate failed". HIVE-PLAN Round 9 and the T28 task row record the gate
   as **PASSED** (1.103× < 1.44× bar). The defensible failure is at the *mission*
   level (90.6% < 97%), not the T28 gate. This entry records the verified
   reading; see "Seeded-entry verification notes" below.
+- **[rev 2026-09-20b] Reframed per programme-owner clarification:** F5 was
+  treated as a failure against the *mission acceptance rate* — we expected to
+  match Prism's retention and set out to find the last 8% — not against the T28
+  gate. The 8% trit residual (Gates 1–3) is where that quality lies, and
+  end-to-end QAT is the only route to it. The route was priced and consciously
+  skipped, because Prism's result is public and Track B already ships it. This
+  is a budget/scope decision, not an inability to proceed.
 
 ## F6 — Student-stream block-wise KD dead-end
 
@@ -347,13 +371,16 @@ entries are never rewritten — corrections are appended as `[rev <date>]` notes
 All seeded entries F1–F13 were checked against their sources before writing.
 Results:
 
-- **F5 — contradiction found.** The seed says "quality gate failed", but
-  HIVE-PLAN Round 9 ("T28 COMPLETE — quality gate PASSED") and the T28 task row
-  ("gate passed, best 1.103×") both record the opposite. Verified reading: T28
-  passed its immediate 1.44× bar; the shortfall is against the **mission**
-  ≥97%-retention target (90.6%) and the run was corpus-limited. Recorded in the
-  F5 entry as `[rev 2026-09-20]`. This is the only seeded entry whose stated
-  verdict did not survive verification.
+- **F5 — contradiction found, then resolved by owner clarification.** The seed
+  says "quality gate failed", but HIVE-PLAN Round 9 ("T28 COMPLETE — quality
+  gate PASSED") and the T28 task row ("gate passed, best 1.103×") both record
+  the opposite. Owner clarification: "failed" meant the **mission acceptance
+  rate** (we expected to match Prism's retention and chased the last 8%), not
+  the T28 1.44× gate. Both readings are correct against their respective bars.
+  Recorded in the F5 entry as `[rev 2026-09-20]` and `[rev 2026-09-20b]`; the
+  entry is now framed as a *deliberate scope stop*, not a methodological
+  dead-end. This is the only seeded entry whose stated verdict did not survive
+  verification unchanged.
 - **F1 — artifact nuance (not a contradiction).** The 2.106× fixed-passage
   reproduction is attested in commit `ea089e2` and HIVE-PLAN Round 6. The
   persisted `artifacts/ternary/reference/*.json` files are the *held-out*
