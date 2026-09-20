@@ -30,7 +30,9 @@ export GGML_CUDA_NO_PINNED=1
 PQ2=${PQ2:-artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf}
 Q8=${Q8:-artifacts/ternary/refs/Qwen3.8-27B-Q8_0.gguf}
 Q4=${Q4:-artifacts/ternary/refs/Qwen3.8-27B-UD-Q4_K_M.gguf}
+BF16=${BF16:-artifacts/ternary/refs/BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf}
 FORBID=${FORBID:-dflash,uncensored,turbo,fable,mtp,nuslerp,dau}
+MODELS=${MODELS:-pq2_0 q8_0 q4_k_m}
 
 log() { printf '[ab] %s\n' "$*"; }
 die() { printf '[ab] ERROR: %s\n' "$*" >&2; exit 2; }
@@ -143,9 +145,15 @@ disk_guard
 fetch_refs
 
 rc=0
-run_one pq2_0 "$PQ2" "" || rc=1
-run_one q8_0 "$Q8" "Qwen3.8-27B" || rc=1
-run_one q4_k_m "$Q4" "Qwen3.8-27B" || rc=1
+for m in $MODELS; do
+  case "$m" in
+    pq2_0) run_one pq2_0 "$PQ2" "" || rc=1 ;;
+    q8_0)  run_one q8_0 "$Q8" "Qwen3.8-27B" || rc=1 ;;
+    q4_k_m) run_one q4_k_m "$Q4" "Qwen3.8-27B" || rc=1 ;;
+    bf16)  run_one bf16 "$BF16" "Qwen3.8-27B" || rc=1 ;;
+    *) log "unknown model '$m' (pq2_0|q8_0|q4_k_m|bf16)"; rc=1 ;;
+  esac
+done
 
 sweep_port
 log "reports in $OUTDIR/ab-*.json"
