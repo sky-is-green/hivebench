@@ -111,12 +111,16 @@ verify_sha() {
 }
 
 run_one() {
-  local label=$1 gguf=$2 expect_name=$3
+  local label=$1 gguf=$2 expect_name=$3 expect_arch=${4:-qwen35}
   if [ ! -f "$gguf" ]; then
     log "SKIP $label: missing $gguf"
     return 1
   fi
   log "=== $label: $gguf ==="
+  local guard=()
+  [ -n "$expect_name" ] && guard+=(--expect-name "$expect_name")
+  [ -n "$expect_arch" ] && guard+=(--expect-arch "$expect_arch")
+  guard+=(--forbid "$FORBID")
   "$PY" -m experiments.ternary_eval \
     --gguf "$gguf" \
     --fork-bin "$FORK/llama-server" \
@@ -126,8 +130,7 @@ run_one() {
     --timeout "$REQ_TIMEOUT" \
     --deadline "$DEADLINE" \
     --max-convs "$MAX_CONVS" \
-    --expect-name "$expect_name" \
-    --forbid "$FORBID" \
+    "${guard[@]}" \
     --output "$OUTDIR/ab-${label}.json"
   local rc=$?
   log "$label exit=$rc"
@@ -140,7 +143,7 @@ disk_guard
 fetch_refs
 
 rc=0
-run_one pq2_0 "$PQ2" "Ternary-Bonsai-2-27B" || rc=1
+run_one pq2_0 "$PQ2" "" || rc=1
 run_one q8_0 "$Q8" "Qwen3.8-27B" || rc=1
 run_one q4_k_m "$Q4" "Qwen3.8-27B" || rc=1
 
