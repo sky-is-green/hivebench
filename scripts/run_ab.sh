@@ -20,8 +20,8 @@ STARTUP_TIMEOUT=${STARTUP_TIMEOUT:-1800}
 REQ_TIMEOUT=${REQ_TIMEOUT:-900}
 OUTDIR=${OUTDIR:-artifacts/ternary/eval}
 
-export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-1}
-export HARNESS_VRAM_GB=${HARNESS_VRAM_GB:-20}
+export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
+export HARNESS_VRAM_GB=${HARNESS_VRAM_GB:-40}
 export LD_LIBRARY_PATH="$ROOT/$FORK"
 export STRATA_HOME=$PIN
 export PYTHONPATH=$PIN/strata
@@ -75,26 +75,39 @@ fetch_refs() {
   [ "${FETCH:-0}" = "1" ] || return 0
   local base="https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main"
   mkdir -p "$(dirname "$Q8")"
-  fetch_one "$base/Qwen3.8-27B-Q8_0.gguf" "$Q8" 29050000000
-  fetch_one "$base/Qwen3.8-27B-UD-Q4_K_M.gguf" "$Q4" 16460000000
+  fetch_one "$base/Qwen3.8-27B-Q8_0.gguf" "$Q8" 29047086048 \
+    a680f44a06920e5d689774823782006aa3acc8db95750323373b24139b67e348
+  fetch_one "$base/Qwen3.8-27B-UD-Q4_K_M.gguf" "$Q4" 16464440224 \
+    322e194ff79741c7baa497c240f677f54b201b0efab44ca8e50f122b39123482
 }
 
 fetch_one() {
-  local url=$1 dest=$2 expect=$3
+  local url=$1 dest=$2 expect=$3 sha=${4:-}
   if [ -f "$dest" ]; then
     local have
     have=$(stat -c %s "$dest")
-    if [ "$have" -ge "$expect" ]; then
-      log "have $(basename "$dest") (${have} bytes)"
-      return 0
+    if [ "$have" -eq "$expect" ]; then
+      verify_sha "$dest" "$sha" && return 0
     fi
     log "resuming $(basename "$dest") (${have}/${expect})"
   fi
   curl -fL -C - --retry 3 --retry-delay 2 -o "$dest" "$url" || die "download failed: $url"
   local have
   have=$(stat -c %s "$dest")
-  [ "$have" -ge "$expect" ] || die "short download $(basename "$dest"): $have < $expect"
+  [ "$have" -eq "$expect" ] || die "size mismatch $(basename "$dest"): $have != $expect"
+  verify_sha "$dest" "$sha"
   log "fetched $(basename "$dest") (${have} bytes)"
+}
+
+verify_sha() {
+  local dest=$1 sha=$2
+  [ -n "$sha" ] || return 0
+  [ "${VERIFY:-1}" = "1" ] || return 0
+  log "hashing $(basename "$dest") ..."
+  local got
+  got=$(sha256sum "$dest" | cut -d' ' -f1)
+  [ "$got" = "$sha" ] || die "sha256 mismatch $(basename "$dest"): $got != $sha"
+  log "sha256 ok $(basename "$dest")"
 }
 
 run_one() {
@@ -109,7 +122,6 @@ run_one() {
     --fork-bin "$FORK/llama-server" \
     --host 127.0.0.1 --port "$PORT" \
     --no-thinking \
-    --warmup \
     --startup-timeout "$STARTUP_TIMEOUT" \
     --timeout "$REQ_TIMEOUT" \
     --deadline "$DEADLINE" \
