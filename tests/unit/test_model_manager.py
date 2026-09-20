@@ -984,3 +984,51 @@ def test_competing_gpu_processes_is_a_list():
     import harness.models as mm
 
     assert isinstance(mm.competing_gpu_processes(), list)
+
+
+# ---------------------------------------------------------------------------
+# auto-fit (unsloth-style ngl from free VRAM + KV)
+# ---------------------------------------------------------------------------
+def test_fit_gpu_layers_from_free_vram_and_kv(tmp_path):
+    import harness.models as mm
+
+    model = tmp_path / "m.gguf"
+    _sparse(model, 20.0)  # 20 GB
+    meta = {"qwen35.block_count": 64, "qwen35.embedding_length": 5120,
+            "qwen35.attention.head_count": 24,
+            "qwen35.attention.head_count_kv": 4}
+    # one 20 GB card: some layers fit, none negative, never more than n_layers
+    ngl = mm.fit_gpu_layers(model, ctx_size=8192,
+                            hardware={"vram_free_gb": 20.0}, gguf_meta=meta)
+    assert 0 < ngl < 64
+    # huge free VRAM -> all layers
+    assert mm.fit_gpu_layers(model, ctx_size=512,
+                             hardware={"vram_free_gb": 1000.0},
+                             gguf_meta=meta) == 64
+    # no metadata -> None so the caller can fall back
+    assert mm.fit_gpu_layers(model, gguf_meta={}) is None
+
+
+def test_load_auto_ngl_uses_fit(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "fit_gpu_layers", lambda *a, **k: 7)
+    model_dir = tmp_path / "models" / "gguf"
+    model_dir.mkdir(parents=True)
+    (model_dir / "m.gguf").write_bytes(b"x")
+    spawned = {}
+
+    def fake_spawner(cmd, stdout=None, stderr=None):
+        spawned["cmd"] = cmd
+        return FakeProc()
+
+    mgr = mm.LlamaServerManager(
+        binary=tmp_path / "llama-server", models_dir=model_dir,
+        log_dir=tmp_path / "logs", port=_free_port(),
+        spawner=fake_spawner, prober=lambda url: "m", startup_timeout=1,
+        memory_guard=False)
+    mgr.binary.write_bytes(b"")
+    info = mgr.load(model="m", ngl="auto")
+    cmd = spawned["cmd"]
+    assert cmd[cmd.index("-ngl") + 1] == "7"
+    assert info["ngl"] == 7

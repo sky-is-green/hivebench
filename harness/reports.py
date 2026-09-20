@@ -420,6 +420,8 @@ def render_server_page() -> str:
     <div class="grid-2col load-grid">
       <label title="How: -t <n> or omit auto. Does: CPU parallelism. Changing: 4→16 up tok/s, over→down.">threads  <input id="eng-threads" type="number" placeholder="auto" oninput="engDirty=true"></label>
       <label title="How: -ngl <n> 999=all, clamped to est_layers. Does: GPU VRAM linear. Changing: 999→28 on 8GB fits but slower; 999 oom→exit.">gpu_layers  <input id="eng-gpu" type="number" value="999" oninput="engDirty=true"></label>
+      <label title="How: auto_fit → ngl from free VRAM + KV (GET /v1/server/status). Does: Offloads overflow layers to CPU/GTT instead of OOM. Changing: on overrides gpu_layers.">auto-fit <input id="eng-autofit" type="checkbox" onchange="engDirty=true"></label>
+      <label title="How: visible_devices → HIP/CUDA_VISIBLE_DEVICES for this server. Does: Pins the model to specific card(s). Changing: e.g. 1 = second HIP device (PCI order).">GPU(s) <select id="eng-devices" onfocus="fillGpuDevices()" onchange="engDirty=true"><option value="">auto (all visible)</option></select></label>
       <label title="How: -fa on if set, auto on when ctx>=8192. Does: Faster long ctx. Changing: off→on +10-30% at 32k, needs GPU.">flash_attn  <select id="eng-flash" onchange="engDirty=true"><option value="">off</option><option value="on">on</option><option value="auto">auto</option></select></label>
       <label title="How: -np <n> parallel slots. Does: Concurrent decode, ctx/slots. Changing: 1→4 throughput up, per-slot ctx down.">parallel  <input id="eng-parallel" type="number" placeholder="1" oninput="engDirty=true"></label>
       <label title="How: -b <n> 512 default. Does: Tokens/step RAM. Changing: 512→2048 prompt faster, more VRAM/spill.">batch  <input id="eng-batch" type="number" placeholder="512" oninput="engDirty=true"></label>
@@ -2326,6 +2328,8 @@ async function saveEngineProfile() {{
     model: selModel || eng.model || null,
     ctx_size: ctxLen,
     ngl: eng.load_options.gpu_layers ?? 999,
+    auto_fit: document.getElementById('eng-autofit')?.checked ?? false,
+    visible_devices: val('eng-devices') || null,
     threads: eng.load_options.threads ?? null,
     flash_attn: eng.load_options.flash_attn ?? false,
     parallel_slots: eng.load_options.parallel_slots ?? null,
@@ -2428,6 +2432,21 @@ function computeAutoPreset(size_gb, hw, file, ggufMeta) {{
   cache_k = null; cache_v = null;
   if (ctx > 16384) {{ cache_k = 'q8_0'; cache_v = 'q8_0'; }}
   return {{ gpu_layers, context: ctx, ctx_size: ctx, threads, flash_attn, cache_type_k: cache_k, cache_type_v: cache_v, block_count: estLayers, gguf_metadata: meta }};
+}}
+async function fillGpuDevices() {{
+  const sel = document.getElementById('eng-devices');
+  if (!sel || sel.dataset.filled === '1') return;
+  try {{
+    const st = await api('/v1/server/status');
+    const devs = (st.hardware && st.hardware.devices) || [];
+    for (const d of devs) {{
+      const opt = document.createElement('option');
+      opt.value = String(d.index);
+      opt.textContent = `${{d.index}}: ${{d.name || d.bdf || 'gpu'}} ${{d.free_gb ?? '?'}}GB free${{d.display ? ' (display)' : ''}}`;
+      sel.appendChild(opt);
+    }}
+    sel.dataset.filled = '1';
+  }} catch (e) {{}}
 }}
 async function engineAuto() {{
   const btn = document.getElementById('eng-auto');

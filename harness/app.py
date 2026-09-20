@@ -75,6 +75,7 @@ from backend.providers import (
 from cortex.config import StrataConfig
 from cortex.strata import Strata
 from experiments.model_probe import _list_models, probe_model
+from harness.hardware import disk_summary, parse_visible_indices
 from harness.models import LlamaServerManager
 from harness.reports import (
     render_report_page,
@@ -142,26 +143,24 @@ def _hardware_summary() -> dict:
     # Nvidia
     try:
         out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", "--query-gpu=name,memory.total,memory.used",
+             "--format=csv,noheader,nounits"],
             timeout=2, text=True, stderr=subprocess.DEVNULL,
             creationflags=_NO_WINDOW,
         )
         for line in out.strip().splitlines():
-            line = line.strip()
-            if not line:
+            parts = [p.strip().strip('"') for p in line.split(",")]
+            if len(parts) < 3:
                 continue
-            last = line.rfind(",")
-            if last < 0:
-                continue
-            name = line[:last].strip().strip('"')
-            mem_str = line[last + 1:].strip()
             try:
-                mib = int(mem_str)
+                total = round(int(parts[1]) / 1024, 2)
+                used = round(int(parts[2]) / 1024, 2)
             except ValueError:
                 continue
-            gb = round(mib / 1024, 2)
-            vram_gb = (vram_gb or 0) + gb  # sum for combined
-            devices.append({"backend": "cuda", "name": name, "memory_gb": gb})
+            vram_gb = (vram_gb or 0) + total  # sum for combined
+            devices.append({"backend": "cuda", "name": parts[0],
+                            "memory_gb": total, "used_gb": used,
+                            "free_gb": round(max(0.0, total - used), 2)})
     except Exception:
         pass
     # AMD fallback via registry + WMI count (avoids duplicate registry entries counting 4x)
@@ -237,21 +236,9 @@ def _hardware_summary() -> dict:
         except Exception:
             pass
         try:
-            import glob as _glob2
-
-            for p in _glob2.glob("/sys/class/drm/card*/device/mem_info_vram_total"):
-                try:
-                    with open(p) as f:
-                        val = int(f.read().strip())
-                        gb = round(val / (1024 ** 3), 2)
-                        if 1 < gb < 128:
-                            # avoid double-count if already have devices
-                            if any(abs(d["memory_gb"] - gb) < 0.5 for d in devices):
-                                continue
-                            vram_gb = (vram_gb or 0) + gb
-                            devices.append({"backend": "rocm", "name": "AMD GPU", "memory_gb": gb})
-                except Exception:
-                    continue
+            from harness.hardware import linux_amd_devices
+            if not devices:
+                devices.extend(linux_amd_devices())
         except Exception:
             pass
     # macOS fallback
@@ -273,21 +260,71 @@ def _hardware_summary() -> dict:
                             devices.append({"backend": "metal", "name": "Apple GPU", "memory_gb": gb})
         except Exception:
             pass
-    if vram_gb is not None:
-        combined_vram_gb = round(vram_gb, 2)
-        vram_gb = combined_vram_gb
-        source = "nvidia-smi" if any(d["backend"] == "cuda" for d in devices) else ("amd-registry" if any(d["backend"] == "rocm" for d in devices) else "sysfs" if devices else "ram")
+    for index, device in enumerate(devices):
+        device.setdefault("index", index)
+    visibility_env = ("HIP_VISIBLE_DEVICES"
+                      if any(d.get("backend") == "rocm" for d in devices)
+                      else "CUDA_VISIBLE_DEVICES")
+    visibility_value = os.environ.get("HIP_VISIBLE_DEVICES")
+    if visibility_value is None and any(d.get("backend") == "cuda" for d in devices):
+        visibility_value = os.environ.get("CUDA_VISIBLE_DEVICES")
+    visible_indices = parse_visible_indices(visibility_value)
+    for device in devices:
+        device["visible"] = (visible_indices is None
+                             or device.get("index") in visible_indices)
+    visible = [d for d in devices if d.get("visible")]
+
+    def _sum(items, key):
+        vals = [d[key] for d in items if d.get(key) is not None]
+        return round(sum(vals), 2) if vals else None
+
+    vram_total = _sum(visible, "memory_gb")
+    vram_free = _sum(visible, "free_gb")
+    combined_vram_gb = _sum(devices, "memory_gb")
+    if vram_total is not None:
+        vram_gb = vram_total
+        if any(d.get("backend") == "cuda" for d in devices):
+            source = "nvidia-smi"
+        elif any(d.get("backend") == "rocm" for d in devices):
+            source = "amd-registry" if os.name == "nt" else "sysfs"
+        elif devices:
+            source = "sysfs"
+        else:
+            source = "ram"
+        available_gb = vram_free if vram_free is not None else vram_total
     else:
+        vram_gb = None
         source = "ram"
-    available_gb = round(vram_gb, 2) if vram_gb is not None else total_ram_gb
+        available_gb = total_ram_gb
+    try:
+        swap = psutil.swap_memory()
+        swap_total_gb = round(swap.total / (1024 ** 3), 2)
+        swap_used_gb = round(swap.used / (1024 ** 3), 2)
+    except Exception:
+        swap_total_gb = swap_used_gb = None
+    disk = disk_summary({
+        "repo": str(REPO_ROOT),
+        "models": str(REPO_ROOT / "models" / "gguf"),
+        "tmp": "/tmp" if os.name != "nt" else os.environ.get("TEMP", "/tmp"),
+    })
     return {
+        "cpu_count": os.cpu_count(),
         "total_ram_gb": total_ram_gb,
         "available_ram_gb": available_ram_gb,
+        "swap_total_gb": swap_total_gb,
+        "swap_used_gb": swap_used_gb,
+        "disk": disk,
         "vram_gb": vram_gb,
+        "vram_free_gb": vram_free,
         "combined_vram_gb": combined_vram_gb,
-        "available_gb": available_gb,
+        "gtt_total_gb": _sum(visible, "gtt_total_gb"),
+        "gtt_used_gb": _sum(visible, "gtt_used_gb"),
+        "available_gb": round(available_gb, 2) if available_gb is not None else None,
         "devices": devices,
         "vram_source": source,
+        "visibility": {"env": visibility_env if visible_indices is not None else None,
+                       "value": visibility_value,
+                       "indices": visible_indices},
     }
 
 def _read_gguf_metadata(path: Path) -> dict:
@@ -1081,6 +1118,8 @@ class ServerStartRequest(BaseModel):
     port: Optional[int] = None
     ctx_size: int = 8192
     ngl: int = 999  # GPU layers (Vulkan build: all layers on the RX 7900 XT)
+    auto_fit: bool = False  # compute ngl from free VRAM + KV (unsloth-style)
+    visible_devices: Optional[str] = None  # e.g. "1" or "0,1" -> HIP/CUDA_VISIBLE_DEVICES for this server
     register_provider: bool = True
     claim_default: bool = True  # first load claims the default provider slot
     # extra llama-server launch flags (wired to the UI settings panel)
@@ -2334,6 +2373,17 @@ def create_app(
     def server_log(tail: int = 120):
         return {"lines": models_manager.server_log(tail)}
 
+    @app.get("/v1/gpu/processes")
+    def gpu_processes_endpoint():
+        """Per-process VRAM (from /proc/<pid>/fdinfo), on-demand.
+
+        Kept out of /v1/server/status so the hardware poll stays cheap."""
+        try:
+            from harness.hardware import gpu_processes
+            return {"processes": gpu_processes()}
+        except Exception as exc:  # noqa: BLE001
+            return {"processes": [], "error": str(exc)}
+
     @app.get("/v1/server/memory")
     def server_memory():
         """Sidecar RSS + conversation accounting — the leak-detection probe."""
@@ -2821,10 +2871,17 @@ def create_app(
                 "mean", "cls", "last"):
             raise HTTPException(422, "unknown pooling; known: mean, cls, last")
         try:
+            env = None
+            if req.visible_devices:
+                vis_env = ("CUDA_VISIBLE_DEVICES"
+                           if (req.backend or "").strip().lower() == "cuda"
+                           else "HIP_VISIBLE_DEVICES")
+                env = {vis_env: req.visible_devices}
             info = models_manager.load(
                 model=req.model, hf_repo=req.hf_repo, hf_file=req.hf_file,
                 key=req.key, port=req.port, ctx_size=req.ctx_size,
-                ngl=req.ngl, extra_args=req.extra_args(),
+                ngl=("auto" if req.auto_fit else req.ngl), extra_args=req.extra_args(),
+                env=env,
                 backend=req.backend,
                 embedding=bool(req.embedding),
                 pooling=req.pooling.strip().lower() if req.pooling else None,
