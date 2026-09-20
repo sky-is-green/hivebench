@@ -271,6 +271,7 @@ def _run_command(argv: Sequence[str]):
 def paired_ab_subset(*, base_url: str, model: str = "",
                      conversations: str = "tests/fixtures/generated",
                      max_convs: int = 1, max_turns: int | None = None,
+                     max_tokens: int | None = None,
                      output=None, run=None) -> dict:
     """Run one ``paired_ab`` subset against the served backend.
 
@@ -286,6 +287,8 @@ def paired_ab_subset(*, base_url: str, model: str = "",
         argv += ["--model", str(model)]
     if max_turns:
         argv += ["--max-turns", str(int(max_turns))]
+    if max_tokens:
+        argv += ["--max-tokens", str(int(max_tokens))]
     argv += ["--output", str(out_path)]
     runner = run or _run_command
     proc = runner(argv)
@@ -424,6 +427,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--forbid", default="",
                         help="comma-separated name markers that fail the reference "
                              "identity guard (e.g. dflash,uncensored,turbo)")
+    parser.add_argument("--llama-arg", action="append", default=None,
+                        help="extra llama-server flag, repeatable "
+                             "(e.g. --llama-arg -fa --llama-arg on, or -md <mtp.gguf>)")
+    parser.add_argument("--paired-max-tokens", type=int, default=None,
+                        help="cap generation length for the paired subset")
     parser.add_argument("--mock", action="store_true",
                         help="offline wiring check (stub manager/chat/paired)")
     args = parser.parse_args(argv)
@@ -487,15 +495,17 @@ def main(argv: list[str] | None = None) -> int:
                     model=instance.get("model") or "",
                     conversations=args.conversations, max_convs=args.max_convs,
                     max_turns=args.max_turns,
+                    max_tokens=args.paired_max_tokens,
                     output=REPO_ROOT / "logs" / f"ternary_paired_{stem}.json",
                 )
 
+    llama_args = (list(NO_THINKING_ARGS) if args.no_thinking else []) + (args.llama_arg or [])
     try:
         report = evaluate(
             gguf=gguf, manager=manager, chat_fn=chat_fn, paired_fn=paired_fn,
             max_tokens=args.max_tokens, ctx_size=args.ctx_size, ngl=args.ngl,
             backend=(None if args.fork_bin else (args.backend or None)),
-            extra_args=list(NO_THINKING_ARGS) if args.no_thinking else None,
+            extra_args=llama_args or None,
             keep_loaded=args.keep_loaded, timeout=args.timeout,
             deadline=(args.deadline or None), warmup=args.warmup,
             health_fn=health_fn, manifest=manifest,
