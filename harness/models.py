@@ -173,16 +173,24 @@ def preflight_memory(model_path, *, hardware_probe=None) -> dict:
             vram = float(override)
         except ValueError:
             vram = combined
+    elif hw.get("vram_free_gb") is not None:
+        # Visible free VRAM (other apps' usage already subtracted).
+        vram = float(hw["vram_free_gb"])
     elif visibility is not None and per_card:
-        # A visibility list is set but HIP indices do not match sysfs card
-        # order on every host, so assume the largest single visible card
-        # rather than the combined total (conservative, avoids false refusals
-        # only when an override is absent).
+        # Visibility set but no free accounting: assume the largest single
+        # visible card (conservative; HIP indices need not match sysfs order).
         vram = max(per_card)
     else:
         vram = combined
     ram = float(hw.get("available_ram_gb") or 0.0)
-    capacity = vram + ram
+    # On AMD, CPU offload is bounded by GTT (GPU-accessible system memory),
+    # not the whole of RAM; use the smaller budget.
+    gtt_free = None
+    if hw.get("gtt_total_gb") is not None:
+        gtt_free = max(0.0, float(hw["gtt_total_gb"])
+                       - float(hw.get("gtt_used_gb") or 0.0))
+    offload_budget = min(ram, gtt_free) if gtt_free is not None else ram
+    capacity = vram + offload_budget
     required = model_gb * 1.05 + 1.0  # weights + KV / scratch headroom
     result = {
         "ok": capacity <= 0 or required <= capacity * 0.98,
@@ -192,6 +200,7 @@ def preflight_memory(model_path, *, hardware_probe=None) -> dict:
         "capacity_gb": round(capacity, 2),
         "vram_gb": round(vram, 2),
         "ram_gb": round(ram, 2),
+        "gtt_free_gb": round(gtt_free, 2) if gtt_free is not None else None,
         "offload": model_gb > vram,
         "visible": visibility,
         "vram_override": override or None,
@@ -336,11 +345,22 @@ def _read_gguf_metadata(path: Path) -> dict:
                     prefix = key[: -len(".context_length")]
                     context_candidates[prefix] = int(val)
                     out[key] = val
-                elif key in ("general.name",):
+                elif key in ("general.name", "general.parameter_count"):
                     out[key] = val
-                if arch is not None and file_type is not None and arch in context_candidates:
-                    if len(out) > 12:
-                        break
+                elif isinstance(val, int) and (
+                        key.endswith(".block_count")
+                        or key.endswith(".embedding_length")
+                        or key.endswith(".attention.head_count")
+                        or key.endswith(".attention.head_count_kv")
+                        or key.endswith(".attention.key_length")
+                        or key.endswith(".attention.value_length")):
+                    out[key] = int(val)
+                # keep reading until the fit-relevant keys are present, not just
+                # the hover ones (block_count/head counts often come later)
+                has_fit = (any(k.endswith(".block_count") for k in out)
+                           and any(k.endswith(".attention.head_count_kv") for k in out))
+                if arch is not None and file_type is not None and has_fit:
+                    break
             if arch is not None:
                 out["architecture"] = arch
             if file_type is not None:
@@ -354,6 +374,59 @@ def _read_gguf_metadata(path: Path) -> dict:
             return out
     except Exception:
         return {}
+
+
+def fit_gpu_layers(model_path, *, ctx_size: int = 8192,
+                   hardware: Optional[dict] = None,
+                   gguf_meta: Optional[dict] = None) -> Optional[int]:
+    """Max transformer layers that fit on the visible GPU(s), unsloth-style.
+
+    Leaves ~10% VRAM headroom and subtracts the f16 KV cache for ``ctx_size``;
+    llama.cpp offloads the remaining layers to CPU/GTT. Returns None when the
+    GGUF lacks the metadata to estimate reliably (caller falls back to all)."""
+    path = Path(model_path)
+    try:
+        model_bytes = path.stat().st_size
+    except OSError:
+        return None
+    meta = gguf_meta if gguf_meta is not None else _read_gguf_metadata(path)
+
+    def first(suffix: str) -> Optional[int]:
+        for key, value in meta.items():
+            if key.endswith(suffix):
+                try:
+                    return int(value)
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    n_layers = first(".block_count")
+    if not n_layers:
+        return None
+    if hardware is None:
+        try:
+            from harness.app import _hardware_summary
+            hardware = _hardware_summary()
+        except Exception:  # noqa: BLE001 - caller falls back
+            return None
+    vram_free = hardware.get("vram_free_gb")
+    if vram_free is None:
+        vram_free = hardware.get("combined_vram_gb") or hardware.get("vram_gb")
+    if not vram_free:
+        return None
+    head_kv = first(".attention.head_count_kv")
+    head = first(".attention.head_count")
+    emb = first(".embedding_length")
+    key_len = first(".attention.key_length") or (emb // head if emb and head else None)
+    val_len = first(".attention.value_length") or key_len
+    kv_bytes = 0
+    if head_kv and key_len and val_len:
+        kv_bytes = 2 * n_layers * head_kv * (key_len + val_len) * int(ctx_size) * 2
+    budget = float(vram_free) * (1024 ** 3) * 0.90 - kv_bytes
+    per_layer = model_bytes / n_layers
+    if per_layer <= 0:
+        return None
+    return int(max(0, min(n_layers, budget // per_layer)))
 
 
 def _port_in_use(host: str, port: int, timeout: float = 1.0) -> bool:
@@ -879,8 +952,9 @@ class LlamaServerManager:
         key: Optional[str] = None,
         port: Optional[int] = None,
         ctx_size: int = 8192,
-        ngl: int = 999,
+        ngl: "int | str | None" = 999,
         extra_args: Optional[list[str]] = None,
+        env: Optional[dict] = None,
         backend: Optional[str] = None,
         embedding: bool = False,
         pooling: Optional[str] = None,
@@ -976,6 +1050,13 @@ class LlamaServerManager:
                 + "; stop that server or pick another port."
             )
 
+        if isinstance(ngl, str):
+            ngl = ngl.strip().lower()
+            ngl = None if ngl in ("", "auto", "fit") else int(ngl)
+        if ngl is None:
+            computed = fit_gpu_layers(resolved, ctx_size=ctx_size) if resolved else None
+            ngl = computed if computed is not None else 999
+
         memory_info: Optional[dict] = None
         if self.memory_guard and resolved is not None:
             memory_info = preflight_memory(resolved,
@@ -1016,6 +1097,9 @@ class LlamaServerManager:
         log_handle = open(log_path, "ab")
         try:
             sp_kwargs: dict = {"stdout": log_handle, "stderr": subprocess.STDOUT}
+            if env:
+                # Per-load card selection: e.g. {"HIP_VISIBLE_DEVICES": "1"}.
+                sp_kwargs["env"] = {**os.environ, **env}
             if os.name == "nt":
                 sp_kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
             try:
@@ -1069,6 +1153,7 @@ class LlamaServerManager:
         with self._lock:
             self._instances[inst.key] = inst
         out = inst.to_dict()
+        out["ngl"] = ngl
         if memory_info is not None:
             out["memory"] = memory_info
         return out
