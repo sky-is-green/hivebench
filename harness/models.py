@@ -24,6 +24,7 @@ import os
 import socket
 import struct
 import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass, field
@@ -93,6 +94,117 @@ def _binary_for_backend(backend: Optional[str]) -> Optional[Path]:
     exe = "llama-server.exe" if os.name == "nt" else "llama-server"
     p = (REPO_ROOT / "tools" / "backends" / backend.strip().lower() / exe)
     return p if p.is_file() else None
+
+
+class OutOfMemoryError(RuntimeError):
+    """A model cannot load without exhausting VRAM/RAM.
+
+    Raised before spawn when the estimate clearly exceeds host capacity, or
+    when llama-server exits during startup with an allocation failure in its
+    log. Actionable, non-fatal: callers report it instead of hanging or dying.
+    """
+
+
+# Substrings that mark an allocation failure in a llama-server log. Kept broad
+# so CUDA, HIP, Vulkan and CPU/ggml allocator messages all match.
+_OOM_SIGNATURES = (
+    "out of memory", "outofmemory", "out_of_memory",
+    "hiperroroutofmemory", "hip error: out of memory",
+    "cuda_error_out_of_memory", "cuda error: out of memory",
+    "failed to allocate", "unable to allocate", "cannot allocate",
+    "not enough memory", "insufficient memory",
+)
+
+# Models below this size skip the preflight (unit tests use tiny stubs).
+_MEMORY_GUARD_MIN_GB = 1.0
+
+
+def _looks_like_oom(text: str) -> bool:
+    low = (text or "").lower()
+    return any(sig in low for sig in _OOM_SIGNATURES)
+
+
+def _read_log_tail(path: Path, limit: int = 8192) -> str:
+    try:
+        with Path(path).open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            handle.seek(max(0, handle.tell() - limit))
+            return handle.read().decode("utf-8", "replace")
+    except OSError:
+        return ""
+
+
+def preflight_memory(model_path, *, hardware_probe=None) -> dict:
+    """Estimate whether ``model_path`` fits on this host.
+
+    Weights dominate; KV/scratch is estimated as a small fraction. Never
+    raises: returns a dict with ``ok`` False only when the estimate clearly
+    exceeds total VRAM + available RAM. ``warning`` marks a model that fits
+    but must offload layers to RAM (slow).
+    """
+    path = Path(model_path)
+    try:
+        model_gb = path.stat().st_size / (1024 ** 3)
+    except OSError:
+        return {"ok": True, "checked": False, "reason": "unreadable model file"}
+    if model_gb < _MEMORY_GUARD_MIN_GB:
+        return {"ok": True, "checked": False, "reason": "small model",
+                "model_gb": round(model_gb, 3)}
+    if hardware_probe is None:
+        try:
+            from harness.app import _hardware_summary
+            hw = _hardware_summary()
+        except Exception:  # noqa: BLE001 - best-effort; never block a load
+            return {"ok": True, "checked": False,
+                    "reason": "hardware probe unavailable",
+                    "model_gb": round(model_gb, 2)}
+    else:
+        hw = hardware_probe()
+    devices = hw.get("devices") or []
+    combined = float(hw.get("combined_vram_gb") or hw.get("vram_gb") or 0.0)
+    visibility = (os.environ.get("HIP_VISIBLE_DEVICES")
+                  or os.environ.get("CUDA_VISIBLE_DEVICES"))
+    per_card = [float(d.get("memory_gb") or 0.0) for d in devices]
+    per_card = [g for g in per_card if g > 0]
+    override = os.environ.get("HARNESS_VRAM_GB")
+    if override:
+        # Authoritative: the caller knows which cards are visible.
+        try:
+            vram = float(override)
+        except ValueError:
+            vram = combined
+    elif visibility is not None and per_card:
+        # A visibility list is set but HIP indices do not match sysfs card
+        # order on every host, so assume the largest single visible card
+        # rather than the combined total (conservative, avoids false refusals
+        # only when an override is absent).
+        vram = max(per_card)
+    else:
+        vram = combined
+    ram = float(hw.get("available_ram_gb") or 0.0)
+    capacity = vram + ram
+    required = model_gb * 1.05 + 1.0  # weights + KV / scratch headroom
+    result = {
+        "ok": capacity <= 0 or required <= capacity * 0.98,
+        "checked": True,
+        "model_gb": round(model_gb, 2),
+        "required_gb": round(required, 2),
+        "capacity_gb": round(capacity, 2),
+        "vram_gb": round(vram, 2),
+        "ram_gb": round(ram, 2),
+        "offload": model_gb > vram,
+        "visible": visibility,
+        "vram_override": override or None,
+    }
+    if not result["ok"]:
+        result["reason"] = (
+            f"needs ~{required:.1f} GB but only {capacity:.1f} GB is available "
+            f"(VRAM {vram:.1f} + RAM {ram:.1f})")
+    elif result["offload"]:
+        result["warning"] = (
+            f"model is {model_gb:.1f} GB > VRAM {vram:.1f} GB; llama-server "
+            "will offload layers to RAM and run slowly")
+    return result
 
 
 def _probe(base_url: str, timeout: float = 5.0):
@@ -292,6 +404,90 @@ def _terminate_pid(pid: int) -> None:
         pass
 
 
+def gguf_identity(path) -> dict:
+    """Best-effort GGUF provenance: name, architecture, quant, size, mtime."""
+    p = Path(path)
+    meta = _read_gguf_metadata(p)
+    try:
+        stat = p.stat()
+        size_gb = round(stat.st_size / (1024 ** 3), 3)
+        mtime = int(stat.st_mtime)
+    except OSError:
+        size_gb = None
+        mtime = None
+    return {
+        "path": str(p),
+        "name": meta.get("general.name"),
+        "architecture": meta.get("general.architecture") or meta.get("architecture"),
+        "quantization": meta.get("quantization"),
+        "size_gb": size_gb,
+        "mtime": mtime,
+    }
+
+
+def verify_reference(path, *, expect_name: Optional[str] = None,
+                     expect_arch: Optional[str] = None,
+                     forbid: Optional[list[str]] = None) -> dict:
+    """Check a reference GGUF is the expected base, not a finetune.
+
+    ``ok`` is False when an expectation is unmet: architecture mismatch, name
+    missing ``expect_name``, or name containing any ``forbid`` marker (e.g.
+    ``["dflash", "uncensored"]`` — substring matching alone cannot separate a
+    finetune whose name merely contains the base name)."""
+    identity = gguf_identity(path)
+    name = str(identity.get("name") or "")
+    problems: list[str] = []
+    if expect_arch and identity.get("architecture") and identity["architecture"] != expect_arch:
+        problems.append(
+            f"architecture {identity['architecture']!r} != {expect_arch!r}")
+    if expect_name and name and expect_name.lower() not in name.lower():
+        problems.append(f"name {name!r} does not contain {expect_name!r}")
+    for marker in (forbid or []):
+        if marker and marker.lower() in name.lower():
+            problems.append(f"name {name!r} contains forbidden marker {marker!r}")
+    result: dict = {"ok": not problems, "identity": identity}
+    if problems:
+        result["reason"] = "; ".join(problems)
+    return result
+
+
+def stop_stale_server(host: str, port: int) -> dict:
+    """Terminate a llama-server orphan holding ``host:port`` (by PID, never by
+    pattern). Safe when the port is free or held by something else."""
+    if not _port_in_use(host, port):
+        return {"stopped": None, "reason": "port free"}
+    pid = _pid_listening_on(port)
+    name = _process_name(pid)
+    if pid and "llama" in name.lower():
+        _terminate_pid(pid)
+        return {"stopped": pid, "name": name}
+    return {"stopped": None, "reason": f"port held by {name or 'unknown'}"}
+
+
+def competing_gpu_processes() -> list[dict]:
+    """Other llama.cpp processes that would contend for the GPU/ROCm stack.
+
+    Advisory: two independent ROCm contexts can hang this host, so callers
+    should refuse to start a heavy load while this is non-empty."""
+    out: list[dict] = []
+    try:
+        import psutil
+    except Exception:  # noqa: BLE001
+        return out
+    me = os.getpid()
+    for proc in psutil.process_iter(["pid", "name"]):
+        try:
+            if proc.info["pid"] == me:
+                continue
+            name = (proc.info.get("name") or "")
+            low = name.lower()
+            if low.startswith("llama-") or low == "llama-server":
+                out.append({"pid": proc.info["pid"], "name": name})
+        except Exception:  # noqa: BLE001 - process vanished
+            continue
+    return out
+
+
 def launch_extra_args(load_options: dict) -> list[str]:
     """llama-server argv extras recorded in an engine profile's load_options
     (shared by the start endpoint, /model command, and CLI auto-start)."""
@@ -392,6 +588,8 @@ class LlamaServerManager:
         spawner: Callable[..., object] = subprocess.Popen,
         prober: Optional[Callable[[str], object]] = None,
         startup_timeout: float = 300.0,
+        hardware_probe: Optional[Callable[[], dict]] = None,
+        memory_guard: Optional[bool] = None,
     ) -> None:
         self.binary = Path(binary) if binary else _default_binary()
         # Persisted override from previous directory selection
@@ -417,6 +615,12 @@ class LlamaServerManager:
         self.spawner = spawner
         self.prober = prober or _probe
         self.startup_timeout = startup_timeout
+        self.hardware_probe = hardware_probe
+        if memory_guard is None:
+            memory_guard = os.environ.get(
+                "HARNESS_MEMORY_GUARD", "1").strip().lower() not in (
+                    "0", "false", "no", "off")
+        self.memory_guard = bool(memory_guard)
         self._lock = threading.RLock()
         self._instances: dict[str, ServerInstance] = {}
         self._downloads: dict[str, DownloadJob] = {}
@@ -437,6 +641,24 @@ class LlamaServerManager:
             return []
         text = candidates[0].read_text(encoding="utf-8", errors="replace")
         return text.splitlines()[-max(1, tail):]
+
+    def _raise_startup_exit(self, proc, log_path: Path) -> None:
+        """Raise the right error when llama-server dies before becoming healthy.
+
+        An allocation failure in the log becomes ``OutOfMemoryError`` with the
+        log tail attached; anything else keeps the original RuntimeError."""
+        code = proc.poll()
+        tail = _read_log_tail(log_path)
+        if _looks_like_oom(tail):
+            raise OutOfMemoryError(
+                f"llama-server ran out of memory during startup (exit {code}). "
+                "Lower --ctx-size or -ngl, free VRAM/RAM, or set "
+                "HARNESS_MEMORY_GUARD=0 to skip the preflight. "
+                f"Log tail:\n{tail[-600:]}"
+            )
+        raise RuntimeError(
+            f"llama-server exited during startup (code {code}); see {log_path}"
+        )
 
     def list_local(self, use_cache: bool = True) -> list[dict]:
         # Cache for 30s to avoid re-reading GGUF headers on every poll (refresh every 15s + tab switch)
@@ -754,6 +976,18 @@ class LlamaServerManager:
                 + "; stop that server or pick another port."
             )
 
+        memory_info: Optional[dict] = None
+        if self.memory_guard and resolved is not None:
+            memory_info = preflight_memory(resolved,
+                                           hardware_probe=self.hardware_probe)
+            if not memory_info.get("ok", True):
+                raise OutOfMemoryError(
+                    f"refusing to load '{model_name}': {memory_info.get('reason')}. "
+                    "Lower --ctx-size/-ngl, free VRAM, or set HARNESS_MEMORY_GUARD=0 "
+                    "to override.")
+            if memory_info.get("warning"):
+                print(f"[models] {memory_info['warning']}", file=sys.stderr)
+
         cmd = [str(binary)]
         if resolved is not None:
             cmd += ["-m", str(resolved)]
@@ -800,20 +1034,14 @@ class LlamaServerManager:
         model_id = None
         while time.time() < deadline:
             if proc.poll() is not None:
-                raise RuntimeError(
-                    f"llama-server exited during startup (code {proc.poll()}); "
-                    f"see {log_path}"
-                )
+                self._raise_startup_exit(proc, log_path)
             probe = self.prober(base_url)
             if probe:
                 # The probe must answer for OUR process: re-check liveness so a
                 # foreign server that raced the bind is not misattributed.
                 time.sleep(0.5)
                 if proc.poll() is not None:
-                    raise RuntimeError(
-                        f"llama-server exited during startup (code {proc.poll()}); "
-                        f"see {log_path}"
-                    )
+                    self._raise_startup_exit(proc, log_path)
                 model_id = probe if probe is not True else None
                 break
             time.sleep(0.5)
@@ -840,7 +1068,10 @@ class LlamaServerManager:
         )
         with self._lock:
             self._instances[inst.key] = inst
-        return inst.to_dict()
+        out = inst.to_dict()
+        if memory_info is not None:
+            out["memory"] = memory_info
+        return out
 
     def unload(self, key: str) -> dict:
         with self._lock:
