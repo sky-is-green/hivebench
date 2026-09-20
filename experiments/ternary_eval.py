@@ -385,7 +385,9 @@ def main(argv: list[str] | None = None) -> int:
                              "(ignored when --fork-bin is given)")
     parser.add_argument("--host", default=DEFAULT_HOST)
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
-    parser.add_argument("--ngl", type=int, default=DEFAULT_NGL)
+    parser.add_argument("--ngl", default="auto",
+                        help="GPU layers: an integer, or 'auto' to fit to free "
+                             "VRAM and offload the rest to CPU/GTT")
     parser.add_argument("--ctx-size", type=int, default=DEFAULT_CTX)
     parser.add_argument("--max-tokens", type=int, default=DEFAULT_MAX_TOKENS)
     parser.add_argument("--conversations", default="tests/fixtures/generated",
