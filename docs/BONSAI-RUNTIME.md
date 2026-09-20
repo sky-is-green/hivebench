@@ -1,0 +1,59 @@
+# Bonsai Runtime (T29) — released Bonsai-2 27B `PQ2_0` on the Prism ROCm fork
+
+Plan-B end-state: run Prism's released ternary artifact as-is and evaluate it with
+hivebench. This is the pragmatic route to the user's goal — the quality lives in
+their trained weights (Gate 3), so no local training is required.
+
+## Artifact
+
+| Item | Path |
+|---|---|
+| Model | `artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf` (7.2 GB, sha `3907dc16…`) |
+| Fork binary | `artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a/llama-server` |
+| Driver | `experiments/ternary_eval.py` (T11) |
+
+## Serve / evaluate
+
+```sh
+cd /home/penis/Desktop/work/hivebench
+FORK=artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a
+PIN=/home/penis/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN
+
+HIP_VISIBLE_DEVICES=1 LD_LIBRARY_PATH=$PWD/$FORK \
+STRATA_HOME=$PIN PYTHONPATH=$PIN/strata \
+  /home/penis/Desktop/work/strata-memory/venv/bin/python -m experiments.ternary_eval \
+    --gguf artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf \
+    --fork-bin $FORK/llama-server \
+    --no-thinking --max-convs 10 \
+    --output artifacts/ternary/eval/bonsai27-hivebench.json
+```
+
+- `--no-thinking` passes `--chat-template-kwargs '{"enable_thinking": false}'` to
+  `llama-server`; without it the reasoning template returns empty visible content.
+- `HIP_VISIBLE_DEVICES=1` keeps the desktop GPU0 free; the 27B `PQ2_0` fits one
+  RX 7900 XT at `-ngl 99` (the driver's default), so both cards are not needed.
+- **T23 workaround:** the sibling `strata-memory` main no longer defines
+  `cortex.config.StrataConfig`, so the harness import fails unless the F6 pin is
+  on `PYTHONPATH` (`$PIN/strata`) with `STRATA_HOME=$PIN`.
+
+## Results (2026-09-20)
+
+PPL under the Gate-2 protocol (tinyshakespeare, ctx 512, 8 chunks): **18.5851**.
+
+Hivebench eval, `--max-convs 10`, 124 turns compared:
+
+| Metric | hive | FIFO |
+|---|---|---|
+| answer recall | 72.6 | 77.4 |
+| avg fact hit ratio | 0.731 | 0.789 |
+| avg context fidelity | **0.306** | 0.205 |
+
+- 5/5 smoke prompts PASS (coherent: `Paris`, `51`, `ternary.`); ~0.5–0.9 s/reply.
+- `fidelity_hive_gt_fifo_ratio` 69.4%, `hive_ge_fifo_ratio` 89.0% — the memory
+  layer improves context fidelity over FIFO while trailing slightly on raw answer
+  recall. `hive_only` 4, `fifo_only` 10, `both_sufficient` 77.
+
+## Status
+
+T29 runtime + eval verified. Remaining (optional): LoRA adaptation around the
+released weights, and a 2-card throughput pass if serving latency matters.
