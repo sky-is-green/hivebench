@@ -114,15 +114,17 @@ verify_sha() {
 
 run_one() {
   local label=$1 gguf=$2 expect_name=$3 expect_arch=${4:-qwen35}
+  local devices=${5:-1} vram=${6:-20}
   if [ ! -f "$gguf" ]; then
     log "SKIP $label: missing $gguf"
     return 1
   fi
-  log "=== $label: $gguf ==="
+  log "=== $label: $gguf (HIP_VISIBLE_DEVICES=$devices) ==="
   local guard=()
   [ -n "$expect_name" ] && guard+=(--expect-name "$expect_name")
   [ -n "$expect_arch" ] && guard+=(--expect-arch "$expect_arch")
   guard+=(--forbid "$FORBID")
+  env HIP_VISIBLE_DEVICES="$devices" HARNESS_VRAM_GB="$vram" \
   "$PY" -m experiments.ternary_eval \
     --gguf "$gguf" \
     --fork-bin "$FORK/llama-server" \
@@ -147,10 +149,12 @@ fetch_refs
 rc=0
 for m in $MODELS; do
   case "$m" in
-    pq2_0) run_one pq2_0 "$PQ2" "" || rc=1 ;;
-    q8_0)  run_one q8_0 "$Q8" "Qwen3.8-27B" || rc=1 ;;
-    q4_k_m) run_one q4_k_m "$Q4" "Qwen3.8-27B" || rc=1 ;;
-    bf16)  run_one bf16 "$BF16" "Qwen3.8-27B" || rc=1 ;;
+    # small models fit one card (faster than a 2-card layer split)
+    pq2_0) run_one pq2_0 "$PQ2" "" qwen35 1 20 || rc=1 ;;
+    q4_k_m) run_one q4_k_m "$Q4" "Qwen3.8-27B" qwen35 1 20 || rc=1 ;;
+    # Q8_0 / BF16 need both cards
+    q8_0)  run_one q8_0 "$Q8" "Qwen3.8-27B" qwen35 0,1 40 || rc=1 ;;
+    bf16)  run_one bf16 "$BF16" "Qwen3.8-27B" qwen35 0,1 40 || rc=1 ;;
     *) log "unknown model '$m' (pq2_0|q8_0|q4_k_m|bf16)"; rc=1 ;;
   esac
 done
