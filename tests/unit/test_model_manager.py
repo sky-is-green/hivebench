@@ -821,3 +821,166 @@ def test_server_page_serves(client):
     assert "/v1/strata/stream" in page.text
     assert "chatlog" in page.text
     assert page.headers.get("cache-control") == "no-store"
+
+
+# ---------------------------------------------------------------------------
+# OOM guard (preflight + startup detection)
+# ---------------------------------------------------------------------------
+def _sparse(path: Path, gb: float) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as handle:
+        handle.truncate(int(gb * 1024 ** 3))
+
+
+def _free_port() -> int:
+    blocker = socket.socket()
+    blocker.bind(("127.0.0.1", 0))
+    port = blocker.getsockname()[1]
+    blocker.close()
+    return port
+
+
+def test_preflight_memory_refuses_over_capacity(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "_MEMORY_GUARD_MIN_GB", 0.0)
+    model = tmp_path / "big.gguf"
+    _sparse(model, 8.0)
+    hw = {"combined_vram_gb": 2.0, "vram_gb": 2.0, "available_ram_gb": 1.0}
+    info = mm.preflight_memory(model, hardware_probe=lambda: hw)
+    assert info["checked"] is True and info["ok"] is False
+    assert "needs" in info["reason"]
+
+
+def test_preflight_memory_warns_on_offload(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "_MEMORY_GUARD_MIN_GB", 0.0)
+    model = tmp_path / "big.gguf"
+    _sparse(model, 8.0)
+    hw = {"combined_vram_gb": 4.0, "vram_gb": 4.0, "available_ram_gb": 32.0}
+    info = mm.preflight_memory(model, hardware_probe=lambda: hw)
+    assert info["ok"] is True and info["offload"] is True
+    assert "warning" in info
+
+
+def test_load_refuses_over_capacity_with_oom_error(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "_MEMORY_GUARD_MIN_GB", 0.0)
+    model_dir = tmp_path / "models" / "gguf"
+    _sparse(model_dir / "huge.gguf", 8.0)
+    mgr = mm.LlamaServerManager(
+        binary=tmp_path / "llama-server", models_dir=model_dir,
+        log_dir=tmp_path / "logs", port=_free_port(),
+        spawner=lambda *a, **k: FakeProc(), prober=lambda url: True,
+        startup_timeout=1, memory_guard=True,
+        hardware_probe=lambda: {"combined_vram_gb": 1.0, "vram_gb": 1.0,
+                                "available_ram_gb": 0.5},
+    )
+    mgr.binary.write_bytes(b"")
+    with pytest.raises(mm.OutOfMemoryError):
+        mgr.load(model="huge")
+
+
+def test_startup_oom_detected_from_log(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    model_dir = tmp_path / "models" / "gguf"
+    model_dir.mkdir(parents=True)
+    (model_dir / "m.gguf").write_bytes(b"x")
+    port = _free_port()
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / f"llama_server_{port}.log").write_text(
+        "ggml_backend_cuda_buffer_type_alloc_buffer: failed to allocate 8.00 MiB\n")
+
+    class DeadProc:
+        pid = 1
+        returncode = 1
+
+        def poll(self):
+            return 1
+
+        def terminate(self):
+            pass
+
+    mgr = mm.LlamaServerManager(
+        binary=tmp_path / "llama-server", models_dir=model_dir, log_dir=logs,
+        port=port, spawner=lambda *a, **k: DeadProc(), prober=lambda url: False,
+        startup_timeout=1, memory_guard=False,
+    )
+    mgr.binary.write_bytes(b"")
+    monkeypatch.setattr(mgr, "_free_port", lambda _p: port)
+    with pytest.raises(mm.OutOfMemoryError) as exc:
+        mgr.load(model="m")
+    assert "out of memory" in str(exc.value).lower()
+
+
+def test_preflight_honors_visibility_and_override(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "_MEMORY_GUARD_MIN_GB", 0.0)
+    monkeypatch.delenv("HARNESS_VRAM_GB", raising=False)
+    model = tmp_path / "big.gguf"
+    _sparse(model, 8.0)
+    hw = {"combined_vram_gb": 4.0, "vram_gb": 4.0, "available_ram_gb": 0.0,
+          "devices": [{"memory_gb": 2.0}, {"memory_gb": 2.0}]}
+    # visibility set -> largest single visible card, not the combined total
+    monkeypatch.setenv("HIP_VISIBLE_DEVICES", "1")
+    info = mm.preflight_memory(model, hardware_probe=lambda: hw)
+    assert info["vram_gb"] == 2.0 and info["ok"] is False
+    assert info["visible"] == "1"
+    # explicit override is authoritative
+    monkeypatch.setenv("HARNESS_VRAM_GB", "64")
+    info2 = mm.preflight_memory(model, hardware_probe=lambda: hw)
+    assert info2["vram_gb"] == 64.0 and info2["ok"] is True
+
+
+# ---------------------------------------------------------------------------
+# A/B hardening helpers: identity guard, stale-server sweep, GPU contention
+# ---------------------------------------------------------------------------
+def test_verify_reference_accepts_base_and_rejects_finetune(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "_read_gguf_metadata", lambda p: {
+        "general.name": "Qwen3.8-27B-DFlash2",
+        "general.architecture": "qwen35"})
+    model = tmp_path / "m.gguf"
+    model.write_bytes(b"x")
+    # substring alone can't separate a finetune; the forbid list does
+    assert mm.verify_reference(model, expect_name="Qwen3.8-27B")["ok"] is True
+    assert mm.verify_reference(model, expect_name="Qwen3.8-27B",
+                               expect_arch="qwen35",
+                               forbid=["dflash"])["ok"] is False
+    assert mm.verify_reference(model, expect_arch="dflash")["ok"] is False
+
+
+def test_gguf_identity_reports_name_arch_size(tmp_path, monkeypatch):
+    import harness.models as mm
+
+    monkeypatch.setattr(mm, "_read_gguf_metadata", lambda p: {
+        "general.name": "Qwen3.8-27B",
+        "general.architecture": "qwen35",
+        "quantization": "Q8_0"})
+    model = tmp_path / "m.gguf"
+    model.write_bytes(b"x" * 1024)
+    ident = mm.gguf_identity(model)
+    assert ident["name"] == "Qwen3.8-27B"
+    assert ident["architecture"] == "qwen35"
+    assert ident["quantization"] == "Q8_0"
+    assert ident["size_gb"] == 0.0
+
+
+def test_stop_stale_server_port_free(tmp_path):
+    import harness.models as mm
+
+    port = _free_port()
+    assert mm.stop_stale_server("127.0.0.1", port) == {"stopped": None,
+                                                        "reason": "port free"}
+
+
+def test_competing_gpu_processes_is_a_list():
+    import harness.models as mm
+
+    assert isinstance(mm.competing_gpu_processes(), list)

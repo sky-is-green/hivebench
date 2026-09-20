@@ -271,3 +271,52 @@ def test_serve_gguf_through_real_model_manager(tmp_path: Path) -> None:
     assert instance["key"] == "mock-ternary"
     assert instance["base_url"] == f"http://127.0.0.1:{manager.port}"
     assert manager.unload(instance["key"])["unloaded"] == "mock-ternary"
+
+
+# ---------------------------------------------------------------------------
+# A/B hardening: manifest, warmup, liveness, deadline, timeout
+# ---------------------------------------------------------------------------
+def test_evaluate_records_manifest_and_warmup(tmp_path: Path) -> None:
+    manager, gguf = te.build_mock_manager(tmp_path)
+    calls: list[str] = []
+
+    def chat(base_url, prompt, **kwargs):
+        calls.append(prompt)
+        return {"response": "ok"}
+
+    report = te.evaluate(gguf=gguf, manager=manager, chat_fn=chat, paired_fn=None,
+                         warmup=True, manifest={"mode": "live", "x": 1})
+    assert report["manifest"] == {"mode": "live", "x": 1}
+    assert len(calls) == 6  # 1 warmup + 5 smoke
+    assert calls[0] == "Reply with the single word: ok"
+    json.dumps(report)
+
+
+def test_evaluate_aborts_when_server_unreachable(tmp_path: Path) -> None:
+    manager, gguf = te.build_mock_manager(tmp_path)
+    report = te.evaluate(gguf=gguf, manager=manager, chat_fn=te._mock_chat,
+                         paired_fn=None, health_fn=lambda url: False)
+    assert report["ok"] is False
+    assert "not reachable" in report["smoke"]["error"]
+
+
+def test_run_smoke_deadline_marks_failures() -> None:
+    manager, gguf = te.build_mock_manager()
+    instance = te.serve_gguf(gguf, manager=manager)
+    report = te.run_smoke(instance, chat_fn=te._mock_chat,
+                          deadline=te.time.monotonic() - 1)
+    assert report["passed"] == 0 and report["failed"] == 5
+    assert all(row["error"] == "deadline exceeded" for row in report["rows"])
+
+
+def test_run_smoke_passes_timeout() -> None:
+    manager, gguf = te.build_mock_manager()
+    instance = te.serve_gguf(gguf, manager=manager)
+    seen: dict = {}
+
+    def chat(base_url, prompt, **kwargs):
+        seen.update(kwargs)
+        return {"response": "ok"}
+
+    te.run_smoke(instance, chat_fn=chat, timeout=42)
+    assert seen.get("timeout") == 42

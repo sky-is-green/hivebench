@@ -65,6 +65,37 @@ def _free_port(host: str = DEFAULT_HOST) -> int:
         return int(sock.getsockname()[1])
 
 
+def _server_alive(base_url: str, timeout: float = 2.0) -> bool:
+    """TCP reachability probe used as a mid-run liveness check."""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(str(base_url))
+        with socket.create_connection((parsed.hostname or DEFAULT_HOST,
+                                       parsed.port or 80), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def _git_rev() -> str:
+    try:
+        proc = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(REPO_ROOT),
+                              capture_output=True, text=True, timeout=5)
+        return proc.stdout.strip() if proc.returncode == 0 else ""
+    except Exception:  # noqa: BLE001 - provenance is best-effort
+        return ""
+
+
+def _hardware() -> dict:
+    try:
+        from harness.app import _hardware_summary
+        hw = _hardware_summary()
+        return {k: hw.get(k) for k in ("vram_gb", "combined_vram_gb",
+                                       "available_ram_gb", "vram_source")}
+    except Exception:  # noqa: BLE001 - provenance is best-effort
+        return {}
+
+
 def build_manager(*, binary=None, models_dir=None, log_dir=None,
                   host: str = DEFAULT_HOST, port: int = DEFAULT_PORT,
                   spawner=None, prober=None, startup_timeout: float = 300.0):
@@ -193,16 +224,28 @@ def chat_completion(base_url: str, prompt: str, *, model: str = "",
 
 
 def run_smoke(instance: dict, *, prompts: Sequence[str] | None = None,
-              chat_fn=None, max_tokens: int = DEFAULT_MAX_TOKENS) -> dict:
+              chat_fn=None, max_tokens: int = DEFAULT_MAX_TOKENS,
+              timeout: float = CHAT_TIMEOUT, deadline: float | None = None,
+              health_fn=None) -> dict:
     """Run the 5-prompt smoke; per-prompt failures are recorded, not raised."""
     chat_fn = chat_fn or chat_completion
     prompts = list(prompts or SMOKE_PROMPTS)
+    base_url = instance["base_url"]
     rows: list[dict] = []
     for prompt in prompts:
         started = time.monotonic()
+        if deadline is not None and started > deadline:
+            rows.append({"prompt": prompt, "response": "", "status": "FAIL",
+                         "error": "deadline exceeded", "seconds": 0.0})
+            continue
+        if health_fn is not None and not health_fn(base_url):
+            rows.append({"prompt": prompt, "response": "", "status": "FAIL",
+                         "error": "server not reachable", "seconds": 0.0})
+            continue
         try:
-            out = chat_fn(instance["base_url"], prompt,
-                          model=instance.get("model") or "", max_tokens=max_tokens)
+            out = chat_fn(base_url, prompt,
+                          model=instance.get("model") or "", max_tokens=max_tokens,
+                          timeout=timeout)
             response = str(out.get("response") or "")
             row = {
                 "prompt": prompt,
@@ -260,22 +303,42 @@ def evaluate(*, gguf, manager, chat_fn=None, paired_fn=None,
              max_tokens: int = DEFAULT_MAX_TOKENS, ctx_size: int = DEFAULT_CTX,
              ngl: int = DEFAULT_NGL, backend: str | None = None,
              extra_args: Sequence[str] | None = None, key: str | None = None,
-             keep_loaded: bool = False) -> dict:
+             keep_loaded: bool = False, timeout: float = CHAT_TIMEOUT,
+             deadline: float | None = None, warmup: bool = False,
+             health_fn=None, manifest: dict | None = None) -> dict:
     """Serve, smoke, optional paired subset, unload; return the report dict."""
     started = time.monotonic()
+    if deadline:
+        deadline = started + float(deadline)
     instance = serve_gguf(gguf, manager=manager, key=key, ctx_size=ctx_size,
                           ngl=ngl, backend=backend, extra_args=extra_args)
     report: dict = {"task": "T11", "spec_sha256": SPEC_SHA256,
                     "gguf": str(gguf), "instance": instance,
-                    "smoke": None, "paired_ab": None}
+                    "manifest": manifest or {}, "smoke": None, "paired_ab": None}
     try:
-        report["smoke"] = run_smoke(instance, prompts=prompts, chat_fn=chat_fn,
-                                    max_tokens=max_tokens)
+        if health_fn is not None and not health_fn(instance["base_url"]):
+            report["smoke"] = {"prompts": 0, "passed": 0, "failed": 0, "rows": [],
+                               "error": "server not reachable after load"}
+        else:
+            if warmup:
+                try:
+                    (chat_fn or chat_completion)(
+                        instance["base_url"], "Reply with the single word: ok",
+                        model=instance.get("model") or "", max_tokens=4,
+                        timeout=timeout)
+                except Exception:  # noqa: BLE001 - warmup is best-effort
+                    pass
+            report["smoke"] = run_smoke(instance, prompts=prompts, chat_fn=chat_fn,
+                                        max_tokens=max_tokens, timeout=timeout,
+                                        deadline=deadline, health_fn=health_fn)
         if paired_fn is not None:
-            try:
-                report["paired_ab"] = paired_fn(instance)
-            except Exception as exc:  # noqa: BLE001 - reported, not raised
-                report["paired_ab"] = {"error": str(exc)}
+            if deadline is not None and time.monotonic() > deadline:
+                report["paired_ab"] = {"error": "deadline exceeded before paired subset"}
+            else:
+                try:
+                    report["paired_ab"] = paired_fn(instance)
+                except Exception as exc:  # noqa: BLE001 - reported, not raised
+                    report["paired_ab"] = {"error": str(exc)}
     finally:
         if not keep_loaded:
             try:
@@ -286,6 +349,7 @@ def evaluate(*, gguf, manager, chat_fn=None, paired_fn=None,
     smoke = report["smoke"] or {}
     paired = report["paired_ab"]
     report["ok"] = (bool(smoke) and smoke.get("failed", 1) == 0
+                    and not smoke.get("error")
                     and not (isinstance(paired, dict) and paired.get("error")))
     return report
 
@@ -337,6 +401,27 @@ def main(argv: list[str] | None = None) -> int:
                              "empty visible replies otherwise); passed to "
                              "llama-server as --chat-template-kwargs")
     parser.add_argument("--output", default="", help="report JSON path")
+    parser.add_argument("--startup-timeout", type=float, default=300.0,
+                        help="seconds to wait for llama-server to become healthy "
+                             "(raise for large/offloaded models)")
+    parser.add_argument("--timeout", type=float, default=CHAT_TIMEOUT,
+                        help="per-request chat timeout in seconds")
+    parser.add_argument("--deadline", type=float, default=0.0,
+                        help="global run budget in seconds (0 = unlimited)")
+    parser.add_argument("--no-warmup", dest="warmup", action="store_false",
+                        default=True,
+                        help="skip the unscored warmup turn before the smoke")
+    parser.add_argument("--no-health", dest="health", action="store_false",
+                        default=True,
+                        help="skip mid-run TCP liveness checks")
+    parser.add_argument("--expect-name", default="",
+                        help="refuse to score unless the GGUF name contains this "
+                             "(reference-identity guard, e.g. Qwen3.8-27B)")
+    parser.add_argument("--expect-arch", default="",
+                        help="refuse to score unless the GGUF architecture matches")
+    parser.add_argument("--forbid", default="",
+                        help="comma-separated name markers that fail the reference "
+                             "identity guard (e.g. dflash,uncensored,turbo)")
     parser.add_argument("--mock", action="store_true",
                         help="offline wiring check (stub manager/chat/paired)")
     args = parser.parse_args(argv)
@@ -345,6 +430,8 @@ def main(argv: list[str] | None = None) -> int:
         manager, gguf = build_mock_manager()
         chat_fn = _mock_chat
         paired_fn = None if args.no_paired else _mock_paired
+        health_fn = None
+        manifest: dict = {"mode": "mock", "spec_sha256": SPEC_SHA256}
     else:
         if not args.gguf:
             print("error: --gguf is required (or use --mock)", file=sys.stderr)
@@ -353,9 +440,41 @@ def main(argv: list[str] | None = None) -> int:
         manager = build_manager(
             binary=Path(args.fork_bin) if args.fork_bin else None,
             log_dir=REPO_ROOT / "logs", host=args.host, port=args.port,
+            startup_timeout=args.startup_timeout,
         )
         chat_fn = None
         stem = Path(args.gguf).stem
+        try:
+            from harness.models import gguf_identity, verify_reference
+            identity = gguf_identity(gguf)
+        except Exception:  # noqa: BLE001 - provenance is best-effort
+            identity = {}
+        if args.expect_name or args.expect_arch:
+            check = verify_reference(
+                gguf, expect_name=args.expect_name or None,
+                expect_arch=args.expect_arch or None,
+                forbid=[m for m in args.forbid.split(",") if m])
+            if not check.get("ok", True):
+                print(f"error: reference identity check failed: "
+                      f"{check.get('reason')}", file=sys.stderr)
+                return 2
+        manifest = {
+            "mode": "live",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "git_rev": _git_rev(),
+            "spec_sha256": SPEC_SHA256,
+            "binary": str(args.fork_bin or args.backend or ""),
+            "identity": identity,
+            "ctx_size": args.ctx_size,
+            "ngl": args.ngl,
+            "max_tokens": args.max_tokens,
+            "temperature": 0.0,
+            "timeout": args.timeout,
+            "startup_timeout": args.startup_timeout,
+            "warmup": args.warmup,
+            "hardware": _hardware(),
+        }
+        health_fn = _server_alive if args.health else None
 
         if args.no_paired:
             paired_fn = None
@@ -375,10 +494,23 @@ def main(argv: list[str] | None = None) -> int:
             max_tokens=args.max_tokens, ctx_size=args.ctx_size, ngl=args.ngl,
             backend=(None if args.fork_bin else (args.backend or None)),
             extra_args=list(NO_THINKING_ARGS) if args.no_thinking else None,
-            keep_loaded=args.keep_loaded,
+            keep_loaded=args.keep_loaded, timeout=args.timeout,
+            deadline=(args.deadline or None), warmup=args.warmup,
+            health_fn=health_fn, manifest=manifest,
         )
     except (FileNotFoundError, RuntimeError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
+        try:
+            output = Path(args.output) if args.output else (
+                REPO_ROOT / "artifacts" / "ternary" / "eval"
+                / f"{Path(str(gguf)).stem}.json")
+            write_report({
+                "task": "T11", "spec_sha256": SPEC_SHA256, "gguf": str(gguf),
+                "error": str(exc), "error_type": type(exc).__name__, "ok": False,
+            }, output)
+            print(f"  report : {output}")
+        except Exception:  # noqa: BLE001 - best-effort failure report
+            pass
         return 2
 
     output = Path(args.output) if args.output else (
