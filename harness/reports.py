@@ -127,6 +127,8 @@ def _baseline_rows(report: dict, composite: object) -> list[tuple[str, object]]:
 
 def render_report_page(report: dict, run_name: str) -> str:
     """One run_report.json bundle as a standalone HTML page."""
+    if isinstance(report, dict) and report.get("kind") == "training":
+        return render_training_report(report, run_name)
     aggregate = report.get("aggregate") if isinstance(report.get("aggregate"), dict) else {}
     post = report.get("post_run_pes") if isinstance(report.get("post_run_pes"), dict) else {}
     components = post.get("components") if isinstance(post.get("components"), dict) else {}
@@ -237,10 +239,14 @@ backend <b>{_esc(report.get('backend') or '&mdash;')}</b> &middot; run
 
 def render_runs_page(entries: list[dict]) -> str:
     """Index of available run bundles."""
+    def _kind(e: dict) -> str:
+        kind = e.get("kind") or "benchmark"
+        return f" · <b>{_esc(kind)}</b>" if kind != "benchmark" else ""
+
     items = "".join(
         f"<li><a href='/view/{_esc(e['name'])}'><code>{_esc(e['name'])}</code></a> "
         f"<span class='note'>modified {_esc(e['modified'])}"
-        f"{'' if e['has_report'] else ' · no run_report.json yet'}</span></li>"
+        f"{_kind(e)}{'' if e.get('has_report') else ' · no run_report.json yet'}</span></li>"
         for e in entries
     ) or "<li class='note'>no runs yet</li>"
     return f"""<!doctype html>
@@ -250,6 +256,194 @@ def render_runs_page(entries: list[dict]) -> str:
 <p><a href="/server"><button>← Studio console</button></a> <a href="/docs"><button>API docs</button></a></p>
 <ul class="runs">{items}</ul>
 </body></html>"""
+
+
+def _training_kv(label: str, value: object, nd: int = 2) -> str:
+    return f"<div class='kv'><span>{label}</span><b>{_fmt(value, nd)}</b></div>"
+
+
+def render_training_report(report: dict, run_name: str) -> str:
+    """One training run bundle (``kind == 'training'``) as a standalone page."""
+    aggregate = report.get("aggregate") if isinstance(report.get("aggregate"), dict) else {}
+    progress = report.get("progress") if isinstance(report.get("progress"), dict) else {}
+    config = report.get("config") if isinstance(report.get("config"), dict) else {}
+    regions = report.get("regions") if isinstance(report.get("regions"), list) else []
+
+    ratio = aggregate.get("mean_ratio")
+    retention = report.get("retention")
+    if retention is None and isinstance(ratio, (int, float)) and ratio:
+        retention = round(100.0 / float(ratio), 1)
+
+    region_rows = "".join(
+        "<tr>"
+        f"<td>{_esc(r.get('name', ''))}</td>"
+        f"<td>{_fmt(r.get('start_token'), 0)}</td>"
+        f"<td>{_fmt(r.get('n_windows'), 0)}</td>"
+        f"<td>{_fmt(r.get('ppl'), 3)}</td>"
+        f"<td>{_fmt(r.get('teacher_ppl'), 3)}</td>"
+        f"<td><b>{_fmt(r.get('ratio'), 4)}</b></td>"
+        "</tr>"
+        for r in regions if isinstance(r, dict)
+    ) or "<tr><td colspan='6' class='note'>no evaluation yet &mdash; run still in progress</td></tr>"
+
+    return f"""<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Hive-Ternary run &mdash; {_esc(run_name)}</title>
+<style>{_CSS}</style></head><body>
+<h1>Hive-Ternary &mdash; <code>{_esc(run_name)}</code></h1>
+<p class="note">engine <b>{_esc(report.get('engine') or '&mdash;')}</b> &middot;
+recipe <b>{_esc(report.get('method') or '&mdash;')}</b> &middot;
+status <b>{_esc(report.get('status') or '&mdash;')}</b></p>
+<div class="cards">
+<div class="card"><span>Mean ratio</span><b>{_fmt(ratio, 4)}</b></div>
+<div class="card"><span>Retention</span><b>{_fmt(retention, 1)}%</b></div>
+<div class="card"><span>Best region</span><b>{_fmt(aggregate.get('min_ratio'), 4)}</b></div>
+<div class="card"><span>Regions</span><b>{_fmt(aggregate.get('n_regions'), 0)}</b></div>
+</div>
+
+<h2>Per-region retention (lower ratio is better)</h2>
+<table><tr><th>Region</th><th>Start</th><th>Windows</th><th>PPL</th><th>Teacher</th><th>Ratio</th></tr>
+{region_rows}
+</table>
+
+<h2>Run</h2>
+<div class="kv-grid">
+{_training_kv('Step', progress.get('step'), 0)}
+{_training_kv('Total steps', progress.get('total_steps'), 0)}
+{_training_kv('Loss', progress.get('loss'))}
+{_training_kv('Deployed ratio', progress.get('deployed_ratio'))}
+{_training_kv('Init ratio', progress.get('init_ratio'))}
+{_training_kv('Elapsed (s)', progress.get('elapsed_s'), 0)}
+</div>
+
+<h2>Config</h2>
+<div class="kv-grid">
+{_training_kv('Model', config.get('model_dir'))}
+{_training_kv('Corpus', config.get('corpus'))}
+{_training_kv('Steps', config.get('steps'), 0)}
+{_training_kv('Seq', config.get('seq'), 0)}
+{_training_kv('LR', config.get('lr'))}
+{_training_kv('Device', config.get('device'))}
+{_training_kv('Eval regions', config.get('eval_regions'), 0)}
+{_training_kv('Eval windows', config.get('eval_windows'), 0)}
+</div>
+
+<p class="note"><a href="/runs">&larr; all runs</a></p>
+</body></html>"""
+
+
+_TRAINING_PANE = r"""
+<div id="tab-training" class="tabpane" style="display:none">
+<section>
+<h2 style="margin-top:0">Training <span class="note">Unsloth Core &middot; Hive-Ternary</span></h2>
+<div class="row">
+  <label class="inline">Engine <select id="tr-engine" onchange="trSyncMethods()"></select></label>
+  <label class="inline">Recipe <select id="tr-method"></select></label>
+  <label class="inline">Run name <input id="tr-name" size="16" placeholder="ste-rotate 20k"></label>
+</div>
+<div class="row"><label class="inline" style="flex:1">Model dir
+  <input id="tr-model" size="34" placeholder="/path/to/hf base model"></label></div>
+<div class="row"><label class="inline" style="flex:1">Corpus
+  <input id="tr-corpus" size="34" placeholder="/path/to/corpus.txt"></label></div>
+<div class="row">
+  <label class="inline">steps <input id="tr-steps" type="number" value="20000" size="6"></label>
+  <label class="inline">seq <input id="tr-seq" type="number" value="512" size="5"></label>
+  <label class="inline">lr <input id="tr-lr" value="5e-5" size="7"></label>
+  <label class="inline">device <input id="tr-device" value="cuda:1" size="7"></label>
+  <label class="inline">seed <input id="tr-seed" type="number" value="1337" size="6"></label>
+  <label class="inline">eval regions <input id="tr-regions" type="number" value="8" size="3"></label>
+  <label class="inline">eval windows <input id="tr-windows" type="number" value="8" size="3"></label>
+</div>
+<div class="row">
+  <button onclick="trLaunch(this)">Start training</button>
+  <span id="tr-msg" class="note"></span>
+</div>
+<div id="tr-status" class="kv-grid"></div>
+<pre id="tr-log" style="max-height:240px;overflow:auto"></pre>
+<p class="note">One 512-token window per step &mdash; batch size is not a control here.
+History lives in <a href="/runs">Runs</a>; ternary reports render at <code>/view/&lt;run&gt;</code>.</p>
+</section>
+<script>
+const TR_CATALOG = __CATALOG__;
+let trRun = null, trTimer = null;
+function trFillEngines(){
+  const es = document.getElementById('tr-engine'); if(!es) return;
+  es.innerHTML = '';
+  for (const e of TR_CATALOG){
+    const o = document.createElement('option'); o.value = e.id;
+    o.textContent = e.label + (e.external ? ' (external)' : '');
+    es.appendChild(o);
+  }
+  trSyncMethods();
+}
+function trSyncMethods(){
+  const ev = document.getElementById('tr-engine').value;
+  const ms = document.getElementById('tr-method'); if(!ms) return;
+  ms.innerHTML = '';
+  const engine = TR_CATALOG.find(e => e.id === ev); if(!engine) return;
+  for (const m of engine.methods){
+    const o = document.createElement('option'); o.value = m.id;
+    o.textContent = m.label + (m.implemented ? '' : ' \u2014 not implemented');
+    o.disabled = !m.implemented;
+    ms.appendChild(o);
+  }
+}
+function trFields(){
+  const val = id => { const el = document.getElementById(id); return el && el.value.trim() !== '' ? el.value.trim() : undefined; };
+  return {model_dir: val('tr-model'), corpus: val('tr-corpus'),
+          steps: val('tr-steps'), seq: val('tr-seq'), lr: val('tr-lr'),
+          device: val('tr-device'), seed: val('tr-seed'),
+          eval_regions: val('tr-regions'), eval_windows: val('tr-windows')};
+}
+async function trLaunch(btn){
+  const msg = document.getElementById('tr-msg');
+  const method = document.getElementById('tr-method').value;
+  if(!method){ msg.textContent = 'pick a recipe'; return; }
+  msg.textContent = 'launching\u2026';
+  try{
+    const r = await api('/v1/training/launch', 'POST',
+      {engine: document.getElementById('tr-engine').value, method,
+       name: document.getElementById('tr-name').value, fields: trFields()});
+    trRun = r.run_dir;
+    msg.textContent = 'started ' + r.run_dir + ' (pid ' + r.pid + ')';
+    trPoll();
+    if(trTimer) clearInterval(trTimer);
+    trTimer = setInterval(trPoll, 3000);
+  }catch(e){ msg.textContent = 'launch failed: ' + e.message; }
+}
+async function trPoll(){
+  if(!trRun) return;
+  try{
+    const s = await api('/v1/training/status/' + encodeURIComponent(trRun));
+    const p = s.progress || {};
+    const rows = [['state', s.state], ['step', (p.step||0) + ' / ' + (p.total_steps||'?')],
+                  ['loss', p.loss], ['deployed ratio', p.deployed_ratio],
+                  ['init ratio', p.init_ratio], ['elapsed s', p.elapsed_s]];
+    document.getElementById('tr-status').innerHTML = rows.map(([k,v]) =>
+      "<div class='kv'><span>" + k + "</span><b>" +
+      (v === undefined || v === null ? '&mdash;' : v) + "</b></div>").join('');
+    if(s.state === 'finished' || s.state === 'stopped'){
+      if(trTimer){ clearInterval(trTimer); trTimer = null; }
+      document.getElementById('tr-msg').innerHTML =
+        "done &mdash; <a href='/view/" + encodeURIComponent(trRun) + "'>open report</a>";
+    }
+  }catch(e){ /* keep polling while the run settles */ }
+}
+document.addEventListener('DOMContentLoaded', trFillEngines);
+const trTabBtn = document.querySelector('[data-tab="tab-training"]');
+if(trTabBtn) trTabBtn.addEventListener('click', () => setTimeout(trFillEngines, 10));
+</script>
+</div>
+"""
+
+
+def render_training_pane() -> str:
+    """The Training tab pane (self-contained HTML + script)."""
+    import json as _json
+
+    from harness.training import engine_catalog
+
+    return _TRAINING_PANE.replace("__CATALOG__", _json.dumps(engine_catalog()))
 
 
 _STUDIO_CSS_PATH = Path(__file__).with_name("studio.css")
@@ -297,6 +491,7 @@ def render_server_page() -> str:
 <button class="tab" data-tab="tab-providers">Providers</button>
 <button class="tab" data-tab="tab-hub">Hub</button>
 <button class="tab" data-tab="tab-inspect">Inspector</button>
+<button class="tab" data-tab="tab-training">Training</button>
 <button class="tab active" data-tab="tab-settings">Settings</button>
 </div>
 
@@ -589,6 +784,7 @@ providers.local.json (gitignored).</div>
 </section>
 </div>
 
+{render_training_pane()}
 
 </div>
 

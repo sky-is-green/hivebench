@@ -83,6 +83,16 @@ from harness.reports import (
     render_server_page,
     resolve_run_dir,
 )
+from harness.training import (
+    ENGINE_HIVE_TERNARY,
+    build_run_report,
+    engine_catalog,
+    ternary_python,
+    ternary_runner,
+    launch as launch_training,
+    run_status as training_run_status,
+    write_run_report,
+)
 from logs.event_logger import EventLogger
 from retention.store import ContextStore
 from splinter.server import create_app as create_splinter_app
@@ -98,9 +108,17 @@ def _list_runs(runs_root: Path) -> list[dict]:
                         reverse=True):
         if not child.is_dir():
             continue
+        report_path = child / "run_report.json"
+        kind = "benchmark"
+        if report_path.is_file():
+            try:
+                kind = json.loads(report_path.read_text(encoding="utf-8")).get("kind") or kind
+            except (OSError, ValueError):
+                pass
         entries.append({
             "name": child.name,
-            "has_report": (child / "run_report.json").is_file(),
+            "has_report": report_path.is_file(),
+            "kind": kind,
             "modified": datetime.fromtimestamp(child.stat().st_mtime)
             .strftime("%Y-%m-%d %H:%M:%S"),
         })
@@ -1094,6 +1112,14 @@ class _State:
 class ProtocolRunRequest(BaseModel):
     mode: str = "mock"  # live | mock
     args: dict = {}
+
+
+class TrainingLaunchRequest(BaseModel):
+    """One Training-tab run: engine + recipe + the form's fields."""
+    engine: str = ENGINE_HIVE_TERNARY
+    method: str = "ste-rotate"
+    name: str = ""
+    fields: dict = {}
 
 
 class ProviderEntry(BaseModel):
@@ -3365,6 +3391,41 @@ def create_app(
             stderr=subprocess.STDOUT,
         )
         return {"run_dir": str(run_dir), "pid": proc.pid}
+
+    # ------------------------------------------------------------------
+    # Training tab (engine switch + Hive-Ternary launch/monitor). Unsloth Core
+    # is catalogue-only for now; the ternary engine is the launchable one.
+    @app.get("/v1/training/engines")
+    def training_engines():
+        return {
+            "engines": engine_catalog(),
+            "python": ternary_python(),
+            "runner": ternary_runner(),
+        }
+
+    @app.post("/v1/training/launch")
+    def training_launch(req: TrainingLaunchRequest):
+        try:
+            return launch_training(
+                st.runs_root, req.engine, req.method,
+                dict(req.fields or {}), name=req.name)
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+    @app.get("/v1/training/status/{run_dir:path}")
+    def training_status(run_dir: str):
+        target = resolve_run_dir(st.runs_root, run_dir)
+        if not target.is_dir():
+            raise HTTPException(404, f"no run under {target}")
+        return training_run_status(target)
+
+    @app.post("/v1/training/report/{run_dir:path}")
+    def training_report(run_dir: str):
+        target = resolve_run_dir(st.runs_root, run_dir)
+        if not (target / "training.json").is_file():
+            raise HTTPException(404, f"not a training run: {target}")
+        write_run_report(target)
+        return build_run_report(target)
 
     @app.get("/v1/report/{run_dir:path}")
     def report(run_dir: str):

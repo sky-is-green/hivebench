@@ -162,6 +162,7 @@ class ConsoleCommands:
             "provider": self._provider,
             "engine": self._engine,
             "bench": self._bench,
+            "train": self._train,
             "status": self._status,
         }
         self._descriptors = [
@@ -179,6 +180,8 @@ class ConsoleCommands:
                               input_hint="[name]"),
             CommandDescriptor("bench", "run the mock HiveBench protocol",
                               input_hint="[max_convs]"),
+            CommandDescriptor("train", "list training engines/recipes or show one",
+                              input_hint="[engine]"),
             CommandDescriptor("status", "server / agent / provider summary"),
         ]
 
@@ -324,6 +327,34 @@ class ConsoleCommands:
             "success",
             f"mock benchmark launched ({max_convs} convs) -> {run_dir.name}; "
             f"report at /view/{run_dir.name} when done")
+
+    def _train(self, args: str, _cid: str) -> CommandResult:
+        from harness.training import (
+            engine_catalog,
+            get_engine,
+            ternary_python,
+            ternary_runner,
+        )
+
+        if args:
+            try:
+                engine = get_engine(args.strip())
+            except ValueError as exc:
+                return CommandResult("error", str(exc))
+            lines = [f"{engine.label} — {engine.description}"]
+            for m in engine.methods:
+                mark = "" if m.implemented else " (not implemented)"
+                lines.append(f"  {m.id}{mark} — {m.label}")
+            return CommandResult("success", "\n".join(lines))
+        lines = ["training engines:"]
+        for e in engine_catalog():
+            ready = ", ".join(m.id for m in e.methods if m.implemented) or "—"
+            lines.append(f"  {e.id} — {e.label} [ready: {ready}]")
+        lines.append("runner: " + (" ".join(ternary_runner()) or
+                                   "(unset — set $HIVE_TERNARY_RUNNER)"))
+        lines.append(f"python: {ternary_python()}")
+        lines.append("launch from the Training tab, or POST /v1/training/launch")
+        return CommandResult("success", "\n".join(lines))
 
     def _status(self, _args: str, _cid: str) -> CommandResult:
         s = self.models.status()
