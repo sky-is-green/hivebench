@@ -42,11 +42,22 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          Write-Host "free before: $([math]::Round((Get-PSDrive C).Free/1GB,1)) GB"
+          # The Windows image ships ~20 GB of SDKs this Python job never uses.
           $paths = @(
-            'C:\Android', 'C:\Program Files\Android', 'C:\Program Files (x86)\Android',
-            'C:\Program Files\dotnet', 'C:\Program Files\Google\Chrome',
-            'C:\Program Files (x86)\Google\Chrome',
-            'C:\hostedtoolcache\windows\PyPy'
+            'C:\Program Files\Microsoft Visual Studio',
+            'C:\Program Files (x86)\Microsoft Visual Studio',
+            'C:\Program Files\dotnet',
+            'C:\Program Files\Android', 'C:\Program Files (x86)\Android',
+            'C:\Program Files\Google\Chrome', 'C:\Program Files (x86)\Google\Chrome',
+            'C:\Program Files (x86)\Windows Kits',
+            'C:\Program Files\Java', 'C:\Program Files\Microsoft JDK',
+            'C:\Program Files\Microsoft SQL Server',
+            'C:\Program Files\Microsoft SDKs',
+            'C:\Program Files (x86)\Microsoft SDKs',
+            'C:\ProgramData\chocolatey\lib', 'C:\vcpkg',
+            'C:\hostedtoolcache\windows\PyPy', 'C:\hostedtoolcache\windows\Ruby',
+            'C:\hostedtoolcache\windows\Go'
           )
           foreach ($p in $paths) {
             if (Test-Path $p) {
@@ -54,7 +65,7 @@ jobs:
               Write-Host "removed $p"
             }
           }
-          Get-PSDrive C | Select-Object @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
+          Write-Host "free after:  $([math]::Round((Get-PSDrive C).Free/1GB,1)) GB"
 
       - uses: actions/checkout@v4
 
@@ -81,6 +92,10 @@ jobs:
           # run blocks in single quotes, so $VAR expansion never happens there.
           pip install -e ${{ env.SPLINTER_HOME }}
           pip install -e .
+
+      - name: Disk headroom
+        shell: bash
+        run: df -h / 2>/dev/null || true
 
       # The suite's only real encoder is paraphrase-MiniLM-L3-v2 (~90 MB);
       # cache it so repeat runs stay offline and no download can fail mid-test.
