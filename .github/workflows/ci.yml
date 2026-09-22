@@ -12,6 +12,14 @@ jobs:
     # $SPLINTER_HOME (their default is ../splinter-memory for local dev).
     env:
       SPLINTER_HOME: ${{ github.workspace }}/splinter-sys
+      # Keep downloads off the runner disk: the hosted Windows image is tight,
+      # and pip's cache costs GBs. `PIP_NO_CACHE_DIR` makes this binding for
+      # every `pip install` below (and is why setup-python has no `cache: pip`).
+      PIP_NO_CACHE_DIR: "1"
+      # Encoder weights live in the workspace so they can be cached; ~90 MB.
+      HF_HOME: ${{ github.workspace }}/.hf-cache
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      PYTHONUNBUFFERED: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -19,6 +27,35 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     steps:
+      # The hosted images ship several GB of SDKs this job never uses; reclaim
+      # the space before the Python + torch install (the Windows image is the
+      # tight one — see the disk-space note in README).
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/share/swift /opt/ghc /usr/local/.ghcup \
+                      /usr/local/lib/android /opt/hostedtoolcache/CodeQL \
+                      /usr/local/share/boost /opt/az /usr/local/share/powershell 2>/dev/null || true
+          df -h /
+
+      - name: Free disk space (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $paths = @(
+            'C:\Android', 'C:\Program Files\Android', 'C:\Program Files (x86)\Android',
+            'C:\Program Files\dotnet', 'C:\Program Files\Google\Chrome',
+            'C:\Program Files (x86)\Google\Chrome',
+            'C:\hostedtoolcache\windows\PyPy'
+          )
+          foreach ($p in $paths) {
+            if (Test-Path $p) {
+              Remove-Item -Recurse -Force $p -ErrorAction SilentlyContinue
+              Write-Host "removed $p"
+            }
+          }
+          Get-PSDrive C | Select-Object @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}}
+
       - uses: actions/checkout@v4
 
       # The system under test — sibling repo, checked out inside the workspace
@@ -28,10 +65,11 @@ jobs:
           ref: SplinterMemory-test
           path: splinter-sys
 
+      # No `cache: pip` on purpose: the pip cache is GBs of runner disk and the
+      # env above keeps pip from writing one anyway.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
 
       # CPU-only torch keeps the install lean (default wheels pull CUDA)
       - name: Install CPU torch
@@ -43,6 +81,18 @@ jobs:
           # run blocks in single quotes, so $VAR expansion never happens there.
           pip install -e ${{ env.SPLINTER_HOME }}
           pip install -e .
+
+      # The suite's only real encoder is paraphrase-MiniLM-L3-v2 (~90 MB);
+      # cache it so repeat runs stay offline and no download can fail mid-test.
+      - name: Cache encoder model
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.HF_HOME }}
+          key: hf-${{ runner.os }}-minilm-l3-v2-v1
+
+      - name: Pre-fetch encoder
+        run: |
+          python -c "from sentence_transformers import SentenceTransformer as S; S('sentence-transformers/paraphrase-MiniLM-L3-v2')"
 
       # Corpora are generated, not committed (splinter repo docs/INSTALL.md step 4)
       - name: Generate fixture corpora
