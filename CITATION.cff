@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software or its measurements, cite it as below."
+title: "HiveBench"
+abstract: >-
+  Evaluation suite and Studio sidecar for Splinter-Memory. Ships the white
+  paper's falsifiable predictions (P1-P11) as executable, offline tests with
+  measured verdicts, deterministic retrieval diagnostics that avoid
+  LLM-as-judge circularity in the evidence path, and replayable paired A/B
+  batteries (splinter-curated context vs a naive FIFO window).
+type: software
+authors:
+  - name: "sky-is-green"
+    alias: "sky-is-green"
+version: "0.1.0"
+date-released: "2026-09-22"
+repository-code: "https://github.com/sky-is-green/hivebench"
+url: "https://github.com/sky-is-green/hivebench"
+keywords:
+  - evaluation
+  - benchmark
+  - context-management
+  - llm
+  - reproducibility
