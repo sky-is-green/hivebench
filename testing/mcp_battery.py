@@ -1,7 +1,7 @@
 """MCP-path recall + latency battery (S3).
 
 Makes the sidecar's MCP tools a measured feature: it drives
-``strata_remember`` + ``strata_search`` over live JSON-RPC (``POST /v1/mcp``)
+``splinter_remember`` + ``splinter_search`` over live JSON-RPC (``POST /v1/mcp``)
 and measures recall and latency on the same long-horizon conversations the
 raw REST path is measured on, then folds the per-turn numbers through the
 existing :class:`~testing.ab_test.ABTestRunner` so an MCP run yields the same
@@ -13,13 +13,13 @@ Method (deterministic, no LLM required):
    facts the assistant stated and the later user turns that ask for them again
    (``Remind me ... throttling``). Fall back to recent-memory probes when a
    conversation carries no decision markers.
-2. Ingest every earlier fact through the path under test (MCP ``strata_remember``
-   vs raw ``/v1/strata/observe``), then query it (MCP ``strata_search`` vs raw
-   ``/v1/strata/curate``), so both paths see byte-identical memory and only the
+2. Ingest every earlier fact through the path under test (MCP ``splinter_remember``
+   vs raw ``/v1/splinter/observe``), then query it (MCP ``splinter_search`` vs raw
+   ``/v1/splinter/curate``), so both paths see byte-identical memory and only the
    transport differs.
 3. Recall for a query is the token overlap between the assembled context and the
    fact it should surface; latency is the query round trip. ``--raw-mode turn``
-   swaps the raw baseline to the full generating ``/v1/strata/turn``.
+   swaps the raw baseline to the full generating ``/v1/splinter/turn``.
 
 Usage::
 
@@ -369,7 +369,7 @@ def format_report(report: BatteryReport) -> str:
         f"MCP-path battery  [{'OK' if report.handshake_ok else 'HANDSHAKE FAILED'}]",
         f"  base_url        : {report.base_url}",
         f"  conversation_id : {report.conversation_id}",
-        f"  raw baseline    : /v1/strata/{report.raw_mode}",
+        f"  raw baseline    : /v1/splinter/{report.raw_mode}",
         f"  probes          : {report.probes}",
     ]
     if not report.handshake_ok:
@@ -407,16 +407,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-probes", type=int, default=DEFAULT_MAX_PROBES,
                         help="cap the recall probes per conversation (0 = all)")
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K,
-                        help="strata_search top_k")
+                        help="splinter_search top_k")
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT,
                         help="per-request timeout in seconds")
     parser.add_argument("--token", default="",
-                        help="sidecar token (sent as x-strata-token)")
+                        help="sidecar token (sent as x-splinter-token)")
     parser.add_argument("--conversation-id", default="",
                         help="base conversation id (default: timestamped)")
     parser.add_argument("--raw-mode", choices=("curate", "turn"), default="curate",
                         help="raw baseline endpoint: curate (no generation) or "
-                             "the full /v1/strata/turn")
+                             "the full /v1/splinter/turn")
     parser.add_argument("--json", default="",
                         help="write the full report as JSON to this path")
     args = parser.parse_args(argv)

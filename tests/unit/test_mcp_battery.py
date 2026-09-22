@@ -111,7 +111,7 @@ def test_battery_raw_turn_mode_uses_the_turn_endpoint():
     )
     assert report.raw_mode == "turn"
     assert report.raw["recall"] == 1.0
-    assert any(url.endswith("/v1/strata/turn") for url, _b, _h in fake.requests)
+    assert any(url.endswith("/v1/splinter/turn") for url, _b, _h in fake.requests)
 
 
 def test_battery_counts_errors_when_sidecar_is_down():

@@ -1,6 +1,6 @@
 """P11 comb benchmark: CombStore retrieve cost at max_records scale.
 
-Measures the per-turn comb overhead a gated Strata pays: put (append) latency,
+Measures the per-turn comb overhead a gated Splinter pays: put (append) latency,
 lexical retrieval over a near-full comb (2000 records), and the flush after
 touch. Retrieval is lexical-only since comb_probe (2026-08-24) measured that
 lexical ranking beats the drone on return turns AND costs ~1 ms instead of
@@ -21,7 +21,7 @@ import time
 from pathlib import Path
 
 _HIVEBENCH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_HIVE = os.path.join(os.path.dirname(_HIVEBENCH), "strata")
+_HIVE = os.path.join(os.path.dirname(_HIVEBENCH), "splinter")
 sys.path.insert(0, _HIVEBENCH)
 sys.path.insert(0, _HIVE)
 

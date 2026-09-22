@@ -1,6 +1,6 @@
 """P1-FLOOR — relevance floor + per-chunk window-share cap in focal assembly.
 
-Spec: STRATA-PLAN.md "P1-FLOOR". Selection must skip chunks whose RAW drone
+Spec: SPLINTER-PLAN.md "P1-FLOOR". Selection must skip chunks whose RAW drone
 score is below ``relevance_floor`` (pre-decay, pre-drift, uniform incl. comb
 candidates) and truncate any chunk costing more than ``max_chunk_share`` of
 the budget to the cap at selection time only.
@@ -184,7 +184,7 @@ def test_app_tolerates_empty_assembly(tmp_path, monkeypatch):
         state_dir=tmp_path / "harness_state",
     )
     with TestClient(app) as client:
-        response = client.post("/v1/strata/curate", json={
+        response = client.post("/v1/splinter/curate", json={
             "query": "how does authentication work",
             "conversation_id": "floor-empty",
         })

@@ -12,10 +12,10 @@ import json
 from urllib.parse import urlparse
 
 MCP_PATH = "/v1/mcp"
-TURN_PATH = "/v1/strata/turn"
-CURATE_PATH = "/v1/strata/curate"
-OBSERVE_PATH = "/v1/strata/observe"
-RESET_PATH = "/v1/strata/reset"
+TURN_PATH = "/v1/splinter/turn"
+CURATE_PATH = "/v1/splinter/curate"
+OBSERVE_PATH = "/v1/splinter/observe"
+RESET_PATH = "/v1/splinter/reset"
 
 
 class FakeResponse:
@@ -80,11 +80,11 @@ class FakeSidecar:
             return {"jsonrpc": "2.0", "id": mid, "result": {
                 "protocolVersion": "2025-06-18",
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "strata-memory", "version": "test"},
+                "serverInfo": {"name": "splinter-memory", "version": "test"},
             }}
         if method == "tools/list":
             return {"jsonrpc": "2.0", "id": mid, "result": {"tools": [
-                {"name": "strata_search"}, {"name": "strata_remember"},
+                {"name": "splinter_search"}, {"name": "splinter_remember"},
             ]}}
         if method != "tools/call":
             return {"jsonrpc": "2.0", "id": mid,
@@ -98,7 +98,7 @@ class FakeSidecar:
             return {"jsonrpc": "2.0", "id": mid,
                     "error": {"code": -32602,
                               "message": "conversation_id is required"}}
-        if name == "strata_remember":
+        if name == "splinter_remember":
             text = (args.get("text") or "").strip()
             if not text:
                 return {"jsonrpc": "2.0", "id": mid,
@@ -106,7 +106,7 @@ class FakeSidecar:
             self.store.setdefault(cid, []).append(text)
             payload = {"ok": True, "stored": True, "chunk_id": f"c{len(self.store[cid])}",
                        "turn": len(self.store[cid]), "store_chunks": len(self.store[cid])}
-        elif name == "strata_search":
+        elif name == "splinter_search":
             query = (args.get("query") or "").strip()
             if not query:
                 return {"jsonrpc": "2.0", "id": mid,

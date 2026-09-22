@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/sky-is-green/hivebench/actions/workflows/ci.yml/badge.svg)](https://github.com/sky-is-green/hivebench/actions/workflows/ci.yml)
 
-Evaluation suite + Studio sidecar harness for the [Strata Memory](https://github.com/sky-is-green/strata-memory) system.
+Evaluation suite + Studio sidecar harness for the [Splinter Memory](https://github.com/sky-is-green/splinter-memory) system.
 
-**Status: work in progress.** Carved out of strata-memory on 2026-09-12 as its
+**Status: work in progress.** Carved out of splinter-memory on 2026-09-12 as its
 own repository. The offline suite is green (546 unit + 53 integration, verified
 Sep 12); the live batteries and Studio are under active development — expect
 moving parts here.
@@ -16,12 +16,12 @@ tells you *whether the context you feed the model is the reason it works*, and
 it does it deterministically, offline, and replayably:
 
 - **Falsifiable, not vibes.** The white paper's P1-P11 predictions ship as
-  executable tests with measured PASS/FAIL verdicts (strata repo,
-  `STRATA-WHITE-PAPER.md` section 8). Every number in the strata README is
+  executable tests with measured PASS/FAIL verdicts (splinter repo,
+  `SPLINTER-WHITE-PAPER.md` section 8). Every number in the splinter README is
   reproduced by a command in this repo.
 - **No LLM-as-judge circularity in the evidence path.** The deterministic
   diagnostics score fact presence against fixture ground truth, stated-facts
-  recall, first-mention exclusion, hedge filtering. **The Strata auditor**, an
+  recall, first-mention exclusion, hedge filtering. **The Splinter auditor**, an
   asynchronous ground-truth layer that labels, after each turn, whether the
   assembled context was actually sufficient for the query, corroborates that
   evidence; because it shares the served model's biases, it never constitutes
@@ -31,7 +31,7 @@ it does it deterministically, offline, and replayably:
   local model backend, LM Studio / llama.cpp, which on most rigs means a GPU;
   the drones themselves stay on CPU.)
 - **Paired head-to-head A/B** (`hivebench-ab`): the same turns, the same model,
-  strata-curated context vs the naive FIFO window, both answers scored
+  splinter-curated context vs the naive FIFO window, both answers scored
   deterministically (fixture-fact presence + context fidelity), with both
   arms' stores replaying identical history so the comparison isolates
   selection. The scoring path is unit-tested; interim live results are
@@ -55,16 +55,16 @@ it does it deterministically, offline, and replayably:
 The checkouts live side by side:
 
 ```
-~/Desktop/work/strata-memory   # the system
+~/Desktop/work/splinter-memory   # the system
 ~/Desktop/work/hivebench       # this repo
 ```
 
 Windows (PowerShell):
 
 ```powershell
-git clone https://github.com/sky-is-green/strata-memory.git
+git clone https://github.com/sky-is-green/splinter-memory.git
 git clone https://github.com/sky-is-green/hivebench.git
-cd strata-memory
+cd splinter-memory
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -e .   # the system: drones, cortex, retention, backends
 cd ..\hivebench
@@ -75,18 +75,18 @@ python -m venv .venv
 Linux/macOS: same in each checkout — `python3 -m venv .venv && .venv/bin/python -m pip install -e .`
 
 Flat import names are preserved (`experiments.*`, `testing.*`, `tests.*`,
-`harness.*`, `deepseek_harness`); the system under test resolves as `strata` /
+`harness.*`, `deepseek_harness`); the system under test resolves as `splinter` /
 `cortex` / ... from the sibling checkout. Override its location with
-`$STRATA_HOME`.
+`$SPLINTER_HOME`.
 
 ## Run the studio (HiveBench Studio)
 
 Two commands are the whole story, run from this checkout: `--setup` copies
 `providers.example.json` → `providers.local.json` if missing, probes for a reachable
 backend (LM Studio on `:1234`, or auto-starts the local `llama-server` from
-`models/gguf`), and prints the next step. The studio serves the strata over a
+`models/gguf`), and prints the next step. The studio serves the splinter over a
 FastAPI API; the endpoint contract lives in `harness/app.py`, and the
-strata repo's `docs/INTEGRATE.md` shows how to point external clients at it.
+splinter repo's `docs/INTEGRATE.md` shows how to point external clients at it.
 
 ```powershell
 .\.venv\Scripts\python -m harness --setup   # copies providers config, probes backend, warms the drone
@@ -138,7 +138,7 @@ The live benchmark talks to an OpenAI-compatible backend (e.g. LM Studio on
 |---|---|
 | `experiments/` | data generation, probes, A/B batteries, finetune runs (console scripts above) |
 | `testing/` | ablation / AB test tooling |
-| `tests/` | unit + integration suite for the strata system — run from here |
+| `tests/` | unit + integration suite for the splinter system — run from here |
 | `harness/` | HiveBench Studio sidecar (`python -m harness`) |
 | `vendor/deepseek_harness/` | vendored dsh Python SDK (agent bridge; not an installed package) |
 
@@ -151,4 +151,4 @@ The live benchmark talks to an OpenAI-compatible backend (e.g. LM Studio on
   benchmarks stay out of CI on purpose — shared runners flake them.
 
 The system under test, its white paper, and the measured-outcome table behind
-every claim: the [Strata Memory](https://github.com/sky-is-green/strata-memory) repo.
+every claim: the [Splinter Memory](https://github.com/sky-is-green/splinter-memory) repo.

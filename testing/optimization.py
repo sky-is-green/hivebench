@@ -88,7 +88,7 @@ def replay_routing(db, threshold: int) -> tuple[float, float]:
     GroundTruthDB.record_routing_decision).
     """
     rows = db._conn.execute(
-        "SELECT params FROM strata_decisions WHERE decision_type='route'"
+        "SELECT params FROM splinter_decisions WHERE decision_type='route'"
     ).fetchall()
     total = len(rows)
     if not total:

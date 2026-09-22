@@ -12,7 +12,7 @@ Live mode needs a llama-server binary (``--fork-bin`` or
 ``$HARNESS_LLAMA_SERVER``); the released Bonsai ``PQ2_0`` artifacts use the
 Prism ROCm fork. The paired subset delegates to
 ``python -m experiments.paired_ab --live``, so it inherits the F6
-``STRATA_HOME`` pin. ``--mock`` exercises the whole wiring offline with a stub
+``SPLINTER_HOME`` pin. ``--mock`` exercises the whole wiring offline with a stub
 manager, chat, and paired step — no GPU, network, or sibling checkout needed.
 
 ``SPEC_SHA256`` pins the frozen wire contract consumed from
@@ -101,7 +101,7 @@ def build_manager(*, binary=None, models_dir=None, log_dir=None,
                   spawner=None, prober=None, startup_timeout: float = 300.0):
     """Construct the real ``harness.models.LlamaServerManager``.
 
-    Imported lazily: the harness package pulls sibling Strata modules, so
+    Imported lazily: the harness package pulls sibling Splinter modules, so
     offline callers inject the stub manager instead."""
     from harness.models import LlamaServerManager
 
@@ -276,7 +276,7 @@ def paired_ab_subset(*, base_url: str, model: str = "",
     """Run one ``paired_ab`` subset against the served backend.
 
     Delegates to the paired_ab CLI (``--live``), which owns the sibling
-    imports and the F6 ``STRATA_HOME`` env; ``run`` is injectable for tests."""
+    imports and the F6 ``SPLINTER_HOME`` env; ``run`` is injectable for tests."""
     out_path = Path(output) if output else REPO_ROOT / "logs" / "ternary_paired_ab.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     argv = [sys.executable, "-m", "experiments.paired_ab", "--live",

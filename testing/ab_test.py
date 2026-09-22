@@ -1,6 +1,6 @@
 """A/B testing framework.
 
-Runs two configurations of the strata on the same conversations and compares their
+Runs two configurations of the splinter on the same conversations and compares their
 aggregate metrics. Config A is the current production config; Config B is the
 experiment. Both process the same input; only A's output goes to the user.
 """

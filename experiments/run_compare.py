@@ -33,7 +33,7 @@ HEADLINES = (
     ("post_run_pes.pes", "PES (post-run)", "up"),
     ("retrieval_diagnostic.retrieval_recall", "P2 recall (honest %)", "up"),
     ("retrieval_diagnostic.ingestion_rate", "ingestion_rate %", "up"),
-    ("retrieval_diagnostic.perfect_hive_ceiling", "perfect-strata ceiling %", "up"),
+    ("retrieval_diagnostic.perfect_hive_ceiling", "perfect-splinter ceiling %", "up"),
     ("retrieval_diagnostic.retrieval_precision", "precision (sentence proxy %)", "up"),
 )
 

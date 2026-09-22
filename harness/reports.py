@@ -111,7 +111,7 @@ def _comb_totals(comb: dict) -> dict:
 
 
 def _baseline_rows(report: dict, composite: object) -> list[tuple[str, object]]:
-    rows: list[tuple[str, object]] = [("Strata (post-run PES)", composite)]
+    rows: list[tuple[str, object]] = [("Splinter (post-run PES)", composite)]
     for label, key in (("LM-Studio rolling", "baseline_lm_studio"),
                        ("FIFO truncation", "baseline_fifo")):
         blob = report.get(key)
@@ -214,7 +214,7 @@ backend <b>{_esc(report.get('backend') or '&mdash;')}</b> &middot; run
 {kv('Recall (all turns)', diag.get('retrieval_recall'))}
 {kv('Recall (retrievable turns)', diag.get('retrieval_recall_retrievable'))}
 {kv('Ingestion rate', diag.get('ingestion_rate'))}
-{kv('Perfect-strata ceiling', diag.get('perfect_hive_ceiling'))}
+{kv('Perfect-splinter ceiling', diag.get('perfect_hive_ceiling'))}
 {kv('Precision (sentence proxy)', diag.get('retrieval_precision'))}
 </div>
 
@@ -280,8 +280,8 @@ def render_server_page() -> str:
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><title>Studio server &amp; models</title>
 <style>{_get_server_css()}</style><style>input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{{-webkit-appearance:none;margin:0}}input[type=number]{{-moz-appearance:textfield;appearance:textfield}}</style></head><body>
 <div id="top-right-status" title="How: GET /v1/server/status hardware poll + process check. Does: Shows loaded model health. Changing: Green=ready, else Start needed." style="position:absolute; top:1rem; right:1.2rem; background:#000; color:#FFDD00; border:2px solid #000; padding:.45rem .9rem; border-radius:8px; font-weight:700; font-size:.88rem; z-index:10; max-width:40vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Launch: No model loaded</div>
-<h1>Strata Studio console</h1>
-<p style="margin:.3rem 0"><button id="afkbtn" onclick="toggleAfk(this)" title="How: toggleAfk sets STRATA-MODE.json. Does: QUEEN autonomy (GREEN/YELLOW auto, RED contained). Changing: On queues pushes/merges until return.">AFK</button> <a href="/runs"><button>Runs →</button></a> <a href="/docs"><button>API docs</button></a></p>
+<h1>Splinter Studio console</h1>
+<p style="margin:.3rem 0"><button id="afkbtn" onclick="toggleAfk(this)" title="How: toggleAfk sets SPLINTER-MODE.json. Does: QUEEN autonomy (GREEN/YELLOW auto, RED contained). Changing: On queues pushes/merges until return.">AFK</button> <a href="/runs"><button>Runs →</button></a> <a href="/docs"><button>API docs</button></a></p>
 <form style="display:inline" onsubmit="event.preventDefault(); return false"><input id="researchq" placeholder="deep-research question..." size="30" autocomplete="off" title="How: researchAdd queues to RESEARCH-QUEUE.md. Does: Deep research task (Auditor only). Changing: Adds entry, not instant." onkeydown="if (event.key === &quot;Enter&quot;) researchAdd(this)"> <button id="researchsubmit" onclick="researchAdd(this)">Research</button> <span id="researchcount" class="meta" title="Queues a deep-research question for QUEEN. Execution is master-only; reports land in RESEARCH/&lt;slug&gt;.md and are summarized on wake."></span></form>
 
 <div class="grid">
@@ -293,7 +293,7 @@ def render_server_page() -> str:
 <button class="tab" data-tab="tab-agent">Agent</button>
 <button class="tab" data-tab="tab-engines">Engines</button>
 <button class="tab" data-tab="tab-library">Local Library</button>
-<button class="tab" data-tab="tab-strata">Strata</button>
+<button class="tab" data-tab="tab-splinter">Splinter</button>
 <button class="tab" data-tab="tab-providers">Providers</button>
 <button class="tab" data-tab="tab-hub">Hub</button>
 <button class="tab" data-tab="tab-inspect">Inspector</button>
@@ -494,14 +494,14 @@ def render_server_page() -> str:
 </section>
 </div>
 
-<div id="tab-strata" class="tabpane" style="display:none">
+<div id="tab-splinter" class="tabpane" style="display:none">
 <section>
-<h2 style="margin-top:0">Strata tuning <span class="note">(new conversations)</span></h2>
+<h2 style="margin-top:0">Splinter tuning <span class="note">(new conversations)</span></h2>
 <div class="note">Applied when a conversation is created — hit
 "New conversation" in the chat pane after changing.</div>
 <div class="row">
-<label class="inline" title="How: StrataConfig.max_context (8192 default) caps assembly.py focal budget vs drone budget (1-6k). Does: Token ceiling for curated prompt. Changing: Up → more chunks fit but higher token_count/latency; down → truncates even high-relevance facts.">max_context  <input id="h-maxctx" type="number" size="6"></label>
-<label class="inline" title="How: StrataConfig.max_tokens (None=backend default) → sampling max_tokens via app:1379/stream. Does: Caps reply length. Changing: Up longer answers; down ≤256 on reasoning models → empty_reply_reasoning_starved.">max_tokens  <input id="h-maxtok" type="number" size="5" placeholder="4096 ceiling"></label>
+<label class="inline" title="How: SplinterConfig.max_context (8192 default) caps assembly.py focal budget vs drone budget (1-6k). Does: Token ceiling for curated prompt. Changing: Up → more chunks fit but higher token_count/latency; down → truncates even high-relevance facts.">max_context  <input id="h-maxctx" type="number" size="6"></label>
+<label class="inline" title="How: SplinterConfig.max_tokens (None=backend default) → sampling max_tokens via app:1379/stream. Does: Caps reply length. Changing: Up longer answers; down ≤256 on reasoning models → empty_reply_reasoning_starved.">max_tokens  <input id="h-maxtok" type="number" size="5" placeholder="4096 ceiling"></label>
 </div>
 <div class="row">
 <label class="inline" title="How: stale_threshold 20 → decay.py age>20 *0.5 and archive to comb. Does: Stale penalty + archiving gate. Changing: Up zombies linger; down faster forgetting, comb sooner, cleaner but lose mid-horizon.">stale wall  <input id="h-stale" type="number" size="3"></label>
@@ -528,7 +528,7 @@ def render_server_page() -> str:
 <label class="inline"><input id="h-combrel" type="checkbox" title="How: comb_relevant_only True → archive only once_curated (relevance_history). Does: Lean archive. Changing: Off archives every evicted (more noise/recall)."> curated-only </label>
 </div>
 </details>
-<div class="row"><span id="strata-msg" class="note"></span>
+<div class="row"><span id="splinter-msg" class="note"></span>
 <button onclick="resetHiveDefaults()">Reset to defaults</button></div>
 </section>
 </div>
@@ -600,24 +600,24 @@ providers.local.json (gitignored).</div>
 <h2 id="chat-title">Loaded model</h2>
 <div class="chat-controls">
 <span class="modesel">
-<label class="inline">model <select id="chat-provider" onchange="saveConvProvider(this.value)" title="How: select saves to localStorage strata-console-convprov, sent as provider on /v1/strata/turn vs /v1/agent/stream, swaps Strata.backend via registry. Does: Per-conversation model/endpoint. Changing: Pick different engine → different base_url/model for this tab only."></select></label>
-<label class="inline"><input type="radio" name="chatmode" value="strata" checked title="How: POST /v1/strata/stream → strata.process_turn curates assembled_content → single generate. Does: No tools, fast curated. Changing: Good for chat/memory; Agent needed for bash/code."> Strata </label>
+<label class="inline">model <select id="chat-provider" onchange="saveConvProvider(this.value)" title="How: select saves to localStorage splinter-console-convprov, sent as provider on /v1/splinter/turn vs /v1/agent/stream, swaps Splinter.backend via registry. Does: Per-conversation model/endpoint. Changing: Pick different engine → different base_url/model for this tab only."></select></label>
+<label class="inline"><input type="radio" name="chatmode" value="splinter" checked title="How: POST /v1/splinter/stream → splinter.process_turn curates assembled_content → single generate. Does: No tools, fast curated. Changing: Good for chat/memory; Agent needed for bash/code."> Splinter </label>
 <label class="inline"><input type="radio" name="chatmode" value="agent" title="How: POST /v1/agent/stream → DshAgentService loop with tools/session log. Does: Full agent (bash/fs/web/subagent). Changing: Use for code/tasks; slower but multi-step."> Agent (dsh) </label>
 </span>
-<button onclick="newConversation()" title="How: newConversation() creates console-<uuid>, localStorage SESS_KEY, clears chatlog. Does: New strata conversation. Changing: Old tab kept; config changes apply only after New.">New conversation</button>
+<button onclick="newConversation()" title="How: newConversation() creates console-<uuid>, localStorage SESS_KEY, clears chatlog. Does: New splinter conversation. Changing: Old tab kept; config changes apply only after New.">New conversation</button>
 </div>
 </div>
 <div id="chatlog" class="chatlog"></div>
 <div class="composer">
-<span class="sugwrap composer-input"><input id="chatin" placeholder="Talk to the loaded AI…  (/ for commands)" title="How: Enter → chatSubmit routes / → /v1/commands/run else sendChat/sendAgent via Strata vs Agent. Does: Sends prompt through strata curate+generate or agent loop. Changing: /command vs message decides path."
+<span class="sugwrap composer-input"><input id="chatin" placeholder="Talk to the loaded AI…  (/ for commands)" title="How: Enter → chatSubmit routes / → /v1/commands/run else sendChat/sendAgent via Splinter vs Agent. Does: Sends prompt through splinter curate+generate or agent loop. Changing: /command vs message decides path."
        onkeydown="if (event.key === 'Enter') chatSubmit()" autocomplete="off">
 <div class="sugbox" id="sug-chat"></div></span>
 <button id="sendbtn" onclick="chatSubmit()">Send</button>
 <button id="stopbtn" onclick="cancelStream()">Stop</button>
-<button id="savebtn" onclick="saveSession()" title="How: saveSession prompts title → sessions[convId].title → localStorage. Does: Persists tab+transcript (restoreTranscript caps 400). Changing: Name to keep; close × deletes + POST /v1/strata/reset.">Save session</button>
+<button id="savebtn" onclick="saveSession()" title="How: saveSession prompts title → sessions[convId].title → localStorage. Does: Persists tab+transcript (restoreTranscript caps 400). Changing: Name to keep; close × deletes + POST /v1/splinter/reset.">Save session</button>
 <button onclick="newConversation()" title="How: Same as top New. Does: New session immediately. Changing: Same effect.">+ New session</button>
 </div>
-<div class="note"><b>Strata</b>: direct curated generation. <b>Agent (dsh)</b>:
+<div class="note"><b>Splinter</b>: direct curated generation. <b>Agent (dsh)</b>:
 the full DeepSeek Harness agent loop — bash/files/code tools, multi-step
 turns, durable session log.</div>
 </section>
@@ -669,18 +669,18 @@ turns, durable session log.</div>
 </div></div>
 
 <script>
-let convId = localStorage.getItem('strata-console-conv');
+let convId = localStorage.getItem('splinter-console-conv');
 if (!convId) {{
   convId = 'console-' + crypto.randomUUID().slice(0, 8);
-  localStorage.setItem('strata-console-conv', convId);
+  localStorage.setItem('splinter-console-conv', convId);
 }}
 let hiveOverrides = {{}};
 // engDirty declared in unified grid block above
 
 async function api(path, method, body, signal) {{
   const headers = {{'content-type': 'application/json'}};
-  const token = localStorage.getItem('strata-token');
-  if (token) headers['x-strata-token'] = token;
+  const token = localStorage.getItem('splinter-token');
+  if (token) headers['x-splinter-token'] = token;
   const opts={{method: method || 'GET', headers}};
   if(body !== undefined && body !== null) opts.body=JSON.stringify(body);
   else if(method === 'POST' && body === undefined) opts.body='{{}}';
@@ -688,7 +688,7 @@ async function api(path, method, body, signal) {{
   const r = await fetch(path, opts);
   if (r.status === 401) {{
     const t = prompt('This server requires an access token (HARNESS_TOKEN):');
-    if (t !== null) {{ localStorage.setItem('strata-token', t); }}
+    if (t !== null) {{ localStorage.setItem('splinter-token', t); }}
     throw new Error('unauthorized — token saved, retry');
   }}
   const t = await r.text();
@@ -723,7 +723,7 @@ for (const btn of document.querySelectorAll('.tab[data-tab]')) {{
       else if (btn.dataset.tab === 'tab-setup') {{ loadSetup(); loadDrives(); }}
       else if (btn.dataset.tab === 'tab-agent') loadAgentPresets();
       else if (btn.dataset.tab === 'tab-engines') loadEngines();
-      else if (btn.dataset.tab === 'tab-strata') loadHiveDefaults();
+      else if (btn.dataset.tab === 'tab-splinter') loadHiveDefaults();
       else if (btn.dataset.tab === 'tab-providers') loadProviders();
     }} catch(err){{ console.error('tab click failed', err); alert('tab error: '+err.message); }}
   }});
@@ -767,7 +767,7 @@ function switchLibraryTab(tab, ev) {{
   return false;
 }}
 
-/* ------------------------------ setup wizard (strata console) ------------------------------ */
+/* ------------------------------ setup wizard (splinter console) ------------------------------ */
 async function loadSetup() {{
   const ctxSel = document.getElementById('setup-ctx');
   const dualCb = document.getElementById('setup-dual');
@@ -834,7 +834,7 @@ async function refreshSetup(ctx, dual) {{
       }};
       healthEl.style.display='grid'; healthEl.style.gridTemplateColumns='160px 1fr'; healthEl.style.gap='8px 10px'; healthEl.style.padding='0'; healthEl.style.background='transparent'; healthEl.style.border='none'; healthEl.style.color='#FFDD00';
       healthEl.innerHTML = ''
-        + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Windows</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(win.state==='running', win.state==='running'?'running — Windows sidecar on :'+(win.port||8765):'Windows not running — start Strata Studio', 'windows') + '</div>'
+        + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Windows</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(win.state==='running', win.state==='running'?'running — Windows sidecar on :'+(win.port||8765):'Windows not running — start Splinter Studio', 'windows') + '</div>'
         + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Linux</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(lin.state==='running', lin.state==='running'?'Linux running — Docker on :'+(lin.port||8000):'Linux stopped — Bootstrap Docker', 'linux-stopped') + '</div>'
         + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">VHDX</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(lin.vhdxExists, lin.vhdxExists?(lin.vhdxMounted?'VHDX mounted — ready':'VHDX exists but not mounted — click Mount AI Drive and approve UAC'):'VHDX missing — click Create Drive and pick size', lin.vhdxExists ? 'vhdx-not-mounted' : 'vhdx-missing') + '</div>'
         + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Shards</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(lin.shardsFound, lin.shardsFound?'Shards found — '+(lin.shardPath||'').split('/').pop():'Shards missing — add .gguf to /mnt/dsh_storage/models via WSL or move from System', 'shards') + '</div>'
@@ -856,7 +856,7 @@ async function refreshSetup(ctx, dual) {{
     if (rawEl) {{
       rawEl.textContent = JSON.stringify(s, null, 1);
       rawEl.style.display = 'none';
-      console.log('[Strata] setup status', s);
+      console.log('[Splinter] setup status', s);
     }}
     const dockerEl = document.getElementById('setup-docker');
     if (dockerEl) {{
@@ -866,16 +866,16 @@ async function refreshSetup(ctx, dual) {{
         + 'Shards ' + (lin2.shardsFound ? 'found ' + (lin2.shardPath || '').split('/').pop() : 'missing') + '\\n'
         + 'Docker http://127.0.0.1:8000/health → ' + (lin2.dockerRunning ? '200 healthy' : 'down — docker compose up dsh-compute-backend') + '\\n'
         + 'WebUI :3000 → dsh-compute-backend:8000/v1 ' + (lin2.dockerRunning ? 'route ready' : 'route down');
-      console.log('[Strata] Docker details', dockerEl.textContent);
+      console.log('[Splinter] Docker details', dockerEl.textContent);
     }} else {{
       const lin2 = s.health.linux || {{}};
-      console.log('[Strata] Docker details', 'VHDX ' + (lin2.vhdxExists ? 'exists' : 'missing') + ' (' + (s.state.vhdxPath || '-') + ') — Mount ' + (lin2.vhdxMounted ? 'mounted' : 'not mounted'));
+      console.log('[Splinter] Docker details', 'VHDX ' + (lin2.vhdxExists ? 'exists' : 'missing') + ' (' + (s.state.vhdxPath || '-') + ') — Mount ' + (lin2.vhdxMounted ? 'mounted' : 'not mounted'));
     }}
     if (msg) {{
       const readyTip = s.complete ? 'Ready to run — WebUI :3000 → :8000 ready' : 'Not ready — fix: ' + (!lin.vhdxExists ? '1. Create Drive' : !lin.vhdxMounted ? '1. Mount AI Drive → 2. Bootstrap Docker' : !lin.shardsFound ? 'add .gguf to /mnt/dsh_storage/models (no button)' : !lin.dockerRunning ? '1. Bootstrap Docker' : 'check diskFull');
       const readyEsc = readyTip.replace(/"/g, '&quot;');
       msg.innerHTML = s.complete ? '<b style="color:#157a3e" title="'+readyEsc+'">✔</b>' : '<b style="color:#b3372c" title="'+readyEsc+'">✘</b>';
-      console.log('[Strata] Ready', msg.textContent);
+      console.log('[Splinter] Ready', msg.textContent);
     }}
     try {{ if (typeof updateFit === 'function') updateFit(); }} catch(e) {{}}
   }} catch(e) {{
@@ -929,7 +929,7 @@ async function refreshStatus() {{
     if (healthEl && s.health) {{
       healthEl.style.display='grid'; healthEl.style.gridTemplateColumns='160px 1fr'; healthEl.style.gap='8px 10px'; healthEl.style.padding='0'; healthEl.style.background='transparent'; healthEl.style.border='none'; healthEl.style.color='#FFDD00';
       healthEl.innerHTML = ''
-        + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Windows</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(win.state==='running', win.state==='running'?'running — Windows sidecar on :'+(win.port||8765):'Windows not running — start Strata Studio') + '</div>'
+        + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Windows</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(win.state==='running', win.state==='running'?'running — Windows sidecar on :'+(win.port||8765):'Windows not running — start Splinter Studio') + '</div>'
         + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Linux</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(lin.state==='running', lin.state==='running'?'Linux running — Docker on :'+(lin.port||8000):'Linux stopped — Bootstrap Docker') + '</div>'
         + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">VHDX</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(lin.vhdxExists, lin.vhdxExists?(lin.vhdxMounted?'VHDX mounted — ready':'VHDX exists but not mounted — click Mount AI Drive and approve UAC'):'VHDX missing — click Create Drive and pick size') + '</div>'
         + '<div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">Shards</div><div style="color:#FFDD00; background:rgba(255,255,255,.04); border:1px solid rgba(255,221,0,.18); border-radius:6px; padding:.45rem .6rem">' + st(lin.shardsFound, lin.shardsFound?'Shards found — '+(lin.shardPath||'').split('/').pop():'Shards missing — add .gguf to /mnt/dsh_storage/models via WSL or move from System') + '</div>'
@@ -955,16 +955,16 @@ async function refreshStatus() {{
         + 'Shards ' + (lin2.shardsFound ? 'found ' + (lin2.shardPath || '').split('/').pop() : 'missing') + '\\n'
         + 'Docker http://127.0.0.1:8000/health → ' + (lin2.dockerRunning ? '200 healthy' : 'down — docker compose up dsh-compute-backend') + '\\n'
         + 'WebUI :3000 → dsh-compute-backend:8000/v1 ' + (lin2.dockerRunning ? 'route ready' : 'route down');
-      console.log('[Strata] Docker details', dockerEl.textContent, s.health, s.state);
+      console.log('[Splinter] Docker details', dockerEl.textContent, s.health, s.state);
     }} else {{
-      console.log('[Strata] Docker details', s.health.linux, s.state);
+      console.log('[Splinter] Docker details', s.health.linux, s.state);
     }}
     const ok = lin.vhdxExists && lin.vhdxMounted && lin.shardsFound && lin.dockerRunning && !s.tier.flags.diskFull;
     const orderTip = !ok ? (!lin.vhdxExists ? 'Fix: 1. Create Drive' : !lin.vhdxMounted ? 'Fix: 1. Mount AI Drive → 2. Bootstrap Docker' : !lin.shardsFound ? 'Fix: add .gguf (no button)' : !lin.dockerRunning ? 'Fix: 1. Bootstrap Docker' : 'Fix: check diskFull') : 'Ready — WebUI :3000 → :8000 ready';
     const orderEsc = orderTip.replace(/"/g, '&quot;');
     const tick = ok ? '<b style="color:#157a3e" title="'+orderEsc+'">✔</b>' : '<b style="color:#b3372c" title="'+orderEsc+'">✘</b>';
     const baseDetail = ok ? 'verify:live LINKED — ready to launch' : 'fix: ' + (!lin.vhdxExists ? 'VHDX missing' : !lin.vhdxMounted ? 'not mounted → wsl --mount --vhd E:/dsh_storage.vhdx --bare' : !lin.shardsFound ? 'shards missing' : !lin.dockerRunning ? 'docker down' : 'disk >80%');
-    if (rawEl) {{ rawEl.textContent = JSON.stringify(s, null, 1); rawEl.style.display = 'none'; console.log('[Strata] setup status', s); }}
+    if (rawEl) {{ rawEl.textContent = JSON.stringify(s, null, 1); rawEl.style.display = 'none'; console.log('[Splinter] setup status', s); }}
     // merged Test WebUI ↔ Docker — wait for Docker 8000 + WebUI 3000, then merge into one sentence (Docker loads last) — console only (details hidden)
     let dockerExtra = '';
     let webuiExtra = '';
@@ -976,28 +976,28 @@ async function refreshStatus() {{
       const count = dockerModels && dockerModels.data ? dockerModels.data.length : 0;
       dockerExtra = ' · Docker ' + (count ? count + ' model' + (count===1?'':'s') : 'reachable') + ' (' + (lin.dockerRunning ? '8000 ok' : '8000 ok but health says down') + ')';
       if (dockerEl) dockerEl.textContent += '\\n\\nTest WebUI ↔ Docker:\\nDocker /v1/models:\\n' + JSON.stringify(dockerModels, null, 1).slice(0,1200);
-      console.log('[Strata] Docker /v1/models (via harness proxy, no CORS)', dockerModels);
+      console.log('[Splinter] Docker /v1/models (via harness proxy, no CORS)', dockerModels);
     }} catch(e) {{
       dockerErr = String(e.message || e).slice(0,600);
       dockerExtra = ' · Docker unreachable (http://127.0.0.1:8000/health — ' + (lin.dockerRunning ? 'health says up but fetch failed' : 'docker down') + ')';
       if (dockerEl) dockerEl.textContent += '\\n\\nTest WebUI ↔ Docker failed:\\n' + dockerErr + '\\nDocker health: http://127.0.0.1:8000/health';
-      console.warn('[Strata] Docker fetch failed (via harness proxy)', dockerErr);
+      console.warn('[Splinter] Docker fetch failed (via harness proxy)', dockerErr);
     }}
     try {{
       webuiOk = await fetch('http://127.0.0.1:3000', {{method: 'GET', mode: 'no-cors'}}).then(() => true).catch(() => false);
       webuiExtra = ' · WebUI :3000 ' + (webuiOk ? 'reachable → dsh-compute-backend:8000/v1' : 'not reachable — open http://127.0.0.1:3000');
       if (dockerEl) dockerEl.textContent += '\\n\\nWebUI :3000 → dsh-compute-backend:8000/v1 — ' + (webuiOk ? 'reachable (no-cors) route likely ok' : 'open http://127.0.0.1:3000 and check Settings → Connections');
-      console.log('[Strata] WebUI :3000', webuiOk ? 'reachable' : 'not reachable');
-      if (dockerEl) console.log('[Strata] Docker details (full)', dockerEl.textContent);
+      console.log('[Splinter] WebUI :3000', webuiOk ? 'reachable' : 'not reachable');
+      if (dockerEl) console.log('[Splinter] Docker details (full)', dockerEl.textContent);
     }} catch(e) {{
       webuiExtra = ' · WebUI check failed';
-      console.warn('[Strata] WebUI check failed', e);
+      console.warn('[Splinter] WebUI check failed', e);
     }}
     // single merged sentence — wait until Docker (slowest) completes
     const finalDetail = baseDetail + dockerExtra + webuiExtra;
     const finalTip = (orderTip + dockerExtra + webuiExtra).replace(/"/g, '&quot;');
     if (msg) msg.innerHTML = '<span style="display:inline-flex; gap:.6rem; align-items:center; flex-wrap:wrap" title="'+finalTip+'">' + tick + ' ' + (ok ? 'Ready' : 'Not ready') + ' <span style="opacity:.6">·</span> ' + finalDetail + '</span>';
-    console.log('[Strata] Ready', finalDetail);
+    console.log('[Splinter] Ready', finalDetail);
   }} catch(e) {{
     if (msg) msg.textContent = 'load failed: ' + String(e).slice(0,120);
   }}
@@ -1013,18 +1013,18 @@ async function createDrive() {{
   if (!confirm('Create ' + size_gb + 'GB dynamic VHDX at ' + vhdx + '?\\n\\nThis creates a sparse virtual drive (initially small, max ' + size_gb + 'GB, grows as needed) at the chosen location and formats it to ext4 on first mount. Proceed?')) return;
   if (msg) msg.textContent = 'creating VHDX at ' + vhdx + ' (' + size_gb + 'GB dynamic, sparse)…';
   if (dockerEl) dockerEl.textContent = 'calling POST /v1/setup/create-vhdx for ' + vhdx + ' (' + size_gb + 'GB)…';
-  console.log('[Strata] Create Drive', vhdx, size_gb);
+  console.log('[Splinter] Create Drive', vhdx, size_gb);
   try {{
     const r = await api('/v1/setup/create-vhdx', 'POST', {{vhdx, size_gb}});
     if (msg) msg.textContent = r.already ? 'VHDX already exists at ' + vhdx : 'VHDX created at ' + vhdx + ' via ' + (r.method || 'New-VHD');
     if (dockerEl) dockerEl.textContent = 'Create result:\\n' + JSON.stringify(r, null, 1).slice(0,1200);
-    console.log('[Strata] Create result', r);
+    console.log('[Splinter] Create result', r);
     await refreshSetup();
   }} catch(e) {{
     const txt = String(e.message || e);
     if (msg) msg.textContent = 'create failed: ' + txt.slice(0,150);
     if (dockerEl) dockerEl.textContent = 'Create failed:\\n' + txt.slice(0,800);
-    console.warn('[Strata] Create failed', txt);
+    console.warn('[Splinter] Create failed', txt);
   }}
 }}
 async function mountBare() {{
@@ -1034,24 +1034,24 @@ async function mountBare() {{
   const vhdx = vhdxEl ? vhdxEl.value.trim() : '';
   if (msg) msg.textContent = 'mounting VHDX as bare device (Admin UAC may pop)…';
   if (dockerEl) dockerEl.textContent = 'calling POST /v1/setup/mount-bare' + (vhdx ? ' for ' + vhdx : '') + '…';
-  console.log('[Strata] Mount bare', vhdx || '(default)');
+  console.log('[Splinter] Mount bare', vhdx || '(default)');
   try {{
     const r = await api('/v1/setup/mount-bare', 'POST', vhdx ? {{vhdx}} : {{}});
     if (r.needs_elevation) {{
       if (msg) msg.textContent = 'UAC shown on host — click Yes, then Bootstrap Docker';
       if (dockerEl) dockerEl.textContent = 'UAC prompt shown on host desktop — click Yes in the Windows dialog, then click Bootstrap Docker.\\n' + (r.error || '').slice(0,500);
-      console.log('[Strata] Mount needs UAC', r);
+      console.log('[Splinter] Mount needs UAC', r);
     }} else {{
       if (msg) msg.textContent = 'bare mount OK';
       if (dockerEl) dockerEl.textContent = 'Bare mount OK:\\n' + (r.output || '').slice(0,800);
-      console.log('[Strata] Bare mount OK', r);
+      console.log('[Splinter] Bare mount OK', r);
       await refreshSetup();
     }}
   }} catch(e) {{
     const txt = String(e.message || e);
     if (msg) msg.textContent = 'mount failed: ' + txt.slice(0,150);
     if (dockerEl) dockerEl.textContent = 'Mount failed:\\n' + txt.slice(0,800) + '\\nFix: Right-click Mount_AI_Drive.bat → Run as administrator';
-    console.warn('[Strata] Mount failed', txt);
+    console.warn('[Splinter] Mount failed', txt);
   }}
 }}
 async function bootstrapDocker() {{
@@ -1062,13 +1062,13 @@ async function bootstrapDocker() {{
   const vhdx = vhdxEl ? vhdxEl.value.trim() : '';
   if (msg) msg.textContent = 'bootstrapping — mounting + docker compose up…';
   if (dockerEl) dockerEl.textContent = 'calling POST /v1/setup/bootstrap' + (vhdx ? ' for ' + vhdx : '') + '…\\n';
-  console.log('[Strata] Bootstrap Docker', vhdx || '(default)');
+  console.log('[Splinter] Bootstrap Docker', vhdx || '(default)');
   try {{
     const r = await api('/v1/setup/bootstrap', 'POST', vhdx ? {{vhdx}} : {{}});
     if (dockerEl) dockerEl.textContent = 'Bootstrap steps:\\n' + JSON.stringify(r.steps, null, 1).slice(0,1800) + '\\n\\nhealth: ' + JSON.stringify(r.health, null, 1).slice(0,800);
     if (msg) msg.textContent = r.ok ? 'bootstrap LINKED — docker healthy' : 'bootstrap done but docker not healthy — check docker logs dsh-compute-backend';
     if (rawEl) {{ rawEl.textContent = JSON.stringify(r, null, 1); rawEl.style.display = 'block'; }}
-    console.log('[Strata] Bootstrap result', r);
+    console.log('[Splinter] Bootstrap result', r);
     await refreshSetup();
   }} catch(e) {{
     const txt = String(e.message || e);
@@ -1079,11 +1079,11 @@ async function bootstrapDocker() {{
         + '2) Then click Bootstrap Docker again (no Admin needed)\\n\\n'
         + 'Error: ' + txt.slice(0,700);
       if (msg) msg.textContent = 'needs Admin: run Mount_AI_Drive.bat as Admin, then Bootstrap again';
-      console.warn('[Strata] Bootstrap needs Admin', txt);
+      console.warn('[Splinter] Bootstrap needs Admin', txt);
     }} else {{
       if (msg) msg.textContent = 'bootstrap failed: ' + txt.slice(0,150);
       if (dockerEl) dockerEl.textContent = 'Bootstrap failed:\\n' + txt.slice(0,1200);
-      console.warn('[Strata] Bootstrap failed', txt);
+      console.warn('[Splinter] Bootstrap failed', txt);
     }}
     if (rawEl) rawEl.style.display = 'none';
   }}
@@ -1199,7 +1199,7 @@ for (const id of ['q', 'drepo', 'hfrepo']) {{
 document.getElementById('model').addEventListener('focus', suggestLocal);
 
 /* --------------------- sessions (OpenCode-style tabs) ----------------- */
-const SESS_KEY = 'strata-console-sessions';
+const SESS_KEY = 'splinter-console-sessions';
 let sessions = {{}};
 try {{ sessions = JSON.parse(localStorage.getItem(SESS_KEY) || '{{}}') || {{}}; }}
 catch (e) {{ sessions = {{}}; }}
@@ -1257,16 +1257,16 @@ function renderTabs() {{
 async function switchSession(id) {{
   if (id === convId) return;
   convId = id;
-  localStorage.setItem('strata-console-conv', convId);
+  localStorage.setItem('splinter-console-conv', convId);
   restoreTranscript(id);
   renderTabs();
   applyConvProvider();
-  try {{ await api('/v1/strata/state?conversation_id=' + encodeURIComponent(id)); }} catch (e) {{}}
+  try {{ await api('/v1/splinter/state?conversation_id=' + encodeURIComponent(id)); }} catch (e) {{}}
 }}
 function closeSession(id) {{
   delete sessions[id];
   persistSessions();
-  api('/v1/strata/reset', 'POST', {{conversation_id: id}}).catch(() => {{}});
+  api('/v1/splinter/reset', 'POST', {{conversation_id: id}}).catch(() => {{}});
   if (id !== convId) {{ renderTabs(); return; }}
   const rest = Object.keys(sessions).sort((a, b) =>
     (sessions[b].updated || 0) - (sessions[a].updated || 0));
@@ -1284,14 +1284,14 @@ function saveSession() {{
 }}
 /* per-conversation inference target (the header model dropdown) */
 function convProviderStore() {{
-  try {{ return JSON.parse(localStorage.getItem('strata-console-convprov') || '{{}}'); }}
+  try {{ return JSON.parse(localStorage.getItem('splinter-console-convprov') || '{{}}'); }}
   catch (e) {{ return {{}}; }}
 }}
 function saveConvProvider(value) {{
   const per = convProviderStore();
   if (value) per[convId] = value;
   else delete per[convId];
-  localStorage.setItem('strata-console-convprov', JSON.stringify(per));
+  localStorage.setItem('splinter-console-convprov', JSON.stringify(per));
 }}
 function applyConvProvider() {{
   const v = convProviderStore()[convId];
@@ -1303,7 +1303,7 @@ function applyConvProvider() {{
 /* --------------------------- afk toggle ------------------------------ */
 async function toggleAfk(btn) {{
   const on = btn.dataset.afk === '1';
-  const r = await api('/v1/strata/mode', 'POST', {{afk: !on, note: on ? 'operator returned' : 'operator away'}});
+  const r = await api('/v1/splinter/mode', 'POST', {{afk: !on, note: on ? 'operator returned' : 'operator away'}});
   applyAfk(r.afk);
 }}
 function applyAfk(on) {{
@@ -1314,7 +1314,7 @@ function applyAfk(on) {{
   b.classList.toggle('afk-on', !!on);
 }}
 (async function initAfk() {{
-  try {{ const m = await api('/v1/strata/mode'); applyAfk(!!m.afk); }} catch (e) {{}}
+  try {{ const m = await api('/v1/splinter/mode'); applyAfk(!!m.afk); }} catch (e) {{}}
 }})();
 /* --------------------------- research queue -------------------------- */
 async function researchAdd(btn) {{
@@ -1390,7 +1390,7 @@ async function runCommand(line) {{
     record('sys', (r.kind === 'error' ? '⚠ ' : '') + (r.text || r.kind));
     if (r.new_conversation_id) {{
       convId = r.new_conversation_id;
-      localStorage.setItem('strata-console-conv', convId);
+      localStorage.setItem('splinter-console-conv', convId);
       ensureSession(convId);
       persistSessions();
       renderTabs();
@@ -1457,7 +1457,7 @@ async function sendChat() {{
   let turn = '?';
   let metaText = '';
   try {{
-    const r = await fetch('/v1/strata/stream', {{method: 'POST',
+    const r = await fetch('/v1/splinter/stream', {{method: 'POST',
       headers: {{'content-type': 'application/json'}},
       body: JSON.stringify(body), signal: ctrl.signal}});
     if (!r.ok || !r.body) throw new Error('HTTP ' + r.status);
@@ -1482,7 +1482,7 @@ async function sendChat() {{
           turn = ev.turn;
           metaText = `curated ${{ev.token_count}}/${{ev.budget}} tokens`;
         }} else if (ev.type === 'done') {{
-          metaText = `strata-curated · turn ${{turn}}`
+          metaText = `splinter-curated · turn ${{turn}}`
             + (ev.tokens ? ` · ${{ev.tokens}} tok` : '')
             + (ev.tokens_per_sec ? ` · ${{ev.tokens_per_sec}} tok/s` : '')
             + (ev.stored ? '' : ' · not stored');
@@ -1638,13 +1638,13 @@ function newConversation() {{
   /* OpenCode semantics: the current session keeps its tab; this opens a
      fresh conversation id and a fresh (empty) tab beside it. */
   convId = 'console-' + crypto.randomUUID().slice(0, 8);
-  localStorage.setItem('strata-console-conv', convId);
+  localStorage.setItem('splinter-console-conv', convId);
   ensureSession(convId);
   persistSessions();
   document.getElementById('chatlog').innerHTML = '';
   bubble('ai', 'Fresh session started.'
     + (Object.keys(hiveOverrides).length
-       ? ' Strata overrides apply from the next message.' : ''));
+       ? ' Splinter overrides apply from the next message.' : ''));
   renderTabs();
 }}
 
@@ -2662,14 +2662,14 @@ function engineLoadFromFit() {{
   setTimeout(()=>{{ getFitHardware().then(()=>updateFit()); }}, 600);
 }})();
 
-/* ----------------------------- strata tab ------------------------------ */
-const STRATA_NUMERIC = [['max_context', 'h-maxctx'], ['max_tokens', 'h-maxtok'],
+/* ----------------------------- splinter tab ------------------------------ */
+const SPLINTER_NUMERIC = [['max_context', 'h-maxctx'], ['max_tokens', 'h-maxtok'],
   ['stale_threshold', 'h-stale'], ['dedup_threshold', 'h-dedup'],
   ['drift_threshold', 'h-drift'], ['remembrance_threshold', 'h-remem'],
   ['vocab_boost', 'h-vocab']];
 
 function hiveToForm(cfg) {{
-  for (const [key, id] of STRATA_NUMERIC)
+  for (const [key, id] of SPLINTER_NUMERIC)
     document.getElementById(id).value =
       (cfg[key] === undefined || cfg[key] === null) ? '' : cfg[key];
   document.getElementById('h-conf').value = cfg.confidence_mode || 'off';
@@ -2688,7 +2688,7 @@ function collectHiveOverrides() {{
   const defaults = window.__hiveDefaults || {{}};
   const changed = (key, value) => defaults[key] === undefined
     || JSON.stringify(defaults[key]) !== JSON.stringify(value);
-  for (const [key, id] of STRATA_NUMERIC) {{
+  for (const [key, id] of SPLINTER_NUMERIC) {{
     const v = num(id);
     if (v !== null && changed(key, v)) out[key] = v;
   }}
@@ -2713,19 +2713,19 @@ function collectHiveOverrides() {{
 
 async function loadHiveDefaults() {{
   try {{
-    const cfg = await api('/v1/strata/defaults');
+    const cfg = await api('/v1/splinter/defaults');
     window.__hiveDefaults = cfg;
     hiveToForm(cfg);
     hiveOverrides = collectHiveOverrides();
-    document.getElementById('strata-msg').textContent =
+    document.getElementById('splinter-msg').textContent =
       Object.keys(hiveOverrides).length + ' override(s) active for new conversations';
-  }} catch (e) {{ document.getElementById('strata-msg').textContent = String(e); }}
+  }} catch (e) {{ document.getElementById('splinter-msg').textContent = String(e); }}
 }}
 
 function resetHiveDefaults() {{
   if (window.__hiveDefaults) hiveToForm(window.__hiveDefaults);
   hiveOverrides = collectHiveOverrides();
-  document.getElementById('strata-msg').textContent = 'defaults restored';
+  document.getElementById('splinter-msg').textContent = 'defaults restored';
 }}
 
 for (const key of ['h-maxctx','h-maxtok','h-stale','h-dedup','h-drift',
@@ -2735,7 +2735,7 @@ for (const key of ['h-maxctx','h-maxtok','h-stale','h-dedup','h-drift',
   const el = document.getElementById(key);
   if (el) el.addEventListener('change', () => {{
     hiveOverrides = collectHiveOverrides();
-    document.getElementById('strata-msg').textContent =
+    document.getElementById('splinter-msg').textContent =
       Object.keys(hiveOverrides).length + ' override(s) active for new conversations';
   }});
 }}
@@ -2830,7 +2830,7 @@ for (const btn of document.querySelectorAll('[data-rtab]')) {{
 
 async function fetchInspection() {{
   try {{
-    const data = await api('/v1/strata/inspect/' + encodeURIComponent(convId));
+    const data = await api('/v1/splinter/inspect/' + encodeURIComponent(convId));
     renderInspection(data);
   }} catch (e) {{
     document.getElementById('inspect-summary').textContent =

@@ -37,7 +37,7 @@ class KeepAwake:
             self._fn = ctypes.windll.kernel32.SetThreadExecutionState
             self._assert()
             self._thread = threading.Thread(
-                target=self._run, name="strata-keep-awake", daemon=True
+                target=self._run, name="splinter-keep-awake", daemon=True
             )
             self._thread.start()
             self.active = True

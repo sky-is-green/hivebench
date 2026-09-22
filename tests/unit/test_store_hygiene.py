@@ -5,7 +5,7 @@ content. Normal prose passes through byte-identical."""
 
 import pytest
 
-from cortex.config import StrataConfig
+from cortex.config import SplinterConfig
 from retention.store import ContextStore
 from retention.hygiene import DEFAULT_MAX_CHUNK_CHARS, sanitize_for_storage
 
@@ -106,6 +106,6 @@ def test_comb_archives_sanitized_content():
 
 # ---------------------------------------------------------------- config wire
 def test_hive_config_exposes_hygiene_knobs():
-    cfg = StrataConfig()
+    cfg = SplinterConfig()
     assert cfg.strip_secrets is True
     assert cfg.max_chunk_chars == DEFAULT_MAX_CHUNK_CHARS

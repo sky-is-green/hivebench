@@ -1,12 +1,12 @@
-"""Strata needle-in-haystack retrieval test.
+"""Splinter needle-in-haystack retrieval test.
 
-Phase 1: Ingest STRATA-CONTEXT.md into a fresh strata conversation via
-         /v1/strata/curate (curation only, no LLM generation — fast).
-Phase 2: Ask targeted questions via /v1/strata/curate and verify the
+Phase 1: Ingest SPLINTER-CONTEXT.md into a fresh splinter conversation via
+         /v1/splinter/curate (curation only, no LLM generation — fast).
+Phase 2: Ask targeted questions via /v1/splinter/curate and verify the
          correct facts appear in assembled_content.
 Phase 3: Dump inspection data for the final query to show chunk-level detail.
 
-Run: python -m tests.integration.test_strata_retrieval
+Run: python -m tests.integration.test_splinter_retrieval
 """
 from __future__ import annotations
 
@@ -18,7 +18,15 @@ from pathlib import Path
 
 SIDECAR = "http://127.0.0.1:8765"
 CID = "retrieval-test"
-CONTEXT_FILE = Path.home() / "Desktop/work/strata-memory/STRATA-CONTEXT.md"
+def _context_file() -> Path:
+    for _dir in ("splinter-memory", "strata-memory"):
+        for _name in ("SPLINTER-CONTEXT.md", "STRATA-CONTEXT.md"):
+            _c = Path.home() / "Desktop/work" / _dir / _name
+            if _c.is_file():
+                return _c
+    return Path.home() / "Desktop/work" / "splinter-memory" / "SPLINTER-CONTEXT.md"
+
+CONTEXT_FILE = _context_file()
 CHUNK_SIZE = 3000  # chars per turn (~750 tokens)
 
 
@@ -37,7 +45,7 @@ def get(url: str, timeout: int = 10) -> dict:
 
 def reset_conversation():
     try:
-        post(f"{SIDECAR}/v1/strata/reset", {"conversation_id": CID})
+        post(f"{SIDECAR}/v1/splinter/reset", {"conversation_id": CID})
         print("  reset ok")
     except Exception as e:
         print(f"  reset: {e}")
@@ -59,7 +67,7 @@ def split_into_chunks(text: str, size: int = CHUNK_SIZE) -> list[str]:
 
 
 def ingest_context() -> int:
-    """Feed STRATA-CONTEXT.md through /v1/strata/curate in chunks."""
+    """Feed SPLINTER-CONTEXT.md through /v1/splinter/curate in chunks."""
     text = CONTEXT_FILE.read_text(encoding="utf-8")
     chunks = split_into_chunks(text)
     print(f"  {len(chunks)} chunks to ingest (avg {sum(len(c) for c in chunks)//len(chunks)} chars)")
@@ -69,7 +77,7 @@ def ingest_context() -> int:
     for i, chunk in enumerate(chunks):
         query = f"[block {i+1}/{len(chunks)}] {chunk}"
         try:
-            post(f"{SIDECAR}/v1/strata/curate", {
+            post(f"{SIDECAR}/v1/splinter/curate", {
                 "query": query,
                 "conversation_id": CID,
             }, timeout=30)
@@ -90,7 +98,7 @@ def ingest_context() -> int:
 
 
 def check_store():
-    state = get(f"{SIDECAR}/v1/strata/state")
+    state = get(f"{SIDECAR}/v1/splinter/state")
     convs = state.get("conversations", {})
     if CID in convs:
         info = convs[CID]
@@ -99,7 +107,7 @@ def check_store():
         print(f"  conversations in state: {state.get('count')}")
         # Try inspect
         try:
-            ins = get(f"{SIDECAR}/v1/strata/inspect/{CID}")
+            ins = get(f"{SIDECAR}/v1/splinter/inspect/{CID}")
             chunks = ins.get("store_chunks", ins.get("chunks", []))
             print(f"  store chunks: {len(chunks)}")
         except Exception as e:
@@ -108,16 +116,16 @@ def check_store():
 
 # Needle questions: (question, expected_substring)
 NEEDLES = [
-    ("What commit hash did RC1 land as in the strata-memory repo?", "c9b2a58"),
+    ("What commit hash did RC1 land as in the splinter-memory repo?", "c9b2a58"),
     ("What is the P1-FLOOR relevance floor default threshold value?", "0.35"),
     ("What GPU model and VRAM size is this machine running?", "7900 XT"),
     ("What KV cache quantization setting is configured for llama-server?", "q4_0"),
-    ("What port number does the strata sidecar listen on?", "8765"),
+    ("What port number does the splinter sidecar listen on?", "8765"),
     ("Which GGUF model file is currently loaded by llama-server?", "IQ4_XS"),
     ("What is the context window size in tokens for the current model config?", "150000"),
     ("What does the RC2 fix do about the similarity comparison in assembly?", "normalize"),
     ("How many chunks were kept versus dropped during the harness_state dedup?", "830"),
-    ("What is the architectural principle regarding hivebench and strata-memory repos?", "dependency direction"),
+    ("What is the architectural principle regarding hivebench and splinter-memory repos?", "dependency direction"),
 ]
 
 
@@ -126,7 +134,7 @@ def run_retrieval_tests():
     results = []
     for question, expected in NEEDLES:
         try:
-            resp = post(f"{SIDECAR}/v1/strata/curate", {
+            resp = post(f"{SIDECAR}/v1/splinter/curate", {
                 "query": question,
                 "conversation_id": CID,
             }, timeout=30)
@@ -147,7 +155,7 @@ def run_retrieval_tests():
 def dump_inspection():
     """Show chunk-level detail for the last query."""
     try:
-        ins = get(f"{SIDECAR}/v1/strata/inspect/{CID}")
+        ins = get(f"{SIDECAR}/v1/splinter/inspect/{CID}")
         print("\n=== Last Query Inspection ===")
         print(f"  mode: {ins.get('mode')}")
         print(f"  budget: {ins.get('budget')}")
@@ -171,12 +179,12 @@ def dump_inspection():
 
 
 def main():
-    print("=== Strata Needle-in-Haystack Retrieval Test ===\n")
+    print("=== Splinter Needle-in-Haystack Retrieval Test ===\n")
 
     print("[1/4] Resetting conversation...")
     reset_conversation()
 
-    print("\n[2/4] Ingesting STRATA-CONTEXT.md via /v1/strata/curate...")
+    print("\n[2/4] Ingesting SPLINTER-CONTEXT.md via /v1/splinter/curate...")
     n = ingest_context()
     if n == 0:
         print("FATAL: no chunks ingested")

@@ -9,9 +9,9 @@ jobs:
   tests:
     # actions/checkout refuses paths outside the workspace, so the sibling
     # system checkout lives inside it; conftest + package bootstraps honour
-    # $STRATA_HOME (their default is ../strata-memory for local dev).
+    # $SPLINTER_HOME (their default is ../splinter-memory for local dev).
     env:
-      STRATA_HOME: ${{ github.workspace }}/strata-sys
+      SPLINTER_HOME: ${{ github.workspace }}/splinter-sys
     strategy:
       fail-fast: false
       matrix:
@@ -24,9 +24,9 @@ jobs:
       # The system under test — sibling repo, checked out inside the workspace
       - uses: actions/checkout@v4
         with:
-          repository: sky-is-green/Strata-memory
-          ref: StrataMemory-test
-          path: strata-sys
+          repository: sky-is-green/Splinter-memory
+          ref: SplinterMemory-test
+          path: splinter-sys
 
       - uses: actions/setup-python@v5
         with:
@@ -39,12 +39,12 @@ jobs:
 
       - name: Install system + suite
         run: |
-          # env.STRATA_HOME context expression, not a shell var: pwsh wraps
+          # env.SPLINTER_HOME context expression, not a shell var: pwsh wraps
           # run blocks in single quotes, so $VAR expansion never happens there.
-          pip install -e ${{ env.STRATA_HOME }}
+          pip install -e ${{ env.SPLINTER_HOME }}
           pip install -e .
 
-      # Corpora are generated, not committed (strata repo docs/INSTALL.md step 4)
+      # Corpora are generated, not committed (splinter repo docs/INSTALL.md step 4)
       - name: Generate fixture corpora
         run: |
           python -m tests.fixtures.synthetic_conversations.generate

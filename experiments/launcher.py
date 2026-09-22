@@ -212,7 +212,7 @@ class LauncherApp:
             "Adds significant time (full generations over the longest conversation).")
         base = ttk.Checkbutton(frame, text="Run baselines (LM Studio + FIFO)", variable=self.vars["baselines"])
         tip(self._row(frame, "", base),
-            "Also run the no-strata baselines for comparison (rolling + FIFO). "
+            "Also run the no-splinter baselines for comparison (rolling + FIFO). "
             "Roughly doubles run time; required for the final evidence run.")
 
         tip(self._row(frame, "Resume run dir (optional)", ttk.Entry(frame, textvariable=self.vars["resume"])),

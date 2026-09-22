@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 _HIVEBENCH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_HIVE = os.path.join(os.path.dirname(_HIVEBENCH), "strata")
+_HIVE = os.path.join(os.path.dirname(_HIVEBENCH), "splinter")
 sys.path.insert(0, _HIVEBENCH)
 sys.path.insert(0, _HIVE)
 

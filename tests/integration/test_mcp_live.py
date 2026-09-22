@@ -1,9 +1,9 @@
 """Live MCP acceptance against a running sidecar (S3).
 
-Skipped unless ``STRATA_SIDECAR_URL`` is set, so the default offline suite
+Skipped unless ``SPLINTER_SIDECAR_URL`` is set, so the default offline suite
 stays green. Guard runs this against the sidecar on its chosen port::
 
-    STRATA_SIDECAR_URL=http://127.0.0.1:8790 \
+    SPLINTER_SIDECAR_URL=http://127.0.0.1:8790 \
         venv/bin/python -m pytest hivebench/tests/integration/test_mcp_live.py -q
 
 (`venv/bin/python -m testing.mcp_battery --base-url ...` is the standalone
@@ -18,10 +18,10 @@ import pytest
 from testing.mcp_battery import run_mcp_battery
 from testing.mcp_client import McpClient
 
-BASE_URL = os.environ.get("STRATA_SIDECAR_URL", "").strip()
+BASE_URL = os.environ.get("SPLINTER_SIDECAR_URL", "").strip()
 
 pytestmark = pytest.mark.skipif(
-    not BASE_URL, reason="set STRATA_SIDECAR_URL to run the live MCP acceptance"
+    not BASE_URL, reason="set SPLINTER_SIDECAR_URL to run the live MCP acceptance"
 )
 
 
@@ -34,12 +34,12 @@ def test_live_handshake_and_tool_list():
     client = McpClient(BASE_URL, "hivebench-live-handshake", timeout=30)
     init = client.initialize()
     assert init.ok, init.error
-    assert init.payload["serverInfo"]["name"] == "strata-memory"
+    assert init.payload["serverInfo"]["name"] == "splinter-memory"
 
     tools = client.list_tools()
     assert tools.ok, tools.error
     assert {t["name"] for t in tools.payload["tools"]} == {
-        "strata_search", "strata_remember"}
+        "splinter_search", "splinter_remember"}
 
 
 def test_live_remember_then_search_roundtrip_and_isolation(conversation_id):

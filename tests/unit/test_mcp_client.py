@@ -30,7 +30,7 @@ def test_initialize_negotiates_protocol_and_server_info():
     result = client.initialize()
     assert result.ok
     assert result.payload["protocolVersion"] == "2025-06-18"
-    assert result.payload["serverInfo"]["name"] == "strata-memory"
+    assert result.payload["serverInfo"]["name"] == "splinter-memory"
     assert fake.requests[0][0] == f"{BASE}{MCP_PATH}"
 
 
@@ -39,7 +39,7 @@ def test_list_tools_exposes_both_tools():
     result = client.list_tools()
     assert result.ok
     assert {t["name"] for t in result.payload["tools"]} == {
-        "strata_search", "strata_remember"}
+        "splinter_search", "splinter_remember"}
 
 
 def test_remember_then_search_roundtrip():
@@ -71,13 +71,13 @@ def test_explicit_conversation_id_switches_scope_and_isolates():
 
 def test_missing_conversation_id_is_a_tool_error_from_sidecar():
     client, fake = _mcp()
-    result = client.call_tool("strata_search", {"query": "q"})
+    result = client.call_tool("splinter_search", {"query": "q"})
     # FakeSidecar mirrors the server's required-argument validation.
     assert result.ok
     # call_tool injects the client default, so no error here; the sidecar still
     # rejects a blank one.
     blank = client.call_tool(
-        "strata_search", {"query": "q", "conversation_id": "  "})
+        "splinter_search", {"query": "q", "conversation_id": "  "})
     assert not blank.ok
     assert "conversation_id" in blank.error
 
@@ -104,13 +104,13 @@ def test_token_header_sent_when_configured():
     fake = FakeSidecar()
     client = McpClient(BASE, "c", http=fake, token="tok-123")
     client.initialize()
-    assert fake.requests[0][2]["x-strata-token"] == "tok-123"
+    assert fake.requests[0][2]["x-splinter-token"] == "tok-123"
 
 
 def test_no_token_header_by_default():
     client, fake = _mcp()
     client.initialize()
-    assert "x-strata-token" not in fake.requests[0][2]
+    assert "x-splinter-token" not in fake.requests[0][2]
 
 
 # ---------------------------------------------------------------------------

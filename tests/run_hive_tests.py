@@ -1,4 +1,4 @@
-"""Strata test runner, organized by what each group measures.
+"""Splinter test runner, organized by what each group measures.
 
 Groups
 ------
@@ -7,7 +7,7 @@ Groups
                      precision, routing/classifier accuracy, auditor, P1-P10,
                      P5 training, A/B statistics).
 - **skills**       : component functionality & integration correctness (logger,
-                     drones, strata context, backends, security, resilience, E2E).
+                     drones, splinter context, backends, security, resilience, E2E).
 - **maximum**      : everything (used for full coverage / hardware min-maxing).
 
 Each group reports PASS/FAIL plus the measured duration and an estimated time.
@@ -33,8 +33,13 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # this repo (hivebench)
-HIVE_HOME = Path(os.environ.get("STRATA_HOME", str(ROOT.parent / "strata-memory")))
-HIVE = HIVE_HOME / "strata"  # system package root (sibling checkout)
+_env_home = os.environ.get("SPLINTER_HOME") or os.environ.get("STRATA_HOME")
+if _env_home:
+    HIVE_HOME = Path(_env_home)
+else:
+    HIVE_HOME = next((ROOT.parent / _n for _n in ("splinter-memory", "strata-memory")
+                      if (ROOT.parent / _n).is_dir()), ROOT.parent / "splinter-memory")
+HIVE = HIVE_HOME / "splinter"  # system package root (sibling checkout)
 HIVEBENCH = ROOT  # this repo holds the suite
 TESTS = ROOT / "tests"
 PY = [sys.executable]
@@ -128,7 +133,7 @@ def run_group(group: str):
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Strata test runner (grouped)")
+    parser = argparse.ArgumentParser(description="Splinter test runner (grouped)")
     parser.add_argument(
         "--group",
         choices=["speed", "intelligence", "skills", "maximum"],
@@ -139,7 +144,7 @@ def main(argv: list[str] | None = None) -> int:
 
     groups = ["speed", "intelligence", "skills"] if args.group == "maximum" else [args.group]
 
-    print("Strata test groups (estimated durations):")
+    print("Splinter test groups (estimated durations):")
     for g in ["speed", "intelligence", "skills", "maximum"]:
         marker = " <- running" if g in groups else ""
         print(f"  {g:<14} ~{ESTIMATES[g]}s{marker}")
@@ -153,7 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         total += dt
         results[g] = (status, dt)
 
-    print("\n=== Strata Test Suite Summary ===")
+    print("\n=== Splinter Test Suite Summary ===")
     ok = True
     for g in ["speed", "intelligence", "skills"]:
         if g not in results:

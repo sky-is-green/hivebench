@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from cortex.checkpoint import StrataCheckpoint
+from cortex.checkpoint import SplinterCheckpoint
 from cortex.efficiency import EfficiencyScorer
 from cortex.rollback import AutomatedRollback
 from cortex.routing import DroneRouter, EscalationHandler
@@ -76,7 +76,7 @@ def test_shadow_mode_better_config_promotes():
 
 
 def test_rollback_fires_and_restores_checkpoint(tmp_path):
-    ck = StrataCheckpoint(tmp_path)
+    ck = SplinterCheckpoint(tmp_path)
     known_good = {"decay_multiplier": 1.8, "threshold": 2}
     saved = ck.auto_checkpoint(known_good, pes=90)
     assert saved is not None

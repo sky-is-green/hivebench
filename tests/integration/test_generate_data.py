@@ -132,7 +132,7 @@ def test_run_lock_live_foreign_pid_refused(tmp_path, monkeypatch):
 def test_per_conversation_store_isolation(tmp_path):
     """Chunks from one conversation must not leak into another.
 
-    A benchmark run over many conversations shares one Strata; without a
+    A benchmark run over many conversations shares one Splinter; without a
     per-conversation reset, later conversations retrieve mostly *other*
     conversations' chunks, collapsing P2 precision. This regression test runs
     two conversations and asserts the second one's context store contains no
@@ -140,9 +140,9 @@ def test_per_conversation_store_isolation(tmp_path):
     """
     import os
 
-    from cortex.config import StrataConfig
+    from cortex.config import SplinterConfig
     from cortex.e2e import FakeUltraSmall, MockTransport
-    from cortex.strata import Strata
+    from cortex.splinter import Splinter
     from backend.lmstudio import LMStudioBackend
     from cortex.baselines.runner import load_conversations
 
@@ -151,8 +151,8 @@ def test_per_conversation_store_isolation(tmp_path):
     first = next(c for c in convs if c["conversation_id"] == "edge_001")
     second = next(c for c in convs if c["conversation_id"] == "edge_002")
 
-    config = StrataConfig(confidence_mode="off", sanitize_context=False)
-    strata = Strata(
+    config = SplinterConfig(confidence_mode="off", sanitize_context=False)
+    splinter = Splinter(
         config=config,
         ultra=FakeUltraSmall(),
         medium=__import__("sieve.medium", fromlist=["MediumDrone"]).MediumDrone(
@@ -165,17 +165,17 @@ def test_per_conversation_store_isolation(tmp_path):
     for td in first["turns"]:
         if td.get("role") != "user":
             continue
-        strata.process_turn(td["content"])
-    first_chunks = [c.content for c in strata.store.all_chunks()]
+        splinter.process_turn(td["content"])
+    first_chunks = [c.content for c in splinter.store.all_chunks()]
     assert first_chunks and "order schema" in " ".join(first_chunks).lower()
 
     # Conversation 2 starts from a fresh store: no order-schema content.
-    strata.reset_conversation()
+    splinter.reset_conversation()
     for td in second["turns"]:
         if td.get("role") != "user":
             continue
-        strata.process_turn(td["content"])
-    second_chunks = [c.content for c in strata.store.all_chunks()]
+        splinter.process_turn(td["content"])
+    second_chunks = [c.content for c in splinter.store.all_chunks()]
     assert second_chunks
     joined = " ".join(second_chunks).lower()
     assert "order schema" not in joined

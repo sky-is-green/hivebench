@@ -3,9 +3,9 @@ upstream harness injects around tool calls must never become persistent
 chunks (it would otherwise score highly at recall and pollute the LLM's
 context with stale instructions)."""
 
-from cortex.config import StrataConfig
+from cortex.config import SplinterConfig
 from cortex.e2e import FakeUltraSmall
-from cortex.strata import Strata
+from cortex.splinter import Splinter
 from retention.hygiene import (
     DEFAULT_INGEST_BLOCK_PREFIXES,
     PREFIX_WINDOW,
@@ -16,8 +16,8 @@ from retention.store import ContextStore
 
 
 def _hive(**config_kwargs):
-    cfg = StrataConfig(**config_kwargs)
-    return Strata(config=cfg, ultra=FakeUltraSmall(), backend=None)
+    cfg = SplinterConfig(**config_kwargs)
+    return Splinter(config=cfg, ultra=FakeUltraSmall(), backend=None)
 
 
 # ------------------------------------------------ blocklisted strings alone
@@ -79,14 +79,14 @@ def test_filter_helpers_agree():
 
 # ------------------------------------------------ config override
 def test_config_default_blocklist_and_override():
-    cfg = StrataConfig()
+    cfg = SplinterConfig()
     assert list(cfg.ingest_block_prefixes) == list(DEFAULT_INGEST_BLOCK_PREFIXES)
 
     custom = ["Custom harness preamble: ignore everything below."]
-    cfg2 = StrataConfig.from_dict({"ingest_block_prefixes": custom})
+    cfg2 = SplinterConfig.from_dict({"ingest_block_prefixes": custom})
     assert cfg2.ingest_block_prefixes == custom
     # unknown keys are still dropped (existing Gatekeeper contract)
-    cfg3 = StrataConfig.from_dict(
+    cfg3 = SplinterConfig.from_dict(
         {"ingest_block_prefixes": custom, "not_a_real_field": 1}
     )
     assert cfg3.ingest_block_prefixes == custom

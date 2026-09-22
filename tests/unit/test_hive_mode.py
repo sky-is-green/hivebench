@@ -1,4 +1,4 @@
-"""AFK mode endpoint (strata mode toggle): canonical workspace-level
+"""AFK mode endpoint (splinter mode toggle): canonical workspace-level
 HIVE-MODE.json, isolated per-test via MODE_FILE monkeypatch."""
 
 import json
@@ -17,15 +17,15 @@ def client(tmp_path, monkeypatch):
 
 
 def test_afk_defaults_off(client):
-    body = client.get("/v1/strata/mode").json()
+    body = client.get("/v1/splinter/mode").json()
     assert body["afk"] is False
 
 
 def test_afk_toggle_roundtrip_writes_canonical_file(client, tmp_path):
-    r = client.post("/v1/strata/mode", json={"afk": True, "note": "going away"})
+    r = client.post("/v1/splinter/mode", json={"afk": True, "note": "going away"})
     assert r.json()["afk"] is True
 
-    data = client.get("/v1/strata/mode").json()
+    data = client.get("/v1/splinter/mode").json()
     assert data["afk"] is True
     assert data["note"] == "going away"
     assert "GREEN/YELLOW fixes" in data["preapproved"]
@@ -34,11 +34,11 @@ def test_afk_toggle_roundtrip_writes_canonical_file(client, tmp_path):
     assert on_disk["mode"] == "AFK"
     assert on_disk["queue_for_return"][0].startswith("pushes to public masters")
 
-    client.post("/v1/strata/mode", json={"afk": False})
-    assert client.get("/v1/strata/mode").json()["afk"] is False
+    client.post("/v1/splinter/mode", json={"afk": False})
+    assert client.get("/v1/splinter/mode").json()["afk"] is False
     assert not (tmp_path / "HIVE-MODE.json").exists()
 
 
 def test_afk_note_truncated_to_200(client):
-    client.post("/v1/strata/mode", json={"afk": True, "note": "x" * 500})
-    assert len(client.get("/v1/strata/mode").json()["note"]) == 200
+    client.post("/v1/splinter/mode", json={"afk": True, "note": "x" * 500})
+    assert len(client.get("/v1/splinter/mode").json()["note"]) == 200

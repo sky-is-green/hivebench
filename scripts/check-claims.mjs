@@ -76,7 +76,7 @@ if (process.argv.includes('--selftest')) {
   process.exit(0);
 }
 
-const EXEMPT = ['.claims/', 'MULTI-OX-PROJECT-PLAN.md', '.gitignore', '.agents/notes/', 'HIVE-PLAN.md', 'MULTI_AGENT_PLAN.md', 'STRATA-PLAN.md'];
+const EXEMPT = ['.claims/', 'MULTI-OX-PROJECT-PLAN.md', '.gitignore', '.agents/notes/', 'HIVE-PLAN.md', 'MULTI_AGENT_PLAN.md', 'SPLINTER-PLAN.md'];
 
 // Hotspot registry mirror (keep in sync with MULTI-OX-PROJECT-PLAN.md §3).
 const HOTSPOTS = [
@@ -85,7 +85,7 @@ const HOTSPOTS = [
   '/requirements-dev.txt',
   '/providers.example.json',
   'docs/INTEGRATE.md',
-  'strata/__init__.py',
+  'splinter/__init__.py',
 ];
 
 function fail(messages) {

@@ -27,7 +27,7 @@ COMPLEX_QUERIES = [
     "design the architecture, review the plan, and audit the risks",
     "analyze, compare, and optimize all three approaches",
     "explain the schema and audit the migrations",
-    "refactor the strata, analyze the decay, and optimize the budget",
+    "refactor the splinter, analyze the decay, and optimize the budget",
     "debug the router and review the escalation handler",
     "design and audit the checkpoint system",
     "review and optimize the embedding cache",

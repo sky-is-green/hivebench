@@ -4,7 +4,7 @@ from testing.ablation import ABLATION_CONFIGS, AblationRunner
 
 
 def _make_hive(config):
-    """Fake strata: each disabled component costs 5 PES points off a base of 80."""
+    """Fake splinter: each disabled component costs 5 PES points off a base of 80."""
 
     def process_turn(query, turn):
         base = 80.0

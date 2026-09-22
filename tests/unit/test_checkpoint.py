@@ -2,11 +2,11 @@
 
 import pytest
 
-from cortex.checkpoint import StrataCheckpoint
+from cortex.checkpoint import SplinterCheckpoint
 
 
 def test_save_restore_roundtrip(tmp_path):
-    ck = StrataCheckpoint(tmp_path)
+    ck = SplinterCheckpoint(tmp_path)
     state = {"decay_multiplier": 1.8, "store": {"a": 1}, "params": {"threshold": 2}}
     path = ck.save(state, "v1")
     assert path.exists()
@@ -14,7 +14,7 @@ def test_save_restore_roundtrip(tmp_path):
 
 
 def test_restore_unknown_tag_raises(tmp_path):
-    ck = StrataCheckpoint(tmp_path)
+    ck = SplinterCheckpoint(tmp_path)
     import pytest
 
     with pytest.raises(FileNotFoundError):
@@ -22,7 +22,7 @@ def test_restore_unknown_tag_raises(tmp_path):
 
 
 def test_auto_checkpoint_only_at_high_pes(tmp_path):
-    ck = StrataCheckpoint(tmp_path)
+    ck = SplinterCheckpoint(tmp_path)
     assert ck.auto_checkpoint({"x": 1}, pes=70) is None
     path = ck.auto_checkpoint({"x": 1}, pes=90)
     assert path is not None
@@ -32,7 +32,7 @@ def test_auto_checkpoint_only_at_high_pes(tmp_path):
 
 
 def test_list_checkpoints(tmp_path):
-    ck = StrataCheckpoint(tmp_path)
+    ck = SplinterCheckpoint(tmp_path)
     ck.save({"a": 1}, "one")
     ck.save({"a": 2}, "two")
     names = [p.name for p in ck.list_checkpoints()]
@@ -40,7 +40,7 @@ def test_list_checkpoints(tmp_path):
 
 
 def test_path_traversal_rejected(tmp_path):
-    ck = StrataCheckpoint(tmp_path)
+    ck = SplinterCheckpoint(tmp_path)
     with pytest.raises(ValueError):
         ck.save({"x": 1}, "../evil")
     with pytest.raises(ValueError):

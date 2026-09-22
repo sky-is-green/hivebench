@@ -30,7 +30,7 @@ from backend.cache_manager import KVCacheManager
 from backend.lmstudio import LMStudioBackend
 from backend.sampling import parse_sampling
 from cortex.efficiency import EfficiencyScorer
-from cortex.strata import Strata
+from cortex.splinter import Splinter
 from cortex.routing import DroneRouter, EscalationHandler
 from focal.assembly import ContextAssembler
 from focal.budget import AdaptiveBudget
@@ -202,7 +202,7 @@ class PredictionSuite:
         )
 
     def p3(self):
-        """Context sufficiency: strata-selected context >= FIFO window on >=80% of
+        """Context sufficiency: splinter-selected context >= FIFO window on >=80% of
         turns, measured deterministically (no LLM auditor).
 
         Sufficiency is the *fact-presence* test the deterministic P2 diagnostic
@@ -211,8 +211,8 @@ class PredictionSuite:
         terms the answer adds beyond the query). Every user turn with a known
         answer is compared — not one conversation, not every 3rd turn.
 
-        The strata store grows like the live strata (query chunk + non-hedge reply
-        chunk per turn, mirroring ``Strata.process_turn``), so the selection sees
+        The splinter store grows like the live splinter (query chunk + non-hedge reply
+        chunk per turn, mirroring ``Splinter.process_turn``), so the selection sees
         the same history a live run would. The FIFO context is the last-4k-token
         window of the same history.
 
@@ -221,7 +221,7 @@ class PredictionSuite:
         first-mention exclusion the deterministic P2 diagnostic applies). A
         first-mention turn has no fact in history for *either* system, so neither
         can be sufficient; counting it would dilute the ratio with structurally
-        unanswerable turns. Among retrievable turns, a strata *win* requires strata
+        unanswerable turns. Among retrievable turns, a splinter *win* requires splinter
         sufficient AND FIFO not (strict — a tie where both deliver the fact is
         not evidence of a selection advantage).
         """
@@ -281,28 +281,28 @@ class PredictionSuite:
                     both += 1
                 else:
                     neither += 1
-                # grow the strata store like the live pipeline: query chunk always,
+                # grow the splinter store like the live pipeline: query chunk always,
                 # reply chunk unless it is a hedge
                 reply = (conv_answers.get(q) or "").strip() or ""
                 store.add_chunk(turn, q)
-                if reply and not Strata._is_hedge_reply(reply):
+                if reply and not Splinter._is_hedge_reply(reply):
                     store.add_chunk(turn, reply)
 
         if compared == 0:
-            return PredictionResult("P3", "Context sufficiency (strata>=FIFO)", "SKIP", {},
+            return PredictionResult("P3", "Context sufficiency (splinter>=FIFO)", "SKIP", {},
                                     "no retrievable turns with fixture ground-truth answers")
-        # Paper protocol: paired A/B, report % of turns where strata >= FIFO. The
+        # Paper protocol: paired A/B, report % of turns where splinter >= FIFO. The
         # denominator is turns where the answer's facts were actually in history
         # (at least one system was sufficient) — a first-mention turn has no fact
         # in history for either system, and a turn where neither system's context
         # contained the canonical fact terms had no fact to retrieve at all.
         fact_retrievable = hive_only + fifo_only + both
-        wins = hive_only + both  # strata >= FIFO (ties count, per the paper's A/B)
+        wins = hive_only + both  # splinter >= FIFO (ties count, per the paper's A/B)
         ratio = wins / fact_retrievable if fact_retrievable else 0.0
         strict = hive_only / fact_retrievable if fact_retrievable else 0.0
         ok = ratio >= 0.80
         return PredictionResult(
-            "P3", "Context sufficiency (strata>=FIFO)", "PASS" if ok else "FAIL",
+            "P3", "Context sufficiency (splinter>=FIFO)", "PASS" if ok else "FAIL",
             {
                 "metric": "deterministic_fact_presence",
                 "compared": compared,
@@ -317,7 +317,7 @@ class PredictionSuite:
                 "target": 0.80,
             },
             "sufficiency = fixture answer-fact terms present in context; "
-            "paper protocol: strata >= FIFO on turns where the facts were actually "
+            "paper protocol: splinter >= FIFO on turns where the facts were actually "
             "in history (ties count); first-mention turns excluded (no fact in "
             "history for either system).",
         )
@@ -450,7 +450,7 @@ class PredictionSuite:
                     expected += len(facts)
                 store.add_chunk(turn, q)
                 reply = (conv_answers.get(q) or "").strip() or ""
-                if reply and not Strata._is_hedge_reply(reply):
+                if reply and not Splinter._is_hedge_reply(reply):
                     store.add_chunk(turn, reply)
                 prior_fixture += " " + q
         return found / expected if expected else 0.0
@@ -606,7 +606,7 @@ class PredictionSuite:
 
         - **full replay** (max_chunks=1000, adaptive budget): the honest
           live-like comparison. On short conversations the whole store fits the
-          budget, so a no-comb strata can still surface old facts from the store
+          budget, so a no-comb splinter can still surface old facts from the store
           (only stale-decayed) — the regime boundary where the comb neither
           helps nor hurts (mirrors the P3 short-conversation finding).
         - **budget-pressure replay** (max_chunks=8, fixed 1000-token budget):
@@ -749,7 +749,7 @@ class PredictionSuite:
                     store.add_chunk(turn, q)
                     store.add_chunk(turn, answer or "")
                     continue
-                # gate + assemble (mirrors Strata.process_turn's comb wiring)
+                # gate + assemble (mirrors Splinter.process_turn's comb wiring)
                 assembled = ContextAssembler().assemble(
                     query=q, current_turn=turn, store=store,
                     router=DroneRouter(), ultra_small=self.ultra,
@@ -760,11 +760,11 @@ class PredictionSuite:
                 )
                 comb_candidates = []
                 if comb is not None and len(comb) > 0:
-                    from cortex.config import StrataConfig
+                    from cortex.config import SplinterConfig
 
-                    gate_fires = assembled.top_raw_score < StrataConfig().comb_gate_threshold
+                    gate_fires = assembled.top_raw_score < SplinterConfig().comb_gate_threshold
                     if not gate_fires and assembled.top_chunk_id is not None:
-                        # query-echo gate (mirrors Strata._comb_gate_fires): a
+                        # query-echo gate (mirrors Splinter._comb_gate_fires): a
                         # template-sibling query chunk scores ~1.0 but carries
                         # no facts — measured to keep the gate closed on every
                         # return turn after the first
@@ -819,7 +819,7 @@ class PredictionSuite:
                     n_non_return += 1
                     non_return_recall += hit
                 store.add_chunk(turn, q)
-                if answer and not Strata._is_hedge_reply(answer):
+                if answer and not Splinter._is_hedge_reply(answer):
                     store.add_chunk(turn, answer)
                 if comb is not None:
                     archived_total += store.evict_stale(
@@ -904,7 +904,7 @@ class PredictionSuite:
                 if not facts:
                     store.add_chunk(turn, q)
                     reply = (conv_answers.get(q) or "").strip() or ""
-                    if reply and not Strata._is_hedge_reply(reply):
+                    if reply and not Splinter._is_hedge_reply(reply):
                         store.add_chunk(turn, reply)
                     continue
                 if turns_since_switch <= 3:
@@ -920,7 +920,7 @@ class PredictionSuite:
                     expected += len(facts)
                 store.add_chunk(turn, q)
                 reply = (conv_answers.get(q) or "").strip() or ""
-                if reply and not Strata._is_hedge_reply(reply):
+                if reply and not Splinter._is_hedge_reply(reply):
                     store.add_chunk(turn, reply)
         return found / expected if expected else 0.0
 

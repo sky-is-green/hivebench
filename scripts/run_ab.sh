@@ -11,8 +11,8 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 2
 ROOT=$PWD
 FORK=${FORK:-artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a}
-PIN=${PIN:-~/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN}
-PY=${PY:-~/Desktop/work/strata-memory/venv/bin/python}
+PIN=${PIN:-~/Desktop/work/worktrees/splinter-memory/hivebench-SPLINTER-PIN}
+PY=${PY:-~/Desktop/work/splinter-memory/venv/bin/python}
 PORT=${PORT:-8090}
 MAX_CONVS=${MAX_CONVS:-10}
 DEADLINE=${DEADLINE:-7200}
@@ -23,8 +23,8 @@ OUTDIR=${OUTDIR:-artifacts/ternary/eval}
 export HIP_VISIBLE_DEVICES=${HIP_VISIBLE_DEVICES:-0,1}
 export HARNESS_VRAM_GB=${HARNESS_VRAM_GB:-40}
 export LD_LIBRARY_PATH="$ROOT/$FORK"
-export STRATA_HOME=$PIN
-export PYTHONPATH=$PIN/strata
+export SPLINTER_HOME=$PIN
+export PYTHONPATH=$PIN/splinter
 export GGML_CUDA_NO_PINNED=1
 
 PQ2=${PQ2:-artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf}

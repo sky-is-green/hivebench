@@ -50,7 +50,7 @@ def test_p11_comb_return_protocol_pass():
 
     Regression-locks the 2026-08-24 comb work: selection-as-curation (the
     assembler marks selected chunks, so comb_relevant_only archives what the
-    strata once judged relevant), the query-echo gate (template-sibling question
+    splinter once judged relevant), the query-echo gate (template-sibling question
     chunks must not keep the gate closed), and the boost-shifted 0.85 gate
     calibration."""
     import json
@@ -93,7 +93,7 @@ def test_p11_comb_return_protocol_pass():
 
 def test_p3_long_conversations_close_sufficiency():
     """P3 must PASS on full-length long conversations with the real drone: on
-    turns where the answer's facts were actually in history, strata >= FIFO on
+    turns where the answer's facts were actually in history, splinter >= FIFO on
     >=80% of turns (paper's paired-A/B criterion, ties counted, first-mention
     excluded)."""
     import json

@@ -26,7 +26,7 @@ FILLERS = [
 def turn(content):
     body = json.dumps({"model": MODEL, "messages":[{"role":"user","content":content}]}).encode()
     r = urllib.request.Request(f"{BASE}/v1/openai/chat/completions", data=body,
-        headers={"Content-Type":"application/json","X-Strata-Conversation":CONV})
+        headers={"Content-Type":"application/json","X-Splinter-Conversation":CONV})
     t0 = time.time()
     with urllib.request.urlopen(r, timeout=600) as resp:
         d = json.load(resp)

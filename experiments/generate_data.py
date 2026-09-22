@@ -1,6 +1,6 @@
 """Unified data-generation workflow.
 
-Drives the full Strata pipeline over a set of conversations and writes a
+Drives the full Splinter pipeline over a set of conversations and writes a
 self-contained run directory with:
 
   - NDJSON event logs (correlation-tagged, redacted, rotated)
@@ -54,9 +54,9 @@ from backend.providers import (
     load_registry,
 )
 from cortex.baselines.runner import load_conversations
-from cortex.config import StrataConfig
+from cortex.config import SplinterConfig
 from cortex.e2e import FakeUltraSmall, MockTransport
-from cortex.strata import Strata
+from cortex.splinter import Splinter
 from cortex.routing import DroneRouter
 from experiments.dashboard import KeepAwake, TermDashboard
 from logs.event_logger import EventLogger
@@ -68,7 +68,7 @@ from sieve.medium import MediumDrone
 from sieve.ultra_small import UltraSmallDrone
 
 DEFAULT_PINNED_PREFIX = (
-    "You are an assistant operating in the Strata Memory system. "
+    "You are an assistant operating in the Splinter Memory system. "
     "Answer using the provided context and conversation history whenever they "
     "contain the needed information. If the context is insufficient, you may "
     "draw on your general knowledge, but clearly mark any such part."
@@ -242,11 +242,11 @@ def _acquire_run_lock(run_dir) -> bool:
     return True
 
 
-def _run_conversations(strata, conversations, max_turns, conversation_id=None,
+def _run_conversations(splinter, conversations, max_turns, conversation_id=None,
                        show_progress=True, resume=None, checkpoint_path=None,
                        checkpoint_every=10, run_args=None, dashboards=None,
                        ttft_probe_every: int = 0):
-    """Run conversations through the strata, optionally resuming a prior run.
+    """Run conversations through the splinter, optionally resuming a prior run.
 
     ``resume`` (dict) carries ``conv_index`` (0-based index of the conversation
     being processed), ``turn_index`` (user turns already done inside it),
@@ -272,12 +272,12 @@ def _run_conversations(strata, conversations, max_turns, conversation_id=None,
             return
         checkpoint_path.write_text(json.dumps({
             "version": 1,
-            "run_id": strata.run_id,
-            "config": strata.config.to_dict(),
-            "store": strata.store.to_dict(),
-            "hive_turn": strata.turn,
-            "comb_stats_history": list(getattr(strata, "comb_stats_history", []) or []),
-            "comb_stats": dict(getattr(strata, "comb_stats", {}) or {}),
+            "run_id": splinter.run_id,
+            "config": splinter.config.to_dict(),
+            "store": splinter.store.to_dict(),
+            "hive_turn": splinter.turn,
+            "comb_stats_history": list(getattr(splinter, "comb_stats_history", []) or []),
+            "comb_stats": dict(getattr(splinter, "comb_stats", {}) or {}),
             "progress": {
                 "conv_index": conv_index,
                 "turn_index": turn_index,
@@ -293,10 +293,10 @@ def _run_conversations(strata, conversations, max_turns, conversation_id=None,
         # Per-conversation store isolation: reset before every conversation
         # EXCEPT a mid-conversation resume, whose store was restored from the
         # checkpoint and must keep the partial conversation's chunks. Without
-        # this reset, one Strata/store across all conversations lets chunks from
+        # this reset, one Splinter/store across all conversations lets chunks from
         # earlier conversations crowd out the current one's relevant context.
         if not (resume is not None and ci == start_conv and current_record is not None):
-            strata.reset_conversation()
+            splinter.reset_conversation()
         if ci == start_conv and current_record is not None:
             conv_record = current_record
         else:
@@ -316,12 +316,12 @@ def _run_conversations(strata, conversations, max_turns, conversation_id=None,
                 break
             if ci == start_conv and turn_count <= start_turn:
                 continue  # already processed before the checkpoint
-            res = strata.process_turn(td["content"], conversation_id=conversation_id)
+            res = splinter.process_turn(td["content"], conversation_id=conversation_id)
             ttft_ms = None
             if ttft_probe_every and turn_count % ttft_probe_every == 0 \
-                    and strata.backend is not None and res.assembled:
+                    and splinter.backend is not None and res.assembled:
                 ttft_ms = _ttft_probe_ms(
-                    strata.backend, strata.pinned_prefix, res.assembled.content,
+                    splinter.backend, splinter.pinned_prefix, res.assembled.content,
                     td["content"],
                 )
             conv_record["turns"].append({
@@ -336,10 +336,10 @@ def _run_conversations(strata, conversations, max_turns, conversation_id=None,
                 "token_count": res.assembled.token_count if res.assembled else 0,
                 "budget": res.assembled.budget if res.assembled else 0,
                 "completion_tokens": (
-                    (getattr(strata.backend, "last_usage", {}) or {}).get("completion_tokens")
+                    (getattr(splinter.backend, "last_usage", {}) or {}).get("completion_tokens")
                 ),
                 "prompt_tokens": (
-                    (getattr(strata.backend, "last_usage", {}) or {}).get("prompt_tokens")
+                    (getattr(splinter.backend, "last_usage", {}) or {}).get("prompt_tokens")
                 ),
                 "ttft_probe_ms": ttft_ms,
             })
@@ -490,7 +490,7 @@ def _read_baseline_tps(run_dir: Path) -> float | None:
 def _compute_post_run_pes(records, db, baseline_tps: float | None = None):
     """Post-run Pipeline Efficiency Score from ground-truth + measured metrics.
 
-    The per-turn in-process PES (``Strata.process_turn``) only sees latency and
+    The per-turn in-process PES (``Splinter.process_turn``) only sees latency and
     context utilization, so in live runs it floors near zero (the paper's
     LatencyHealth is ms-calibrated and live generation is seconds). This computes
     the paper's real PES after the run, when auditor retrieval/routing metrics
@@ -560,7 +560,7 @@ def _compute_post_run_pes(records, db, baseline_tps: float | None = None):
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Strata data-generation workflow")
+    parser = argparse.ArgumentParser(description="Splinter data-generation workflow")
     parser.add_argument("--live", action="store_true", help="use real LM Studio + all-MiniLM")
     parser.add_argument("--mock", action="store_true", help="offline (fake drone + mock backend)")
     parser.add_argument("--conversations", default="tests/fixtures/generated")
@@ -651,7 +651,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--comb-dir", default="",
         help="enable the comb (P11 surplus SSD tier) and write per-conversation "
-             "archive files here, e.g. runs/<ts>/comb. Chunks the strata once "
+             "archive files here, e.g. runs/<ts>/comb. Chunks the splinter once "
              "curated that leave the active store (LRU eviction or stale-out) "
              "are frozen to disk instead of dropped, and resurrected when a "
              "returned topic's query is weak in the store (comb_gate_threshold).",
@@ -736,7 +736,7 @@ def main(argv: list[str] | None = None) -> int:
     (run_dir / "labels").mkdir(parents=True, exist_ok=True)
     logger = EventLogger(log_dir=log_dir)
 
-    # --- backend + strata ---
+    # --- backend + splinter ---
     try:
         backend, ultra, live = _resolve_backend(args)
     except RuntimeError as exc:
@@ -749,8 +749,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"run directory {run_dir} is already in use by a live process (run.lock)")
         return 3
 
-    config = (StrataConfig.from_dict(resume_ckpt["config"]) if resume_ckpt
-              else StrataConfig(max_tokens=args.max_tokens))
+    config = (SplinterConfig.from_dict(resume_ckpt["config"]) if resume_ckpt
+              else SplinterConfig(max_tokens=args.max_tokens))
     if args.sampling:
         from backend.sampling import parse_sampling
 
@@ -772,7 +772,7 @@ def main(argv: list[str] | None = None) -> int:
         config.comb_top_k = args.comb_top_k
         config.comb_max_records = args.comb_max_records
         Path(config.comb_dir).mkdir(parents=True, exist_ok=True)
-    strata = Strata(
+    splinter = Splinter(
         config=config,
         ultra=ultra,
         medium=MediumDrone(score_pair_fn=lambda q, c: 0.5),
@@ -781,15 +781,15 @@ def main(argv: list[str] | None = None) -> int:
         pinned_prefix=args.pinned_prefix,
     )
     if resume_ckpt:
-        strata.run_id = resume_ckpt["run_id"]
-        strata.store = ContextStore.from_dict(
-            resume_ckpt["store"], embed_fn=strata.ultra.embed
+        splinter.run_id = resume_ckpt["run_id"]
+        splinter.store = ContextStore.from_dict(
+            resume_ckpt["store"], embed_fn=splinter.ultra.embed
         )
-        strata.turn = resume_ckpt["hive_turn"]
+        splinter.turn = resume_ckpt["hive_turn"]
         if resume_ckpt.get("comb_stats_history") is not None:
-            strata.comb_stats_history = list(resume_ckpt["comb_stats_history"])
+            splinter.comb_stats_history = list(resume_ckpt["comb_stats_history"])
         if resume_ckpt.get("comb_stats") is not None:
-            strata.comb_stats = dict(resume_ckpt["comb_stats"])
+            splinter.comb_stats = dict(resume_ckpt["comb_stats"])
 
     # Pinned prefix must reach the backend as a byte-stable leading system
     # message for llama.cpp automatic prefix caching (see KVCacheManager).
@@ -841,7 +841,7 @@ def main(argv: list[str] | None = None) -> int:
     _phase(f"1/3 E2E conversations ({len(conversations)} convs, ~{_total_user_turns(conversations, args.max_turns)} turns)")
     push("set_phase", f"1/3 E2E ({len(conversations)} convs)")
     records = _run_conversations(
-        strata, conversations, args.max_turns, conversation_id=run_dir.name,
+        splinter, conversations, args.max_turns, conversation_id=run_dir.name,
         resume=resume_ckpt.get("progress") if resume_ckpt else None,
         checkpoint_path=run_dir / "checkpoint.json",
         checkpoint_every=args.checkpoint_every,
@@ -931,17 +931,17 @@ def main(argv: list[str] | None = None) -> int:
                     "TTFT trend means the pinned prefix stopped being reused",
         }
     comb_report = None
-    if getattr(strata, "comb_stats_history", None):
+    if getattr(splinter, "comb_stats_history", None):
         comb_report = {
             "enabled": bool(args.comb_dir),
             "dir": args.comb_dir,
-            "per_conversation": strata.comb_stats_history,
+            "per_conversation": splinter.comb_stats_history,
             "total": {
-                k: sum(c[k] for c in strata.comb_stats_history) for k in ("archived", "resurrected", "comb_hits", "gate_fired")
+                k: sum(c[k] for c in splinter.comb_stats_history) for k in ("archived", "resurrected", "comb_hits", "gate_fired")
             },
         }
     report = {
-        "run_id": strata.run_id,
+        "run_id": splinter.run_id,
         "mode": "live" if live else "mock",
         "backend": type(backend).__name__,
         "engine": {
@@ -974,7 +974,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- summary ---
     agg = report["aggregate"]
-    print(f"Run {strata.run_id} ({report['mode']}) -> {run_dir.resolve()}")
+    print(f"Run {splinter.run_id} ({report['mode']}) -> {run_dir.resolve()}")
     print(f"  conversations : {agg.get('conversations', 0)}  turns: {agg.get('user_turns', 0)}")
     print(f"  PES min/avg   : {agg.get('min_pes')} / {agg.get('avg_pes')}")
     if post_run_pes:

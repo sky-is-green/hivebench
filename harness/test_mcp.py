@@ -2,7 +2,7 @@
 
 All offline: fake drone + mock transport backend, tmp cwd, mirroring the
 harness-service fixture. Covers the ticket's acceptance shape end to end:
-initialize -> tools/list -> strata_remember -> strata_search in a fresh
+initialize -> tools/list -> splinter_remember -> splinter_search in a fresh
 conversation_id, plus cross-conversation isolation.
 """
 
@@ -50,7 +50,7 @@ def test_mcp_handshake_and_tools_list(client):
     assert init.status_code == 200
     result = init.json()["result"]
     assert result["protocolVersion"] == "2025-06-18"
-    assert result["serverInfo"]["name"] == "strata-memory"
+    assert result["serverInfo"]["name"] == "splinter-memory"
 
     # notification-only body: accepted, nothing to answer
     assert _rpc(client, {
@@ -60,7 +60,7 @@ def test_mcp_handshake_and_tools_list(client):
     tools = _rpc(client, {
         "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {},
     }).json()["result"]["tools"]
-    assert {t["name"] for t in tools} == {"strata_search", "strata_remember"}
+    assert {t["name"] for t in tools} == {"splinter_search", "splinter_remember"}
 
 
 def test_mcp_remember_then_search_roundtrip_and_isolation(client):
@@ -68,7 +68,7 @@ def test_mcp_remember_then_search_roundtrip_and_isolation(client):
     text = "Deploy tokens rotate every 90 days per policy."
     stored = _rpc(client, {
         "jsonrpc": "2.0", "id": 1, "method": "tools/call",
-        "params": {"name": "strata_remember", "arguments": {
+        "params": {"name": "splinter_remember", "arguments": {
             "conversation_id": conv, "text": text}},
     }).json()
     assert "error" not in stored
@@ -76,7 +76,7 @@ def test_mcp_remember_then_search_roundtrip_and_isolation(client):
 
     found = _rpc(client, {
         "jsonrpc": "2.0", "id": 2, "method": "tools/call",
-        "params": {"name": "strata_search", "arguments": {
+        "params": {"name": "splinter_search", "arguments": {
             "conversation_id": conv,
             "query": "What is the deploy token rotation period?"}},
     }).json()
@@ -87,7 +87,7 @@ def test_mcp_remember_then_search_roundtrip_and_isolation(client):
     # isolation: a different conversation must not see it
     other = _rpc(client, {
         "jsonrpc": "2.0", "id": 3, "method": "tools/call",
-        "params": {"name": "strata_search", "arguments": {
+        "params": {"name": "splinter_search", "arguments": {
             "conversation_id": "mcp-accept-other",
             "query": "What is the deploy token rotation period?"}},
     }).json()
@@ -99,7 +99,7 @@ def test_mcp_remember_then_search_roundtrip_and_isolation(client):
 def test_mcp_call_without_conversation_id_is_invalid_params(client):
     body = _rpc(client, {
         "jsonrpc": "2.0", "id": 1, "method": "tools/call",
-        "params": {"name": "strata_search",
+        "params": {"name": "splinter_search",
                    "arguments": {"query": "hello"}},
     }).json()
     assert body["error"]["code"] == -32602

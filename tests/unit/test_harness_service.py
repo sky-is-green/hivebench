@@ -84,7 +84,7 @@ def test_openai_chat_completions_non_stream(client, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream()
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     r = c.post("/v1/openai/chat/completions", json={
         "model": "prism-ml/bonsai-27b",
         "messages": [
@@ -102,7 +102,7 @@ def test_openai_chat_completions_non_stream(client, monkeypatch):
     # model resolves from the provider config, not the client
     assert fake.payload["model"] == "m1"
     # the reply was observed back into the store (2 chunks: query + reply)
-    st = c.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "default"}).json()
     assert st["turn"] == 1
     assert st["store_chunks"] >= 2
 
@@ -123,7 +123,7 @@ def test_openai_chat_completions_stream_relays_and_observes(client, monkeypatch)
         "data: [DONE]",
     ]
     fake = _FakeUpstream(sse_chunks=chunks)
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     r = c.post("/v1/openai/chat/completions", json={
         "model": "x",
         "stream": True,
@@ -134,7 +134,7 @@ def test_openai_chat_completions_stream_relays_and_observes(client, monkeypatch)
     assert "data: [DONE]" in text
     assert "JWT tokens" in text and "with rotation" in text
     # reply observed back (non-hedge, stored)
-    st = c.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "default"}).json()
     assert st["store_chunks"] >= 2
 
 
@@ -143,7 +143,7 @@ def test_openai_chat_completions_conversation_header_and_errors(client, monkeypa
     import harness.app as appmod
 
     fake = _FakeUpstream()
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     # no provider configured -> 502
     r = c.post("/v1/openai/chat/completions", json={
         "messages": [{"role": "user", "content": "hi"}],
@@ -153,12 +153,12 @@ def test_openai_chat_completions_conversation_header_and_errors(client, monkeypa
     # empty messages -> 422
     r = c.post("/v1/openai/chat/completions", json={"messages": []})
     assert r.status_code == 422
-    # conversation keyed by the X-Strata-Conversation header
+    # conversation keyed by the X-Splinter-Conversation header
     r = c.post("/v1/openai/chat/completions", json={
         "messages": [{"role": "user", "content": "Which tokens do I use for auth expiry?"}],
-    }, headers={"X-Strata-Conversation": "proj-a"})
+    }, headers={"X-Splinter-Conversation": "proj-a"})
     assert r.status_code == 200
-    st = c.get("/v1/strata/state", params={"conversation_id": "proj-a"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "proj-a"}).json()
     assert st["turn"] == 1
 
 
@@ -192,7 +192,7 @@ def test_openai_curated_context_feeds_next_turn(tmp_path, monkeypatch):
         state_dir=str(tmp_path / "state"),
     )
     fake = _FakeUpstream()
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     with TestClient(app) as c:
         c.post("/v1/provider/config", json={
             "providers": [{"name": "lm", "base_url": "http://mock-llama",
@@ -213,7 +213,7 @@ def test_openai_responses_non_stream_translates_and_observes(client, monkeypatch
     c, _app = client
     _configure_lm_provider(c)
     fake = _FakeUpstream()
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     r = c.post("/v1/openai/responses", json={
         "model": "prism-ml/bonsai-27b",
         "input": "Which tokens do I use for auth expiry?",
@@ -240,7 +240,7 @@ def test_openai_responses_non_stream_translates_and_observes(client, monkeypatch
     assert fake.payload["max_tokens"] == 128
     assert fake.payload["stream"] is False
     # reply observed back into the store (2 chunks: query + reply)
-    st = c.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "default"}).json()
     assert st["turn"] == 1
     assert st["store_chunks"] >= 2
 
@@ -249,7 +249,7 @@ def test_openai_responses_list_input_and_conversation_header(client, monkeypatch
     c, _app = client
     _configure_lm_provider(c)
     fake = _FakeUpstream()
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     r = c.post("/v1/openai/responses", json={
         "model": "m",
         "input": [
@@ -257,14 +257,14 @@ def test_openai_responses_list_input_and_conversation_header(client, monkeypatch
             {"type": "message", "role": "assistant", "content": "first answer"},
             {"type": "message", "role": "user", "content": "second question"},
         ],
-    }, headers={"X-Strata-Conversation": "proj-resp"})
+    }, headers={"X-Splinter-Conversation": "proj-resp"})
     assert r.status_code == 200
     assert r.json()["model"] == "m"
     roles = [(m["role"], m["content"]) for m in fake.payload["messages"]]
     assert roles[-1] == ("user", "second question")
     assert ("assistant", "first answer") in roles
-    # conversation keyed by the X-Strata-Conversation header
-    st = c.get("/v1/strata/state", params={"conversation_id": "proj-resp"}).json()
+    # conversation keyed by the X-Splinter-Conversation header
+    st = c.get("/v1/splinter/state", params={"conversation_id": "proj-resp"}).json()
     assert st["turn"] == 1
 
 
@@ -282,7 +282,7 @@ def test_openai_responses_stream_emits_deltas_and_completed(client, monkeypatch)
         "data: [DONE]",
     ]
     fake = _FakeUpstream(sse_chunks=chunks)
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     r = c.post("/v1/openai/responses", json={
         "model": "m", "stream": True,
         "input": "Which tokens do I use for auth expiry?",
@@ -308,7 +308,7 @@ def test_openai_responses_stream_emits_deltas_and_completed(client, monkeypatch)
     assert resp["output"][0]["content"][0]["text"] == deltas
     assert resp["usage"] == {"input_tokens": 0, "output_tokens": 6}
     # reply observed back (non-hedge, stored)
-    st = c.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "default"}).json()
     assert st["store_chunks"] >= 2
 
 
@@ -320,19 +320,19 @@ def test_openai_responses_stream_error_emits_failed(client, monkeypatch):
         def __call__(self, *args, **kwargs):
             raise RuntimeError("upstream down")
 
-    monkeypatch.setattr("strata.server.requests.post", _BoomUpstream())
+    monkeypatch.setattr("splinter.server.requests.post", _BoomUpstream())
     r = c.post("/v1/openai/responses", json={
         "model": "m", "stream": True, "input": "hi"})
     assert r.status_code == 200
     assert "event: response.failed" in r.text
-    assert "strata_upstream_error" in r.text
+    assert "splinter_upstream_error" in r.text
     assert "event: response.completed" not in r.text
 
 
 def test_openai_responses_validation_and_chat_endpoint_intact(client, monkeypatch):
     c, _app = client
     fake = _FakeUpstream()
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     # no provider configured -> 502
     assert c.post("/v1/openai/responses",
                   json={"input": "hi"}).status_code == 502
@@ -374,7 +374,7 @@ def test_git_exclude_protection_is_idempotent(tmp_path):
 
 def test_turn_returns_curated_reply(client):
     c, _app = client
-    r = c.post("/v1/strata/turn", json={
+    r = c.post("/v1/splinter/turn", json={
         "query": "How does JWT authentication work?",
         "conversation_id": "c1",
     })
@@ -382,13 +382,13 @@ def test_turn_returns_curated_reply(client):
     body = r.json()
     assert body["conversation_id"] == "c1"
     assert body["reply"].startswith("[mock] re:")
-    assert body["mode"] in ("strata", "no_backend")
+    assert body["mode"] in ("splinter", "no_backend")
     assert body["error"] is None
     assert body["budget"] > 0
     assert body["turn"] == 1
     assert "total_ms" in body["timings"]
     # turn 1 has no stored history yet; turn 2 must carry curated context
-    second = c.post("/v1/strata/turn", json={
+    second = c.post("/v1/splinter/turn", json={
         "query": "Follow-up about the JWT expiry claim", "conversation_id": "c1",
     }).json()
     assert second["assembled_content"]
@@ -399,8 +399,8 @@ def test_second_turn_increments_and_state_grows(client):
     # distinct queries per turn: RC1 collapses verbatim duplicates at ingest,
     # so repeating the same query would (correctly) not grow the store
     for query in ("tell me about JWT", "how does the JWT refresh flow behave"):
-        c.post("/v1/strata/turn", json={"query": query, "conversation_id": "c1"})
-    st = c.get("/v1/strata/state", params={"conversation_id": "c1"}).json()
+        c.post("/v1/splinter/turn", json={"query": query, "conversation_id": "c1"})
+    st = c.get("/v1/splinter/state", params={"conversation_id": "c1"}).json()
     assert st["turn"] == 2
     assert st["store_chunks"] >= 4  # query+reply per turn (hedge-filter permitting)
     assert set(st["comb_stats"]) == {"archived", "resurrected", "comb_hits", "gate_fired"}
@@ -408,48 +408,48 @@ def test_second_turn_increments_and_state_grows(client):
 
 def test_state_lists_all_conversations_and_404s_unknown(client):
     c, _app = client
-    c.post("/v1/strata/turn", json={"query": "q about JWT", "conversation_id": "a"})
-    c.post("/v1/strata/turn", json={"query": "q about JWT", "conversation_id": "b"})
-    st = c.get("/v1/strata/state").json()
+    c.post("/v1/splinter/turn", json={"query": "q about JWT", "conversation_id": "a"})
+    c.post("/v1/splinter/turn", json={"query": "q about JWT", "conversation_id": "b"})
+    st = c.get("/v1/splinter/state").json()
     assert st["count"] == 2
     assert set(st["conversations"]) == {"a", "b"}
-    assert c.get("/v1/strata/state", params={"conversation_id": "zzz"}).status_code == 404
+    assert c.get("/v1/splinter/state", params={"conversation_id": "zzz"}).status_code == 404
 
 
 def test_reset_drops_conversation_state(client):
     c, _app = client
-    c.post("/v1/strata/turn", json={"query": "JWT please", "conversation_id": "c1"})
-    assert c.post("/v1/strata/reset", json={"conversation_id": "c1"}).json()["ok"]
-    st = c.get("/v1/strata/state").json()
+    c.post("/v1/splinter/turn", json={"query": "JWT please", "conversation_id": "c1"})
+    assert c.post("/v1/splinter/reset", json={"conversation_id": "c1"}).json()["ok"]
+    st = c.get("/v1/splinter/state").json()
     assert st["count"] == 0
-    body = c.post("/v1/strata/turn", json={"query": "JWT again", "conversation_id": "c1"}).json()
+    body = c.post("/v1/splinter/turn", json={"query": "JWT again", "conversation_id": "c1"}).json()
     assert body["turn"] == 1  # fresh conversation
 
 
 def test_empty_query_is_422(client):
     c, _app = client
-    assert c.post("/v1/strata/turn", json={"query": "   "}).status_code == 422
+    assert c.post("/v1/splinter/turn", json={"query": "   "}).status_code == 422
 
 
 def test_config_overrides_applied_on_creation(client):
     c, app = client
-    r = c.post("/v1/strata/turn", json={
+    r = c.post("/v1/splinter/turn", json={
         "query": "JWT", "conversation_id": "cfg",
         "config": {"max_context": 4096, "not_a_real_field": 1},
     })
     assert r.status_code == 200
-    strata = app.state.harness.hives["cfg"]
-    assert strata.config.max_context == 4096  # unknown key silently dropped
+    splinter = app.state.harness.hives["cfg"]
+    assert splinter.config.max_context == 4096  # unknown key silently dropped
 
 
 def test_model_override_swaps_conversation_backend(client):
     c, app = client
-    c.post("/v1/strata/turn", json={
+    c.post("/v1/splinter/turn", json={
         "query": "JWT", "conversation_id": "m", "model": "other-model",
     })
-    strata = app.state.harness.hives["m"]
-    assert strata.backend.model == "other-model"
-    assert strata.cache.backend is strata.backend
+    splinter = app.state.harness.hives["m"]
+    assert splinter.backend.model == "other-model"
+    assert splinter.cache.backend is splinter.backend
 
 
 # ---------------------------------------------------------------------------
@@ -491,7 +491,7 @@ def test_provider_config_roundtrip_masks_keys_and_persists(client, tmp_path):
 
 def test_default_backend_factory_resolves_active_provider(tmp_path, monkeypatch):
     """No injected factories -> conversations ride the active provider
-    (the 'curl /v1/strata/turn against any provider' M1 path)."""
+    (the 'curl /v1/splinter/turn against any provider' M1 path)."""
     monkeypatch.chdir(tmp_path)
     recorded = {}
 
@@ -512,8 +512,8 @@ def test_default_backend_factory_resolves_active_provider(tmp_path, monkeypatch)
                        "api_key": "sk-x", "model": "deepseek-chat"}],
         "default": "ds",
     })
-    r = c.post("/v1/strata/turn", json={"query": "JWT", "conversation_id": "t"})
-    assert r.status_code == 200  # generation errors are contained by the strata
+    r = c.post("/v1/splinter/turn", json={"query": "JWT", "conversation_id": "t"})
+    assert r.status_code == 200  # generation errors are contained by the splinter
     assert recorded["base_url"] == "https://api.deepseek.com"
     assert recorded["model"] == "deepseek-chat"
     assert recorded["api_key"] == "sk-x"
@@ -568,11 +568,11 @@ def test_models_endpoint_probe_flag(client, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# curate / observe (dsh-strata Seam A flow) + built-in mock chat completions
+# curate / observe (dsh-splinter Seam A flow) + built-in mock chat completions
 # ---------------------------------------------------------------------------
 def test_curate_then_observe_feeds_store_without_generation(client):
     c, app = client
-    first = c.post("/v1/strata/curate", json={
+    first = c.post("/v1/splinter/curate", json={
         "query": "What is the JWT refresh policy?",
         "conversation_id": "agent-1",
     }).json()
@@ -580,37 +580,37 @@ def test_curate_then_observe_feeds_store_without_generation(client):
     assert first["reply" if "reply" in first else "assembled_content"] is not None
     assert first["budget"] > 0
 
-    r = c.post("/v1/strata/observe", json={
+    r = c.post("/v1/splinter/observe", json={
         "conversation_id": "agent-1",
         "reply": "The JWT access token expires after 3600 seconds.",
     }).json()
     assert r == {"ok": True, "stored": True, "turn": 1}
 
-    st = c.get("/v1/strata/state", params={"conversation_id": "agent-1"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "agent-1"}).json()
     assert st["store_chunks"] == 2  # query chunk + observed reply chunk
 
     # turn 2: the observed fact must now be retrievable into the context
-    second = c.post("/v1/strata/curate", json={
+    second = c.post("/v1/splinter/curate", json={
         "query": "How often must a JWT client refresh?",
         "conversation_id": "agent-1",
     }).json()
     assert second["turn"] == 2
-    strata = app.state.harness.hives["agent-1"]
-    stored_contents = [ch.content for ch in strata.store.all_chunks()]
+    splinter = app.state.harness.hives["agent-1"]
+    stored_contents = [ch.content for ch in splinter.store.all_chunks()]
     assert any("3600" in content for content in stored_contents)
 
 
 def test_curate_hive_has_no_backend(client):
     c, app = client
-    c.post("/v1/strata/curate", json={"query": "q on JWT", "conversation_id": "nb"})
-    strata = app.state.harness.hives["nb"]
-    assert strata.backend is None
+    c.post("/v1/splinter/curate", json={"query": "q on JWT", "conversation_id": "nb"})
+    splinter = app.state.harness.hives["nb"]
+    assert splinter.backend is None
 
 
 def test_observe_hedge_reply_not_stored(client):
     c, _app = client
-    c.post("/v1/strata/curate", json={"query": "JWT?", "conversation_id": "h"})
-    r = c.post("/v1/strata/observe", json={
+    c.post("/v1/splinter/curate", json={"query": "JWT?", "conversation_id": "h"})
+    r = c.post("/v1/splinter/observe", json={
         "conversation_id": "h",
         "reply": "I do not have that information regarding your account.",
     }).json()
@@ -619,12 +619,12 @@ def test_observe_hedge_reply_not_stored(client):
 
 def test_observe_unknown_conversation_lazy_creates(client):
     c, _app = client
-    r = c.post("/v1/strata/observe", json={
+    r = c.post("/v1/splinter/observe", json={
         "conversation_id": "ghost", "reply": "stored text",
     })
     assert r.status_code == 200
     assert r.json() == {"ok": True, "stored": True, "turn": 0}
-    st = c.get("/v1/strata/state", params={"conversation_id": "ghost"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "ghost"}).json()
     assert st["store_chunks"] >= 1
 
 
@@ -633,15 +633,15 @@ def test_mock_chat_completions_non_stream_reports_context(client):
     r = c.post("/v1/chat/completions", json={
         "model": "mock-model",
         "messages": [
-            {"role": "system", "content": "<strata>HIVE CONTEXT: jwt facts</strata>"},
-            {"role": "user", "content": "<strata-curated-context>jwt facts</strata-curated-context>"},
+            {"role": "system", "content": "<splinter>HIVE CONTEXT: jwt facts</splinter>"},
+            {"role": "user", "content": "<splinter-curated-context>jwt facts</splinter-curated-context>"},
         ],
     })
     assert r.status_code == 200
     body = r.json()
     content = body["choices"][0]["message"]["content"]
     assert body["choices"][0]["finish_reason"] == "stop"
-    assert "system=" in content and "strata_context=yes" in content
+    assert "system=" in content and "splinter_context=yes" in content
     assert body["usage"]["total_tokens"] > 0
 
 
@@ -651,7 +651,7 @@ def test_mock_chat_completions_flags_missing_curated_marker(client):
         "model": "m",
         "messages": [{"role": "user", "content": "plain question"}],
     }).json()
-    assert "strata_context=no" in body["choices"][0]["message"]["content"]
+    assert "splinter_context=no" in body["choices"][0]["message"]["content"]
 
 
 def test_mock_chat_emits_tool_call_for_benchmark_request(client):
@@ -732,7 +732,7 @@ def test_mock_chat_completions_stream_sse(client):
         for ln in lines[:-1]
         if _json.loads(ln[6:])["choices"][0]["delta"].get("content")
     )
-    assert "[strata-mock]" in deltas
+    assert "[splinter-mock]" in deltas
     final = _json.loads(lines[-2][6:])
     assert final["choices"][0]["finish_reason"] == "stop"
     assert "usage" in final
@@ -743,7 +743,7 @@ def test_curate_full_flow_with_mock_llm_roundtrip(client):
     chat endpoint) -> observe; the store then retrieves the fact."""
     c, _app = client
     cid = "sess-demo"
-    cur = c.post("/v1/strata/curate", json={
+    cur = c.post("/v1/splinter/curate", json={
         "query": "Remember: deploy token rotation is 90 days.",
         "conversation_id": cid,
     }).json()
@@ -755,11 +755,11 @@ def test_curate_full_flow_with_mock_llm_roundtrip(client):
         ],
     }).json()
     assert "system=0ch" not in chat["choices"][0]["message"]["content"]
-    c.post("/v1/strata/observe", json={
+    c.post("/v1/splinter/observe", json={
         "conversation_id": cid,
         "reply": "Deploy tokens rotate every 90 days per policy.",
     })
-    nxt = c.post("/v1/strata/curate", json={
+    nxt = c.post("/v1/splinter/curate", json={
         "query": "What is the deploy token rotation period?",
         "conversation_id": cid,
     }).json()
@@ -788,8 +788,8 @@ def test_conversation_survives_sidecar_restart(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     c1 = TestClient(_make_app(tmp_path))
     cid = "ws-demo-workspace"
-    c1.post("/v1/strata/curate", json={"query": "JWT refresh is 3600s", "conversation_id": cid})
-    c1.post("/v1/strata/observe", json={
+    c1.post("/v1/splinter/curate", json={"query": "JWT refresh is 3600s", "conversation_id": cid})
+    c1.post("/v1/splinter/observe", json={
         "conversation_id": cid, "reply": "Access tokens rotate every 90 days.",
     })
     assert (tmp_path / "harness_state").is_dir()
@@ -797,14 +797,14 @@ def test_conversation_survives_sidecar_restart(tmp_path, monkeypatch):
 
     # a brand-new app instance (= restarted sidecar) restores the conversation
     c2 = TestClient(_make_app(tmp_path))
-    st = c2.get("/v1/strata/state", params={"conversation_id": cid}).json()
+    st = c2.get("/v1/splinter/state", params={"conversation_id": cid}).json()
     assert st["turn"] == 1
     assert st["store_chunks"] == 2
 
     # memory works across the restart: a PRE-restart chunk is retrieved into
     # the new context (the fake drone merges same-domain chunks via its
     # constant embeddings, so the kept copy is the turn-1 query)
-    nxt = c2.post("/v1/strata/curate", json={
+    nxt = c2.post("/v1/splinter/curate", json={
         "query": "What is the token rotation period?", "conversation_id": cid,
     }).json()
     assert nxt["turn"] == 2
@@ -815,15 +815,15 @@ def test_conversation_survives_sidecar_restart(tmp_path, monkeypatch):
 def test_reset_deletes_persisted_state(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     c1 = TestClient(_make_app(tmp_path))
-    c1.post("/v1/strata/curate", json={"query": "JWT facts", "conversation_id": "doomed"})
+    c1.post("/v1/splinter/curate", json={"query": "JWT facts", "conversation_id": "doomed"})
     files = list((tmp_path / "harness_state").glob("conv-*.json"))
     assert len(files) == 1
 
-    c1.post("/v1/strata/reset", json={"conversation_id": "doomed"})
+    c1.post("/v1/splinter/reset", json={"conversation_id": "doomed"})
     assert list((tmp_path / "harness_state").glob("conv-*.json")) == []
 
     c2 = TestClient(_make_app(tmp_path))
-    body = c2.post("/v1/strata/curate", json={
+    body = c2.post("/v1/splinter/curate", json={
         "query": "JWT facts", "conversation_id": "doomed",
     }).json()
     assert body["turn"] == 1  # fresh, not restored
@@ -833,7 +833,7 @@ def test_conversation_filename_never_escapes_state_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     c = TestClient(_make_app(tmp_path))
     evil = "../../outside"
-    c.post("/v1/strata/curate", json={"query": "JWT", "conversation_id": evil})
+    c.post("/v1/splinter/curate", json={"query": "JWT", "conversation_id": evil})
     # content-hashed filename: nothing written outside state dir
     assert not (tmp_path / "outside").exists()
     assert len(list((tmp_path / "harness_state").glob("conv-*.json"))) == 1
@@ -857,7 +857,7 @@ def test_disabled_persistence_writes_nothing(tmp_path, monkeypatch):
         state_dir="",
     )
     c = TestClient(app)
-    c.post("/v1/strata/curate", json={"query": "JWT", "conversation_id": "x"})
+    c.post("/v1/splinter/curate", json={"query": "JWT", "conversation_id": "x"})
     assert not (tmp_path / "harness_state").exists()
 
 
@@ -994,7 +994,7 @@ def test_token_auth_guard(tmp_path, monkeypatch):
     assert c.get("/health").status_code == 200  # unguarded
     assert c.post("/v1/commands/run", json={"line": "/status"}).status_code == 401
     ok = c.post("/v1/commands/run", json={"line": "/status"},
-                headers={"x-strata-token": "sekrit"})
+                headers={"x-splinter-token": "sekrit"})
     assert ok.status_code == 200 and ok.json()["kind"] == "success"
 
 
@@ -1058,9 +1058,9 @@ def test_command_mode_sets_transport(client):
 def test_command_save_exports_transcript(client, tmp_path):
     c, app = client
     cid = "save-me"
-    c.post("/v1/strata/curate", json={"query": "The refresh token is 3600s.",
+    c.post("/v1/splinter/curate", json={"query": "The refresh token is 3600s.",
                                     "conversation_id": cid})
-    c.post("/v1/strata/observe", json={
+    c.post("/v1/splinter/observe", json={
         "conversation_id": cid, "reply": "Access tokens rotate every 90 days."})
     r = c.post("/v1/commands/run", json={
         "line": f"/save demo-{cid}", "conversation_id": cid}).json()
@@ -1161,7 +1161,7 @@ def test_openai_model_name_prefix_sets_conversation_id(client, monkeypatch):
     _configure_lm_provider(c)
 
     fake = _FakeUpstream(content="ok")
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
 
     # Model name with project prefix -> conversation ID = prefix
     r = c.post("/v1/openai/chat/completions", json={
@@ -1174,7 +1174,7 @@ def test_openai_model_name_prefix_sets_conversation_id(client, monkeypatch):
     assert fake.payload["model"] == "m1"
 
     # Conversation state should be stored under "my-project"
-    st = c.get("/v1/strata/state", params={"conversation_id": "my-project"}).json()
+    st = c.get("/v1/splinter/state", params={"conversation_id": "my-project"}).json()
     assert st["store_chunks"] >= 1
 
 
@@ -1184,7 +1184,7 @@ def test_openai_model_name_no_colon_uses_default_cid(client, monkeypatch):
     _configure_lm_provider(c)
 
     fake = _FakeUpstream(content="ok")
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
 
     r = c.post("/v1/openai/chat/completions", json={
         "model": "m1",

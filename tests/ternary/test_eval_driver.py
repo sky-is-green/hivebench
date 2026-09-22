@@ -1,9 +1,9 @@
 """T11 — offline tests for the ternary eval driver.
 
-No GPU, network, or sibling Strata checkout: mock mode uses the in-module stub
+No GPU, network, or sibling Splinter checkout: mock mode uses the in-module stub
 manager, chat and paired_ab calls are injected. The real
 ``harness.models.LlamaServerManager`` integration test skips unless the F6
-``STRATA_HOME`` pin makes the harness package importable.
+``SPLINTER_HOME`` pin makes the harness package importable.
 """
 
 from __future__ import annotations
@@ -226,7 +226,7 @@ def test_serve_gguf_through_real_model_manager(tmp_path: Path) -> None:
     try:
         from harness import models as hm
     except ImportError:
-        pytest.skip("harness package needs the F6 STRATA_HOME pin")
+        pytest.skip("harness package needs the F6 SPLINTER_HOME pin")
     assert hm._FILE_TYPE_NAMES.get(141) == "PQ2_0"
     spawned: list[list[str]] = []
 

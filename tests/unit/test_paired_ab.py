@@ -1,4 +1,4 @@
-"""paired_ab — paired strata-vs-FIFO answer-quality A/B (offline)."""
+"""paired_ab — paired splinter-vs-FIFO answer-quality A/B (offline)."""
 
 import json
 
@@ -92,7 +92,7 @@ def test_strict_hive_win_when_fifo_drops_the_fact():
     assert m["strict_hive_only_ratio"] == 100.0
     assert m["hive_avg_fact_hit_ratio"] == 1.0
     assert m["fifo_avg_fact_hit_ratio"] == 0.0
-    # Context fidelity: the strata answer's terms came from its own context;
+    # Context fidelity: the splinter answer's terms came from its own context;
     # the FIFO arm had nothing to draw on.
     assert m["hive_avg_context_fidelity"] > 0.0
     assert m["fifo_avg_context_fidelity"] == 0.0
@@ -103,7 +103,7 @@ def test_fifo_catches_up_with_full_window():
     convs = _conv()
     ultra, medium = _ultra()
     # A full FIFO window includes the earlier assistant answer, so both arms
-    # carry the facts -> both bucket, strata >= FIFO ratio still 100%.
+    # carry the facts -> both bucket, splinter >= FIFO ratio still 100%.
     report = run_paired(convs, _ContextAwareBackend(convs), ultra, medium,
                         fifo_budget=100000)
     m = report["metrics"]
@@ -164,7 +164,7 @@ def test_main_mock_writes_report(tmp_path, capsys):
 def test_fixture_replay_store_is_symmetric():
     """The default (fixture-replay) store keeps both arms' histories
     identical, so the comparison isolates selection. live_store=True starves
-    the strata whenever the model never stated the canonical facts — exactly
+    the splinter whenever the model never stated the canonical facts — exactly
     the asymmetry found in the first prose-horizon evidence run."""
     convs = [{
         "conversation_id": "c3",
@@ -194,7 +194,7 @@ def test_fixture_replay_store_is_symmetric():
     live = run_paired(convs, _ContextAwareBackend(convs), ultra, medium,
                       fifo_budget=100000, live_store=True)
     ml = live["metrics"]
-    # asymmetric mode: the strata store never saw a2 (the model didn't state it),
+    # asymmetric mode: the splinter store never saw a2 (the model didn't state it),
     # so on turn 3 only FIFO's context carries the facts
     assert ml["fifo_only"] == 1
     assert ml["both_sufficient"] == 0

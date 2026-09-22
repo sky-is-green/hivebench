@@ -69,8 +69,21 @@ opencode.json
 *.local.json
 config.local.*
 HANDOFF-*.md
-STRATA-HANDOFF.md
+SPLINTER-HANDOFF.md
 HARNESS-SPEC.md
+
+# Hive workforce files (HIVE-OPS porting checklist — local-only)
+HIVE-OPS.md
+HIVE-PLAN.md
+PROPOSALS.md
+QUEEN.md
+BEE-GUARD.md
+BEE-BETA.md
+HIVE-RESEARCH.md
+RESEARCH/
+RESEARCH-QUEUE.md
+.bee-status/
+hive-status.log
 
 # OS / editor
 .DS_Store

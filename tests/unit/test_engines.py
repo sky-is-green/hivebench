@@ -2,7 +2,7 @@
 
 Covers the EngineProfile validation (kind/capabilities/sampling), registry
 load/save round-trips, sampling-default merging, and the sidecar /v1/engines
-endpoints (with engine-driven sampling defaults flowing into strata turns).
+endpoints (with engine-driven sampling defaults flowing into splinter turns).
 """
 
 import json
@@ -163,15 +163,15 @@ def test_engine_sampling_defaults_flow_into_turn(client):
         }],
         "default": "warm",
     })
-    r = c.post("/v1/strata/turn", json={
+    r = c.post("/v1/splinter/turn", json={
         "query": "How does JWT authentication work?",
         "conversation_id": "c1",
     })
     assert r.status_code == 200
-    # The strata built for c1 should carry the engine's sampling defaults.
+    # The splinter built for c1 should carry the engine's sampling defaults.
     app = _app
-    strata = app.state.harness.hives["c1"]
-    assert strata.config.sampling == {"temperature": 0.7, "top_p": 0.9}
+    splinter = app.state.harness.hives["c1"]
+    assert splinter.config.sampling == {"temperature": 0.7, "top_p": 0.9}
 
 
 def test_engine_sampling_defaults_do_not_clobber_explicit_config(client):
@@ -181,10 +181,10 @@ def test_engine_sampling_defaults_do_not_clobber_explicit_config(client):
                      "sampling": {"temperature": 0.7}}],
         "default": "warm",
     })
-    r = c.post("/v1/strata/turn", json={
+    r = c.post("/v1/splinter/turn", json={
         "query": "q", "conversation_id": "c2",
         "config": {"sampling": {"temperature": 0.2, "top_k": 40}},
     })
     assert r.status_code == 200
-    strata = _app.state.harness.hives["c2"]
-    assert strata.config.sampling == {"temperature": 0.2, "top_k": 40}
+    splinter = _app.state.harness.hives["c2"]
+    assert splinter.config.sampling == {"temperature": 0.2, "top_k": 40}

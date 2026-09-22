@@ -152,16 +152,16 @@ def test_extra_headers_merged_into_requests():
     t = CapturingTransport()
     backend = OpenAICompatBackend(
         base_url="localhost:1234", model="m", transport=t,
-        api_key="sk-live", extra_headers={"X-Title": "strata"},
+        api_key="sk-live", extra_headers={"X-Title": "splinter"},
     )
     backend.generate("ctx", "q")
     _url, _payload, headers = t.posts[0]
     assert headers["Authorization"] == "Bearer sk-live"
-    assert headers["X-Title"] == "strata"
+    assert headers["X-Title"] == "splinter"
     # the provider headers also ride along on GET /v1/models (health, listing)
     backend.health()
     _gurl, gheaders = t.gets[0]
-    assert gheaders["X-Title"] == "strata"
+    assert gheaders["X-Title"] == "splinter"
 
 
 def test_models_lists_sorted_ids():

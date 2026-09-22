@@ -1,16 +1,16 @@
-"""Unit tests for cortex.strata (unified orchestrator)."""
+"""Unit tests for cortex.splinter (unified orchestrator)."""
 
 from backend.lmstudio import LMStudioBackend
-from cortex.config import StrataConfig
+from cortex.config import SplinterConfig
 from cortex.e2e import FakeUltraSmall, MockTransport
-from cortex.strata import Strata
+from cortex.splinter import Splinter
 from logs.event_logger import EventLogger
 from sieve.medium import MediumDrone
 
 
 def _hive(backend=None, logger=None, config=None, pinned_prefix=""):
-    return Strata(
-        config=config or StrataConfig(),
+    return Splinter(
+        config=config or SplinterConfig(),
         ultra=FakeUltraSmall(),
         medium=MediumDrone(score_pair_fn=lambda q, c: 0.5),
         backend=backend, logger=logger, pinned_prefix=pinned_prefix,
@@ -21,7 +21,7 @@ def test_process_turn_basic():
     h = _hive()
     r = h.process_turn("how does authentication work")
     assert r.turn == 1
-    assert r.mode in ("strata", "no_backend")
+    assert r.mode in ("splinter", "no_backend")
     assert r.assembled is not None
     assert 0.0 <= r.pes <= 100.0
     assert h.store.count() >= 1
@@ -31,8 +31,8 @@ def test_process_turn_basic():
 def test_enable_medium_wires_real_medium_drone():
     """enable_medium=True must construct the configured MediumDrone, not the
     lightweight placeholder (score_pair_fn constant 0.5)."""
-    config = StrataConfig(enable_medium=True, medium_model="microsoft/graphcodebert-base")
-    h = Strata(config=config, ultra=FakeUltraSmall(), backend=None)
+    config = SplinterConfig(enable_medium=True, medium_model="microsoft/graphcodebert-base")
+    h = Splinter(config=config, ultra=FakeUltraSmall(), backend=None)
     # not the placeholder: a real MediumDrone with a real model_name and no
     # injected score_pair_fn
     assert not hasattr(h.medium, "_score_pair_fn") or h.medium._score_pair_fn is None
@@ -41,8 +41,8 @@ def test_enable_medium_wires_real_medium_drone():
 
 
 def test_enable_medium_false_uses_placeholder():
-    config = StrataConfig(enable_medium=False)
-    h = Strata(config=config, ultra=FakeUltraSmall(), backend=None)
+    config = SplinterConfig(enable_medium=False)
+    h = Splinter(config=config, ultra=FakeUltraSmall(), backend=None)
     assert h.medium._score_pair_fn is not None  # placeholder, cheap
 
 
@@ -91,7 +91,7 @@ def test_hedge_filter_can_be_disabled():
     from cortex.e2e import MockTransport
 
     backend = LMStudioBackend(base_url="localhost", model="m", transport=MockTransport())
-    h = _hive(backend=backend, config=StrataConfig(filter_hedge_replies=False))
+    h = _hive(backend=backend, config=SplinterConfig(filter_hedge_replies=False))
     h.process_turn("q1")
     assert h.store.count() == 2  # query + (non-hedge) reply both stored
 
@@ -107,7 +107,7 @@ def test_hedge_contraction_variants_caught():
         "Based on the context provided, I don't have specific information about your pipeline.",
     ]
     for c in cases:
-        assert Strata._is_hedge_reply(c), f"should be hedge: {c!r}"
+        assert Splinter._is_hedge_reply(c), f"should be hedge: {c!r}"
 
 
 def test_hedge_lead_anchored_mid_reply_caveat_not_hedge():
@@ -119,9 +119,9 @@ def test_hedge_lead_anchored_mid_reply_caveat_not_hedge():
         "don't have specific details about your setup, here's a general "
         "framework you can use: DEBUG for development, INFO in production..."
     )
-    assert not Strata._is_hedge_reply(factual)
+    assert not Splinter._is_hedge_reply(factual)
     # but the same signal at the START is a hedge
-    assert Strata._is_hedge_reply(
+    assert Splinter._is_hedge_reply(
         "I don't have specific details about your setup, so I cannot recommend log levels."
     )
 
@@ -134,7 +134,7 @@ def test_hedge_factual_context_openers_not_filtered():
         "Based on the provided context, here is a comprehensive walkthrough "
         "for implementing a consistent error envelope in your REST API."
     )
-    assert not Strata._is_hedge_reply(factual)
+    assert not Splinter._is_hedge_reply(factual)
 
 
 def test_no_backend_mode():
@@ -148,7 +148,7 @@ def test_backend_generates_with_pinned_prefix():
     backend = LMStudioBackend(base_url="localhost", model="m", transport=MockTransport())
     h = _hive(backend=backend, pinned_prefix="PIN")
     r = h.process_turn("how does authentication work", conversation_id="c1")
-    assert r.mode == "strata"
+    assert r.mode == "splinter"
     assert r.reply
     assert r.timings["generation_ms"] > 0
     assert backend.pinned_prefix == "PIN"
@@ -196,8 +196,8 @@ class _FailingBackend:
 
 def test_backend_error_is_captured_not_raised(tmp_path):
     backend = _FailingBackend()
-    h = Strata(
-        config=StrataConfig(), ultra=FakeUltraSmall(),
+    h = Splinter(
+        config=SplinterConfig(), ultra=FakeUltraSmall(),
         medium=MediumDrone(score_pair_fn=lambda q, c: 0.5),
         backend=backend, logger=EventLogger(log_dir=tmp_path), pinned_prefix="PIN",
     )
@@ -211,8 +211,8 @@ def test_backend_error_is_captured_not_raised(tmp_path):
 def test_error_logged_as_event(tmp_path):
     backend = _FailingBackend()
     logger = EventLogger(log_dir=tmp_path)
-    h = Strata(
-        config=StrataConfig(), ultra=FakeUltraSmall(),
+    h = Splinter(
+        config=SplinterConfig(), ultra=FakeUltraSmall(),
         medium=MediumDrone(score_pair_fn=lambda q, c: 0.5),
         backend=backend, logger=logger,
     )
@@ -240,14 +240,14 @@ class _ReasoningStarvedBackend:
 def test_empty_reply_reasoning_starved_warns_once(tmp_path, capsys):
     backend = _ReasoningStarvedBackend()
     logger = EventLogger(log_dir=tmp_path)
-    h = Strata(
-        config=StrataConfig(max_tokens=128), ultra=FakeUltraSmall(),
+    h = Splinter(
+        config=SplinterConfig(max_tokens=128), ultra=FakeUltraSmall(),
         medium=MediumDrone(score_pair_fn=lambda q, c: 0.5),
         backend=backend, logger=logger,
     )
     r1 = h.process_turn("q1")
     assert r1.reply == ""
-    assert r1.mode == "strata"  # not a crash
+    assert r1.mode == "splinter"  # not a crash
     h.process_turn("q2")  # second turn: no duplicate warning
     logger.flush()
     logger.close()

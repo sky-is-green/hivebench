@@ -17,11 +17,11 @@ their trained weights (Gate 3), so no local training is required.
 ```sh
 cd ~/Desktop/work/hivebench
 FORK=artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a
-PIN=~/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN
+PIN=~/Desktop/work/worktrees/splinter-memory/hivebench-SPLINTER-PIN
 
 HIP_VISIBLE_DEVICES=1 LD_LIBRARY_PATH=$PWD/$FORK \
-STRATA_HOME=$PIN PYTHONPATH=$PIN/strata \
-  ~/Desktop/work/strata-memory/venv/bin/python -m experiments.ternary_eval \
+SPLINTER_HOME=$PIN PYTHONPATH=$PIN/splinter \
+  ~/Desktop/work/splinter-memory/venv/bin/python -m experiments.ternary_eval \
     --gguf artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf \
     --fork-bin $FORK/llama-server \
     --no-thinking --max-convs 10 \
@@ -32,9 +32,9 @@ STRATA_HOME=$PIN PYTHONPATH=$PIN/strata \
   `llama-server`; without it the reasoning template returns empty visible content.
 - `HIP_VISIBLE_DEVICES=1` keeps the desktop GPU0 free; the 27B `PQ2_0` fits one
   RX 7900 XT at `-ngl 99` (the driver's default), so both cards are not needed.
-- **T23 workaround:** the sibling `strata-memory` main no longer defines
-  `cortex.config.StrataConfig`, so the harness import fails unless the F6 pin is
-  on `PYTHONPATH` (`$PIN/strata`) with `STRATA_HOME=$PIN`.
+- **T23 workaround:** the sibling `splinter-memory` main no longer defines
+  `cortex.config.SplinterConfig`, so the harness import fails unless the F6 pin is
+  on `PYTHONPATH` (`$PIN/splinter`) with `SPLINTER_HOME=$PIN`.
 
 ## Results (2026-09-20)
 

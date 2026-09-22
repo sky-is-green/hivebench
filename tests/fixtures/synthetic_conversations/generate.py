@@ -23,7 +23,7 @@ OUTPUT_DIR = Path(__file__).resolve().parents[1] / "generated"
 
 # ---------------------------------------------------------------------------
 # Domain content: per-topic feature + decisions (facts) that turn templates use.
-# The topic table lives in the system (auditor.topics) so strata/ never imports
+# The topic table lives in the system (auditor.topics) so splinter/ never imports
 # from the bench; it is re-exported here for backward compatibility.
 # ---------------------------------------------------------------------------
 from auditor.topics import TOPICS  # noqa: E402

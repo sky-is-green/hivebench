@@ -248,7 +248,7 @@ def test_openai_passthrough_skips_sanitized_echo(tmp_path, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream(SECRET_REPLY)
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
 
     # turn 1: the query itself is pure harness boilerplate, so the ingest
     # filter stores nothing for it — the ONLY chunk persisted is the observed
@@ -261,7 +261,7 @@ def test_openai_passthrough_skips_sanitized_echo(tmp_path, monkeypatch):
         "messages": [{"role": "user", "content": META}],
     })
     assert r.status_code == 200, r.text
-    st = client.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    st = client.get("/v1/splinter/state", params={"conversation_id": "default"}).json()
     assert st["store_chunks"] == 1
 
     # turn 2: the raw secret-bearing reply re-enters as an assistant message
@@ -277,7 +277,7 @@ def test_openai_passthrough_skips_sanitized_echo(tmp_path, monkeypatch):
     })
     assert r.status_code == 200, r.text
 
-    inspect = client.get("/v1/strata/inspect/default").json()
+    inspect = client.get("/v1/splinter/inspect/default").json()
     # the sanitized chunk matches its raw echo via the normalized fingerprint;
     # the old raw-fingerprint code skipped nothing here
     assert inspect["payload_dedup_skipped"] == 1
@@ -305,7 +305,7 @@ def _store_only_fact_via_boilerplate_turn(client):
         "messages": [{"role": "user", "content": META}],
     })
     assert r.status_code == 200, r.text
-    st = client.get("/v1/strata/state", params={"conversation_id": "default"}).json()
+    st = client.get("/v1/splinter/state", params={"conversation_id": "default"}).json()
     assert st["store_chunks"] == 1
 
 
@@ -324,7 +324,7 @@ def test_openai_long_thread_trim_keeps_fact_in_curation(tmp_path, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream(TRIMMED_FACT)
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     _store_only_fact_via_boilerplate_turn(client)
 
     messages = (
@@ -342,7 +342,7 @@ def test_openai_long_thread_trim_keeps_fact_in_curation(tmp_path, monkeypatch):
     assert len(forwarded) - 1 == 8  # system + trimmed body
     assert all(m.get("content") != TRIMMED_FACT for m in forwarded)
 
-    inspect = client.get("/v1/strata/inspect/default").json()
+    inspect = client.get("/v1/splinter/inspect/default").json()
     # the fact was trimmed away, so it must still be curated (not echo-skipped)
     assert inspect["payload_dedup_skipped"] == 0
     assert "ROTATE-42" in inspect["assembled_preview"]
@@ -361,7 +361,7 @@ def test_openai_short_thread_echo_skip_unchanged(tmp_path, monkeypatch):
     import harness.app as appmod
 
     fake = _FakeUpstream(TRIMMED_FACT)
-    monkeypatch.setattr("strata.server.requests.post", fake)
+    monkeypatch.setattr("splinter.server.requests.post", fake)
     _store_only_fact_via_boilerplate_turn(client)
 
     r = client.post("/v1/openai/chat/completions", json={
@@ -374,6 +374,6 @@ def test_openai_short_thread_echo_skip_unchanged(tmp_path, monkeypatch):
     })
     assert r.status_code == 200, r.text
 
-    inspect = client.get("/v1/strata/inspect/default").json()
+    inspect = client.get("/v1/splinter/inspect/default").json()
     assert inspect["payload_dedup_skipped"] == 1
     assert "ROTATE-42" not in inspect["assembled_preview"]

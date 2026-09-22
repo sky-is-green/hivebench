@@ -119,7 +119,7 @@ Full entries, evidence and revisit costs are in [`FAILURES.md`](FAILURES.md).
   + ~20 GB usable RAM); the prefix trick (embedding + first N layers) avoids it.
 - **F10** `-ngl 99` on one 20 GB card fails to allocate (`unable to allocate
   ROCm0 buffer`); **resolved** by unsloth-style auto-fit `ngl`.
-- **F11** Sibling `strata-memory` drift (`cortex.config.StrataConfig` gone)
+- **F11** Sibling `splinter-memory` drift (`cortex.config.SplinterConfig` gone)
   blocked live harness import; **resolved** operationally via the F6 pin
   workaround (durable T23 fix still pending).
 - **F12** Two independent ROCm contexts hang GPU1 at firmware level
@@ -203,12 +203,12 @@ excluded):
 ```sh
 cd ~/Desktop/work/hivebench
 FORK=artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a
-PIN=~/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN
+PIN=~/Desktop/work/worktrees/splinter-memory/hivebench-SPLINTER-PIN
 
 # serve + smoke + paired subset (one process at a time; GPU1)
 HIP_VISIBLE_DEVICES=1 LD_LIBRARY_PATH=$PWD/$FORK \
-STRATA_HOME=$PIN PYTHONPATH=$PIN/strata \
-  ~/Desktop/work/strata-memory/venv/bin/python -m experiments.ternary_eval \
+SPLINTER_HOME=$PIN PYTHONPATH=$PIN/splinter \
+  ~/Desktop/work/splinter-memory/venv/bin/python -m experiments.ternary_eval \
     --gguf artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf \
     --fork-bin $FORK/llama-server --no-thinking --max-convs 10 \
     --output artifacts/ternary/eval/bonsai27-hivebench.json

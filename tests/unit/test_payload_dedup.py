@@ -6,7 +6,7 @@ the incoming request messages must not consume curation budget.
 
 import numpy as np
 
-from cortex.config import StrataConfig
+from cortex.config import SplinterConfig
 from cortex.routing import DroneRouter, EscalationHandler
 from focal.assembly import ContextAssembler
 from focal.budget import AdaptiveBudget
@@ -103,23 +103,23 @@ def test_ultra_small_budget_default_and_configured():
 
 
 def test_config_defaults():
-    cfg = StrataConfig()
+    cfg = SplinterConfig()
     assert cfg.dedup_against_payload is True
     assert cfg.ultra_small_budget_tokens == 1000
 
 
-def test_strata_reports_skip_count_via_inspect():
-    from cortex.strata import Strata
+def test_splinter_reports_skip_count_via_inspect():
+    from cortex.splinter import Splinter
 
-    cfg = StrataConfig()
-    strata = Strata(config=cfg, ultra=FakeUltraSmall(), backend=None)
-    strata.store.add_chunk(1, ECHO)
-    strata.store.add_chunk(1, NOVEL)
-    result = strata.process_turn(
+    cfg = SplinterConfig()
+    splinter = Splinter(config=cfg, ultra=FakeUltraSmall(), backend=None)
+    splinter.store.add_chunk(1, ECHO)
+    splinter.store.add_chunk(1, NOVEL)
+    result = splinter.process_turn(
         "short status query",
         conversation_id="t",
         record_exchange=False,
         payload_fingerprints={content_fingerprint(ECHO)},
     )
     assert result.assembled.payload_dedup_skipped == 1
-    assert strata.inspect_turn(result)["payload_dedup_skipped"] == 1
+    assert splinter.inspect_turn(result)["payload_dedup_skipped"] == 1

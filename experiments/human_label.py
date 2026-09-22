@@ -271,7 +271,7 @@ def group_of(groups: list[dict], idx: int) -> tuple[int, int, int]:
 
 
 RUBRIC = (
-    "Judge the chunk as a retrieval unit: if the strata put this chunk into the "
+    "Judge the chunk as a retrieval unit: if the splinter put this chunk into the "
     "context for this query, would it have helped answer?\n"
     "  1 = RELEVANT — the chunk contains anything that bears on answering this "
     "query (a fact, decision, code, partial answer). Partial overlap counts.\n"

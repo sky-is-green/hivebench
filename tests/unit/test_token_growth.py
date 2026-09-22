@@ -17,7 +17,7 @@ def _conv(n_turns, reply_chars=2000):
             "turn": turn,
             "query": f"question number {turn} about the api gateway?",
             "reply": "x" * reply_chars,
-            "token_count": 1200 if turn > 1 else 0,  # strata: flat after warm-up
+            "token_count": 1200 if turn > 1 else 0,  # splinter: flat after warm-up
         })
     return turns
 
@@ -31,7 +31,7 @@ def test_raw_grows_while_hive_stays_flat(tmp_path):
     analysis = analyze([run_dir], fifo_budget=4000)
     buckets = {b["turns"]: b for b in analysis["buckets"]}
 
-    # raw history grows linearly; strata stays at its flat assembled size
+    # raw history grows linearly; splinter stays at its flat assembled size
     assert buckets["6-10"]["raw_median"] >= 3 * buckets["1"]["raw_median"]
     late = [b for b in analysis["buckets"] if b["turns"] == "6-10"][0]
     assert late["hive_median"] == 1200
@@ -45,7 +45,7 @@ def test_raw_grows_while_hive_stays_flat(tmp_path):
 def test_series_shape_and_first_turn(tmp_path):
     pts = conversation_series(_conv(3), fifo_budget=4000)
     assert [p["turn"] for p in pts] == [1, 2, 3]
-    assert pts[0]["strata"] == 0  # empty store on the first turn
+    assert pts[0]["splinter"] == 0  # empty store on the first turn
     # raw is non-decreasing across the session
     raws = [p["raw"] for p in pts]
     assert raws == sorted(raws)

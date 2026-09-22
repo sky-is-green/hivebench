@@ -1,11 +1,11 @@
-"""Paired live A/B: strata-curated context vs the naive FIFO window on the same
+"""Paired live A/B: splinter-curated context vs the naive FIFO window on the same
 turns — the "improvement over the current standard on LLM performance"
 measurement the paper's PES cannot make alone.
 
 For every retrievable turn with a fixture ground-truth answer, the same model
 generates two replies:
 
-  - arm H: context assembled by the strata (the store replays the live pipeline:
+  - arm H: context assembled by the splinter (the store replays the live pipeline:
     query chunk + non-hedge reply chunk per turn)
   - arm F: the last-``fifo_budget``-token window of the same history
 
@@ -18,7 +18,7 @@ Metrics (over retrievable turns with measurable facts):
   - ``hive_answer_recall`` / ``fifo_answer_recall`` — share of turns whose
     *answer* contained the ground-truth facts (binary at hit-ratio >= 0.5,
     matching the retrieval diagnostic's convention)
-  - ``hive_ge_fifo_ratio`` — turns where the strata answer carried the facts while
+  - ``hive_ge_fifo_ratio`` — turns where the splinter answer carried the facts while
     the FIFO answer did not (strict win) OR both did; the answer-level analogue
     of P3's context-level A/B
   - ``strict_hive_only_ratio`` — strict wins only
@@ -43,7 +43,7 @@ from backend.sampling import parse_sampling
 from cortex.baselines.runner import FIFO_WINDOW_TOKENS, load_conversations
 from cortex.baselines.metrics import estimate_tokens
 from cortex.e2e import FakeUltraSmall, MockTransport
-from cortex.strata import Strata
+from cortex.splinter import Splinter
 from cortex.routing import DroneRouter, EscalationHandler
 from focal.assembly import ContextAssembler
 from focal.budget import AdaptiveBudget
@@ -98,13 +98,13 @@ def run_paired(conversations, backend, ultra, medium, sampling=None,
     ``resume`` (a loaded checkpoint dict) skips completed conversations/turns
     and restores the current conversation's store and prior history.
 
-    ``live_store=False`` (default) replays the strata store from the fixture
+    ``live_store=False`` (default) replays the splinter store from the fixture
     answers, so both arms see the identical history and the comparison
     isolates *selection*: does curated context beat the naive window? The
     earlier live-replay mode (``live_store=True``, where the store grew from
-    the strata arm's live replies) was asymmetric — FIFO's context is the
-    canonical fixture history while the strata's store held whatever the model
-    actually said, which under-credits the strata (the paper's ingestion
+    the splinter arm's live replies) was asymmetric — FIFO's context is the
+    canonical fixture history while the splinter's store held whatever the model
+    actually said, which under-credits the splinter (the paper's ingestion
     problem). Both modes remain available; the fair selection test is the
     default.
     """
@@ -187,7 +187,7 @@ def run_paired(conversations, backend, ultra, medium, sampling=None,
                     stored_reply = answer
                 else:
                     if verbose:
-                        print(f"  turn {turn} [{cid}] strata vs fifo ...", flush=True)
+                        print(f"  turn {turn} [{cid}] splinter vs fifo ...", flush=True)
                     hive_ctx = assembler.assemble(
                         query=q, current_turn=turn, store=store,
                         router=DroneRouter(), ultra_small=ultra, medium=medium,
@@ -231,7 +231,7 @@ def run_paired(conversations, backend, ultra, medium, sampling=None,
                     }
                     if auditor is not None:
                         row["auditor"] = {}
-                        for arm, ctx, reply in (("strata", hive_ctx, reply_h),
+                        for arm, ctx, reply in (("splinter", hive_ctx, reply_h),
                                                 ("fifo", fifo_ctx, reply_f)):
                             try:
                                 label = auditor.evaluate_turn(TurnRecord(
@@ -246,11 +246,11 @@ def run_paired(conversations, backend, ultra, medium, sampling=None,
                                 row["auditor"][arm] = {"error": str(exc)[:200]}
                     rows.append(row)
 
-                # Grow the strata store like the live pipeline on every user turn:
-                # query chunk always, the reply chunk (strata arm's live reply, or
+                # Grow the splinter store like the live pipeline on every user turn:
+                # query chunk always, the reply chunk (splinter arm's live reply, or
                 # the fixture answer for skipped turns) unless it is a hedge.
                 store.add_chunk(turn, q)
-                if stored_reply and not Strata._is_hedge_reply(stored_reply):
+                if stored_reply and not Splinter._is_hedge_reply(stored_reply):
                     store.add_chunk(turn, stored_reply)
                 prior_parts.append(td.get("content", "") or "")
                 done_turns += 1
@@ -348,8 +348,8 @@ def run_paired(conversations, backend, ultra, medium, sampling=None,
         "fifo_budget_tokens": fifo_budget,
     }
     if auditor is not None:
-        qh = [r["auditor"]["strata"] for r in rows if "strata" in r.get("auditor", {})
-              and "sufficient" in r["auditor"]["strata"]]
+        qh = [r["auditor"]["splinter"] for r in rows if "splinter" in r.get("auditor", {})
+              and "sufficient" in r["auditor"]["splinter"]]
         qf = [r["auditor"]["fifo"] for r in rows if "fifo" in r.get("auditor", {})
               and "sufficient" in r["auditor"]["fifo"]]
         metrics["auditor_hive_sufficient_rate"] = round(
@@ -372,7 +372,7 @@ def _live_auditor(backend):
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Paired live A/B: strata context vs FIFO window on the same turns")
+        description="Paired live A/B: splinter context vs FIFO window on the same turns")
     parser.add_argument("--mock", action="store_true")
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--conversations", default="tests/fixtures/generated")
@@ -432,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--live-store", action="store_true",
-        help="grow the strata store from the strata arm's live replies instead of "
+        help="grow the splinter store from the splinter arm's live replies instead of "
              "the fixture answers. Default (fixture replay) is the fair "
              "selection test — both arms see identical history; this flag "
              "restores the asymmetric live-replay measurement (ingestion + "
@@ -536,28 +536,28 @@ def main(argv: list[str] | None = None) -> int:
               f"{report['no_facts_excluded']} no-facts excluded)")
         print(f"Wrote {out.resolve()}")
         return 0
-    print("Paired A/B — strata context vs FIFO window, same model, same turns")
+    print("Paired A/B — splinter context vs FIFO window, same model, same turns")
     print(f"  turns compared      : {m['turns_compared']} "
           f"(first-mention excluded {m['first_mention_excluded']})")
-    print(f"  answer recall       : strata {m['hive_answer_recall']}% "
+    print(f"  answer recall       : splinter {m['hive_answer_recall']}% "
           f"vs FIFO {m['fifo_answer_recall']}% "
           f"(fixture-fact presence in replies)")
-    print(f"  avg fact hit ratio  : strata {m['hive_avg_fact_hit_ratio']} "
+    print(f"  avg fact hit ratio  : splinter {m['hive_avg_fact_hit_ratio']} "
           f"vs FIFO {m['fifo_avg_fact_hit_ratio']}")
-    print(f"  context fidelity    : strata {m['hive_avg_context_fidelity']} "
+    print(f"  context fidelity    : splinter {m['hive_avg_context_fidelity']} "
           f"vs FIFO {m['fifo_avg_context_fidelity']} "
           f"(answer terms sourced from the arm's own context)")
-    print(f"  fidelity strata > FIFO: {m['fidelity_hive_gt_fifo_ratio']}% of turns "
+    print(f"  fidelity splinter > FIFO: {m['fidelity_hive_gt_fifo_ratio']}% of turns "
           f"(>= {m['fidelity_hive_ge_fifo_ratio']}%)")
-    print(f"  strata >= FIFO answers: {m['hive_ge_fifo_ratio']}% "
-          f"(strict strata-only {m['strict_hive_only_ratio']}%)")
+    print(f"  splinter >= FIFO answers: {m['hive_ge_fifo_ratio']}% "
+          f"(strict splinter-only {m['strict_hive_only_ratio']}%)")
     print(f"  answer buckets      : hive_only {m['hive_only']} / "
           f"fifo_only {m['fifo_only']} / both {m['both_sufficient']} / "
           f"neither {m['neither_sufficient']}")
-    print(f"  context sufficiency : strata {m['ctx_hive_ge_fifo_ratio']}% "
+    print(f"  context sufficiency : splinter {m['ctx_hive_ge_fifo_ratio']}% "
           f">= FIFO (P3-style)")
     if m.get("auditor_hive_sufficient_rate") is not None:
-        print(f"  auditor sufficiency   : strata {m['auditor_hive_sufficient_rate']}% "
+        print(f"  auditor sufficiency   : splinter {m['auditor_hive_sufficient_rate']}% "
               f"vs FIFO {m['auditor_fifo_sufficient_rate']}%")
     print(f"Wrote {out.resolve()}")
     return 0

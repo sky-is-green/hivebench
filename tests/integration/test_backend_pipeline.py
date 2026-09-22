@@ -135,7 +135,7 @@ def test_lmstudio_prefix_caching_end_to_end():
     transport = MockTransport()
     backend = LMStudioBackend(base_url="localhost:1234", model="qwen", transport=transport)
     manager = KVCacheManager(backend)
-    pinned = "You are a helpful coding assistant for the strata project."
+    pinned = "You are a helpful coding assistant for the splinter project."
 
     assert manager.update_cache("", persistent_prefix=pinned)["mode"] == "prefix_caching"
     assert manager.update_cache("", persistent_prefix=pinned)["prefix_stable"] is True

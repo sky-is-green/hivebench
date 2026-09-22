@@ -59,7 +59,7 @@ def _wait_and_open(url: str, timeout_s: float = 45.0) -> None:
 def _spawn_detached(child_argv: list[str], log_path: Path) -> int:
     """Relaunch this command headless; the caller exits right after."""
     log_handle = open(log_path, "ab")  # noqa: SIM115 - lifetime is the child's
-    extra: dict = {"env": {**os.environ, "STRATA_STUDIO_CHILD": "1"}}
+    extra: dict = {"env": {**os.environ, "SPLINTER_STUDIO_CHILD": "1"}}
     if sys.platform == "win32":
         # No console attached at all; output lands in the log file.
         extra["creationflags"] = (subprocess.DETACHED_PROCESS
@@ -137,7 +137,7 @@ def _protect_git_excludes(root: Path, names: list[str]) -> None:
         missing = [n for n in names if n not in existing]
         if missing:
             with excl.open("a", encoding="utf-8") as fh:
-                fh.write("\n# strata-memory studio runtime state (auto-added)\n")
+                fh.write("\n# splinter-memory studio runtime state (auto-added)\n")
                 fh.write("\n".join(missing) + "\n")
     except OSError:
         pass
@@ -154,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="path to the providers JSON config "
                              "(default providers.local.json)")
     parser.add_argument("--log-dir", default="logs",
-                        help="NDJSON event-log directory for strata turns")
+                        help="NDJSON event-log directory for splinter turns")
     parser.add_argument(
         "--state-dir", default="harness_state",
         help="directory where conversations persist across restarts "
@@ -260,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Detached instances record every managed server so --stop can take the
     # whole stack down (taskkill /T cannot reach the grandchildren).
-    if os.environ.get("STRATA_STUDIO_CHILD"):
+    if os.environ.get("SPLINTER_STUDIO_CHILD"):
         try:
             llama_pids = [i["pid"] for i in
                           app.state.models.status()["instances"] if i["pid"]]

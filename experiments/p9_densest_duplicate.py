@@ -132,7 +132,7 @@ def run_policy(convs: list[dict], ultra, keep: str) -> tuple[list[dict], int]:
     recap answers are canonical ("The {aspect} for the {feature} is
     {decision}."), so recap facts are pure decision terms."""
     from cortex.baselines.metrics import estimate_tokens
-    from cortex.strata import Strata
+    from cortex.splinter import Splinter
     from cortex.routing import DroneRouter, EscalationHandler
     from experiments.retrieval_diagnostic import (
         _answer_fact_terms, _content_terms, _fixture_answer_map,
@@ -186,7 +186,7 @@ def run_policy(convs: list[dict], ultra, keep: str) -> tuple[list[dict], int]:
                 })
             store.add_chunk(turn, q)
             reply = (conv_answers.get(q) or "").strip() or ""
-            if reply and not Strata._is_hedge_reply(reply):
+            if reply and not Splinter._is_hedge_reply(reply):
                 store.add_chunk(turn, reply)
     return rows, merges
 

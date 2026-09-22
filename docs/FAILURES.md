@@ -296,17 +296,17 @@ entries are never rewritten — corrections are appended as `[rev <date>]` notes
 - **Cost to revisit:** none.
 - **Worth re-assessing?** No.
 
-## F11 — Sibling `strata-memory` drift blocks live harness import
+## F11 — Sibling `splinter-memory` drift blocks live harness import
 
 - **Category:** (c)/(d) resolved incident + open durable fix.
 - **Claim/hypothesis:** hivebench's live harness can import the sibling
-  `strata-memory` package against current `main`.
+  `splinter-memory` package against current `main`.
 - **Method:** Repo-wide collection against the sibling checkout.
-- **Outcome:** Collection fails: `cortex.config.StrataConfig` / `cortex.strata`
-  no longer exist after the sibling's `strata` → `splinter` reorganisation.
+- **Outcome:** Collection fails: `cortex.config.SplinterConfig` / `cortex.splinter`
+  no longer exist after the sibling's `splinter` → `splinter` reorganisation.
   **Resolved operationally** by the F6 pin
-  (`STRATA_HOME=../worktrees/strata-memory/hivebench-STRATA-PIN`,
-  `PYTHONPATH=$PIN/strata`), a detached worktree at the pre-rename P2-DILUTION
+  (`SPLINTER_HOME=../worktrees/splinter-memory/hivebench-SPLINTER-PIN`,
+  `PYTHONPATH=$PIN/splinter`), a detached worktree at the pre-rename P2-DILUTION
   tip `bc332c1` (unit 561 passed, integration 50 passed + 3 skipped).
 - **Verdict:** Mitigated; the durable fix is task **T23** (still open).
 - **Evidence:** HIVE-PLAN Round 1 finding F6, Round 2, T23 row;

@@ -61,29 +61,29 @@ def env(tmp_path, monkeypatch):
 
 def test_reset_and_drop_close_the_event_logger(env):
     c, app = env
-    c.post("/v1/strata/curate", json={"query": "JWT", "conversation_id": "a"})
+    c.post("/v1/splinter/curate", json={"query": "JWT", "conversation_id": "a"})
     assert any(not lg.closed for lg in SpyLogger.instances)
-    c.post("/v1/strata/reset", json={"conversation_id": "a"})
+    c.post("/v1/splinter/reset", json={"conversation_id": "a"})
     assert all(lg.closed for lg in SpyLogger.instances)
 
 
 def test_conversations_bounded_and_evicted_restore_from_disk(env):
     c, app = env
     for i in range(7):  # cap is 5 via env
-        c.post("/v1/strata/curate", json={
+        c.post("/v1/splinter/curate", json={
             "query": f"fact {i}: the number is {i}00",
             "conversation_id": f"conv-{i}",
         })
-    st = c.get("/v1/strata/state").json()
+    st = c.get("/v1/splinter/state").json()
     assert st["count"] <= 5  # bounded
 
     # evicted conversations persist: conv-0 (oldest) restores on next touch
-    body = c.post("/v1/strata/curate", json={
+    body = c.post("/v1/splinter/curate", json={
         "query": "what is fact 0?", "conversation_id": "conv-0",
     }).json()
     assert body["turn"] == 2  # restored, not fresh
-    strata = app.state.harness.hives["conv-0"]
-    contents = " ".join(ch.content for ch in strata.store.all_chunks())
+    splinter = app.state.harness.hives["conv-0"]
+    contents = " ".join(ch.content for ch in splinter.store.all_chunks())
     assert "the number is 000" in contents  # the original fact came back from disk
 
 
@@ -91,11 +91,11 @@ def test_inflight_conversations_are_never_evicted(env):
     c, app = env
     st = app.state.harness
     for i in range(5):
-        c.post("/v1/strata/curate", json={"query": f"q{i}", "conversation_id": f"k{i}"})
+        c.post("/v1/splinter/curate", json={"query": f"q{i}", "conversation_id": f"k{i}"})
     # simulate conv-0 mid-turn: it must survive the next creation even though
     # it is the least recently touched
     st.begin("k0")
-    c.post("/v1/strata/curate", json={"query": "new", "conversation_id": "k-new"})
+    c.post("/v1/splinter/curate", json={"query": "new", "conversation_id": "k-new"})
     assert "k0" in st.hives
     st.end("k0")
 

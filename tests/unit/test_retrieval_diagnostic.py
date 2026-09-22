@@ -34,7 +34,7 @@ def _record(turns, cid="test_conv"):
     return {"conversation_id": cid, "turns": turns}
 
 
-# --- The reframe's key scenario: the model DID state the fact, strata retrieved ---
+# --- The reframe's key scenario: the model DID state the fact, splinter retrieved ---
 HIT_RECORD = _record([
     {"turn": 1, "query": FILLER,
      "reply": "Use cursor-based for pagination.",
@@ -44,7 +44,7 @@ HIT_RECORD = _record([
      "assembled_content": "Use cursor-based for pagination. Use Redis with TTL."},
 ])
 
-# --- Model stated the fact, strata FAILED to retrieve it (genuine retrieval miss) ---
+# --- Model stated the fact, splinter FAILED to retrieve it (genuine retrieval miss) ---
 MISS_RECORD = _record([
     {"turn": 1, "query": FILLER,
      "reply": "Use cursor-based for pagination.",
@@ -54,7 +54,7 @@ MISS_RECORD = _record([
      "assembled_content": "Only unrelated content about the order schema."},
 ])
 
-# --- The live3 edge case: model NEVER stated the expected fact -> not a strata
+# --- The live3 edge case: model NEVER stated the expected fact -> not a splinter
 #     failure, ingestion_rate < 100% and recall denominator excludes it. ---
 NOT_STATED_RECORD = _record([
     {"turn": 1, "query": FILLER,
@@ -138,10 +138,10 @@ def test_recall_counts_only_stated_facts():
 
 
 def test_recall_miss_when_stated_but_not_retrieved():
-    """Model stated the fact but the strata dropped it -> genuine strata miss."""
+    """Model stated the fact but the splinter dropped it -> genuine splinter miss."""
     result = compute_retrieval_vs_fixture([MISS_RECORD], FIXTURE)
     assert result["retrieval_recall"] == 0.0
-    assert result["ingestion_rate"] == 100.0  # fact WAS stated; strata's fault
+    assert result["ingestion_rate"] == 100.0  # fact WAS stated; splinter's fault
     assert result["perfect_hive_ceiling"] == 100.0
 
 

@@ -2,13 +2,13 @@
 
 State model
 -----------
-- One ``Strata`` instance per conversation_id (fresh store + comb per
+- One ``Splinter`` instance per conversation_id (fresh store + comb per
   conversation â€” per-conversation isolation is mandatory).
-  Instances are created lazily on the first turn and dropped by /v1/strata/reset.
+  Instances are created lazily on the first turn and dropped by /v1/splinter/reset.
 - Conversations persist to ``state_dir`` (default ./harness_state, one atomic
   JSON per conversation using the same store serialization as the benchmark's
   checkpoint/resume) and reload lazily on first touch after a restart, so the
-  strata survives sidecar restarts. /v1/strata/reset deletes memory AND disk.
+  splinter survives sidecar restarts. /v1/splinter/reset deletes memory AND disk.
 - One shared ultra-small drone across conversations (a per-conversation encoder
   would multiply VRAM/RAM for nothing); inference is read-only.
 - Per-conversation locks serialize turns within a conversation; different
@@ -72,8 +72,8 @@ from backend.providers import (
     providers_path,
     save_registry,
 )
-from cortex.config import StrataConfig
-from cortex.strata import Strata
+from cortex.config import SplinterConfig
+from cortex.splinter import Splinter
 from experiments.model_probe import _list_models, probe_model
 from harness.hardware import disk_summary, parse_visible_indices
 from harness.models import LlamaServerManager
@@ -85,7 +85,7 @@ from harness.reports import (
 )
 from logs.event_logger import EventLogger
 from retention.store import ContextStore
-from strata.server import create_app as create_strata_app
+from splinter.server import create_app as create_splinter_app
 
 
 def _list_runs(runs_root: Path) -> list[dict]:
@@ -107,8 +107,8 @@ def _list_runs(runs_root: Path) -> list[dict]:
     return entries
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-# Strata mode (AFK) canonical state - workspace-level so all projects share one source.
-MODE_FILE = Path(os.environ.get("HIVE_MODE_FILE", str(Path(REPO_ROOT).parent / "STRATA-MODE.json")))
+# Splinter mode (AFK) canonical state - workspace-level so all projects share one source.
+MODE_FILE = Path(os.environ.get("HIVE_MODE_FILE", str(Path(REPO_ROOT).parent / "SPLINTER-MODE.json")))
 RESEARCH_QUEUE = Path(os.environ.get(
     "HIVE_RESEARCH_QUEUE", str(Path(REPO_ROOT).parent / "RESEARCH-QUEUE.md")))
 DEFAULT_RUNS_ROOT = REPO_ROOT / "runs"
@@ -920,7 +920,7 @@ class _State:
         self.registry = ProviderRegistry()
         self.engines = EngineRegistry()
         self._ultra = None
-        self.hives: dict[str, Strata] = {}
+        self.hives: dict[str, Splinter] = {}
         self.locks: dict[str, threading.Lock] = {}
         self.global_lock = threading.Lock()
         # Conversation lifecycle: LRU-bounded so a long-running sidecar cannot
@@ -944,17 +944,17 @@ class _State:
         digest = hashlib.md5(conversation_id.encode("utf-8")).hexdigest()[:16]
         return self.state_dir / f"conv-{digest}.json"
 
-    def save_conversation(self, conversation_id: str, strata: Strata) -> None:
+    def save_conversation(self, conversation_id: str, splinter: Splinter) -> None:
         """Persist one conversation atomically (tmp file + os.replace)."""
         path = self._conv_path(conversation_id)
         if path is None:
             return
         payload = {
             "conversation_id": conversation_id,
-            "turn": strata.turn,
-            "with_backend": strata.backend is not None,
-            "config": strata.config.to_dict(),
-            "store": strata.store.to_dict(),
+            "turn": splinter.turn,
+            "with_backend": splinter.backend is not None,
+            "config": splinter.config.to_dict(),
+            "store": splinter.store.to_dict(),
         }
         tmp = path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(payload), encoding="utf-8")
@@ -965,35 +965,35 @@ class _State:
         if path is not None and path.exists():
             path.unlink()
 
-    def strata_for(
+    def splinter_for(
         self, conversation_id: str, config_overrides: dict | None,
         with_backend: bool = True, engine: Optional[str] = None,
-    ) -> Strata:
-        """Get or lazily create the conversation's strata.
+    ) -> Splinter:
+        """Get or lazily create the conversation's splinter.
 
         A conversation not in memory but present in ``state_dir`` restores
         from disk (same serialization as the benchmark's checkpoint/resume),
-        so the strata survives sidecar restarts. In-memory hives are LRU-bounded
+        so the splinter survives sidecar restarts. In-memory hives are LRU-bounded
         (``HARNESS_MAX_CONVERSATIONS``); evicted conversations are persisted
         first and transparently restore on their next touch.
 
         ``with_backend=False`` (the curate/observe flow, where the caller's
-        own shell generates) creates the strata without an LLM backend; a
-        conversation is driven either fully (/v1/strata/turn) or externally
+        own shell generates) creates the splinter without an LLM backend; a
+        conversation is driven either fully (/v1/splinter/turn) or externally
         (curate + observe), whichever touches it first wins.
         """
         with self.global_lock:
-            strata = self.hives.get(conversation_id)
-            if strata is not None:
+            splinter = self.hives.get(conversation_id)
+            if splinter is not None:
                 self._last_access[conversation_id] = time.monotonic()
-                return strata
+                return splinter
 
-            def build(cfg: StrataConfig, backend: object | None) -> Strata:
+            def build(cfg: SplinterConfig, backend: object | None) -> Splinter:
                 logger = self._loggers.get(conversation_id)
                 if logger is None:
                     logger = EventLogger(log_dir=self.log_dir)
                     self._loggers[conversation_id] = logger
-                h = Strata(
+                h = Splinter(
                     config=cfg,
                     ultra=self.ultra(),
                     backend=backend,
@@ -1007,24 +1007,24 @@ class _State:
             if path is not None and path.exists():
                 try:
                     data = json.loads(path.read_text(encoding="utf-8"))
-                    strata = build(StrataConfig.from_dict(data["config"]),
+                    splinter = build(SplinterConfig.from_dict(data["config"]),
                                  self.backend_factory(None)
                                  if data.get("with_backend") else None)
-                    strata.store = ContextStore.from_dict(
-                        data["store"], embed_fn=strata.ultra.embed
+                    splinter.store = ContextStore.from_dict(
+                        data["store"], embed_fn=splinter.ultra.embed
                     )
-                    strata.turn = int(data["turn"])
+                    splinter.turn = int(data["turn"])
                     self._last_access[conversation_id] = time.monotonic()
                     self._evict_locked(exclude=conversation_id)
-                    return strata
+                    return splinter
                 except (ValueError, KeyError, TypeError, OSError) as exc:
                     print(f"harness: restoring {conversation_id} failed ({exc}); "
                           "starting fresh", file=sys.stderr)
 
-            config = StrataConfig(confidence_mode="off")
+            config = SplinterConfig(confidence_mode="off")
             if config_overrides:
                 merged = {**config.to_dict(), **config_overrides}
-                config = StrataConfig.from_dict(merged)
+                config = SplinterConfig.from_dict(merged)
             if not config.sampling and self.engines.engines:
                 # Engine sampling defaults apply when the caller did not
                 # specify sampling (per-call / per-config overrides win).
@@ -1034,10 +1034,10 @@ class _State:
                     profile = None
                 if profile is not None and profile.sampling:
                     config.sampling = profile.sampling
-            strata = build(config, self.backend_factory(None) if with_backend else None)
+            splinter = build(config, self.backend_factory(None) if with_backend else None)
             self._last_access[conversation_id] = time.monotonic()
             self._evict_locked(exclude=conversation_id)
-            return strata
+            return splinter
 
     def _evict_locked(self, exclude: str) -> int:
         """LRU-evict idle conversations beyond the cap. Caller holds the
@@ -1290,7 +1290,7 @@ def create_app(
             kw["model"] = model
         return OpenAICompatBackend(**kw)
 
-    app = FastAPI(title="Strata Studio", version="0.1.0")
+    app = FastAPI(title="Splinter Studio", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins(),
@@ -1302,7 +1302,7 @@ def create_app(
     async def token_guard(request: Request, call_next):
         required = _required_token()
         if required and request.url.path.startswith("/v1/"):
-            supplied = request.headers.get("x-strata-token", "")
+            supplied = request.headers.get("x-splinter-token", "")
             if supplied != required:
                 from fastapi.responses import JSONResponse
 
@@ -1345,7 +1345,7 @@ def create_app(
 
     @app.get("/v1/setup/status")
     def setup_status(context: int = 32768, dual: bool = False, vhdx: str | None = None, model_gb: float | None = None):
-        """Setup wizard status — engine + drive + health + tier (strata console)."""
+        """Setup wizard status — engine + drive + health + tier (splinter console)."""
         health_info = _setup_health(vhdx)
         tier = _setup_tier(context, dual, vhdx, model_gb)
         complete = bool(health_info["vhdxExists"] and health_info["mounted"] and health_info["shardsFound"] and health_info["dockerRunning"] and not tier["flags"]["diskFull"])
@@ -1671,7 +1671,7 @@ def create_app(
     # Built-in mock OpenAI-compatible chat completions: pairs with
     # `python -m harness --mock` so a dsh shell (pi-ai openai-completions
     # route) can run end-to-end offline. The reply deterministically echoes
-    # what the request actually contained â€” context size and whether strata
+    # what the request actually contained â€” context size and whether splinter
     # content reached the model â€” which makes it a live probe of Seam A.
     # When the conversation asks for the benchmark, it emits a proper
     # hive_bench_run tool call and then acknowledges the tool result, so the
@@ -1686,16 +1686,16 @@ def create_app(
                 system_txt = str(m.get("content") or "")
             elif m.get("role") == "user":
                 user_txt = str(m.get("content") or "")
-        # the exact marker dsh-strata appends as a snapshot user message
+        # the exact marker dsh-splinter appends as a snapshot user message
         curated = any(
-            "strata-curated-context" in str(m.get("content") or "")
+            "splinter-curated-context" in str(m.get("content") or "")
             for m in messages
         )
         head = " ".join(system_txt.split())[:160]
         return (
-            f"[strata-mock] model={payload.get('model', '?')} "
+            f"[splinter-mock] model={payload.get('model', '?')} "
             f"system={len(system_txt)}ch user={len(user_txt)}ch "
-            f"strata_context={'yes' if curated else 'no'} "
+            f"splinter_context={'yes' if curated else 'no'} "
             f"context_head={head!r}"
         )
 
@@ -1838,7 +1838,7 @@ def create_app(
     # Real OpenAI-compatible passthrough (curated) â€” Mode A integration
     # (OpenCode, dsh, any OpenAI client): standard /chat/completions wire
     # shape, curated system context, the reply observed back into the
-    # store. Conversation key: X-Strata-Conversation header > payload "user"
+    # store. Conversation key: X-Splinter-Conversation header > payload "user"
     # > "default".
     # OpenAI-shape model list for clients that probe {base_url}/models
     # (Unsloth Studio's connection test) when pointed at the curated
@@ -2339,7 +2339,7 @@ def create_app(
         tasks = body.get("tasks") or [
             "List the files in the current directory.",
             "Create a file named trainer-test.txt containing 'hello'.",
-            "Search for the word 'strata' in .py files and report matches.",
+            "Search for the word 'splinter' in .py files and report matches.",
         ]
         candidate = draft_candidate.__wrapped__ if hasattr(
             draft_candidate, "__wrapped__") else None
@@ -2816,8 +2816,8 @@ def create_app(
         return {"queued": True, "question": q}
 
 
-    @app.get("/v1/strata/mode")
-    def strata_mode_get():
+    @app.get("/v1/splinter/mode")
+    def splinter_mode_get():
         if MODE_FILE.exists():
             try:
                 data = json.loads(MODE_FILE.read_text(encoding="utf-8-sig"))
@@ -2827,8 +2827,8 @@ def create_app(
                         "_file": str(MODE_FILE)}
         return {"afk": False, "_file": str(MODE_FILE)}
 
-    @app.post("/v1/strata/mode")
-    async def strata_mode_set(req: Request):
+    @app.post("/v1/splinter/mode")
+    async def splinter_mode_set(req: Request):
         body = await req.json()
         afk = bool(body.get("afk"))
         note = str(body.get("note", ""))[:200]
@@ -2838,7 +2838,7 @@ def create_app(
                        "operator": "away", "note": note,
                        "preapproved": ["GREEN/YELLOW fixes",
                                        "catalog+doc regeneration",
-                                       "executing STRATA-PLAN orders",
+                                       "executing SPLINTER-PLAN orders",
                                        "approved-proposal implementation",
                                        "gate bug fixes"],
                        "queue_for_return": ["pushes to public masters",
@@ -2947,7 +2947,7 @@ def create_app(
         """OpenAI-compatible embeddings endpoint.
 
         Proxies to a loaded embedding llama-server (``--embedding``) when
-        available, otherwise computes embeddings locally via the strata's
+        available, otherwise computes embeddings locally via the splinter's
         ultra-small drone (offline fallback). Accepts the same wire shape
         as ``POST /v1/embeddings`` from llama-server / OpenAI.
         """
@@ -3230,8 +3230,8 @@ def create_app(
                         "Two-tool coding agent with persistent bash and str_replace_editor.", 3),
             "cordis": ("Creator mode",
                        "Built for creating custom agent presets, with all Standard mode capabilities plus runtime inspection, plugin experiments, and preset-authoring guidance.", 4),
-            "strata-curator": ("Strata Curator",
-                             "Standard coding agent plus Strata curation: each turn the local sidecar assembles relevant context and observes replies, ideal for long tasks and cross-session memory. Requires a local Strata sidecar; offline it degrades to Standard.", 4),
+            "splinter-curator": ("Splinter Curator",
+                             "Standard coding agent plus Splinter curation: each turn the local sidecar assembles relevant context and observes replies, ideal for long tasks and cross-session memory. Requires a local Splinter sidecar; offline it degrades to Standard.", 4),
             "local-first": ("Local-first",
                             "Lean composition for local model routing: no cloud search or other cloud surfaces, keeps shell, filesystem, jobs, skills, goals, and planning. Use with a local inference backend or any in-session model.", 5),
         }
@@ -3398,10 +3398,10 @@ def create_app(
         return RedirectResponse("/runs")
 
     # ------------------------------------------------------------------
-    # Strata conversation loop (Phase 2 plug-in): attach the standalone
-    # strata server LAST - host routes above keep precedence, and strata's
-    # paths (/v1/strata/*, /v1/openai/*, /v1/mcp) fall through to it. The
-    # shared registry means one conversation store for host + strata.
-    app.mount("/", create_strata_app(app_state=st))
+    # Splinter conversation loop (Phase 2 plug-in): attach the standalone
+    # splinter server LAST - host routes above keep precedence, and splinter's
+    # paths (/v1/splinter/*, /v1/openai/*, /v1/mcp) fall through to it. The
+    # shared registry means one conversation store for host + splinter.
+    app.mount("/", create_splinter_app(app_state=st))
 
     return app

@@ -8,7 +8,7 @@ UI for discovery, ``/name raw-input`` parsing, and handlers that settle as
 Scope note: dsh's own interactive commands (/plan, /compact, /goal) live in
 its Web host; the SDK transport intentionally does not expose them. These are
 the Studio's console commands — same shape, wired to the seams we own
-(server, providers, engines, strata conversations, benchmark, transcripts).
+(server, providers, engines, splinter conversations, benchmark, transcripts).
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-from cortex.config import StrataConfig
+from cortex.config import SplinterConfig
 
 
 @dataclass
@@ -70,7 +70,7 @@ def _safe_name(text: str) -> str:
 # transcript export (/save)
 # ---------------------------------------------------------------------------
 def _hive_markdown(st, conversation_id: str) -> list[str]:
-    """Strata-side turns from the persisted conversation store: per turn the
+    """Splinter-side turns from the persisted conversation store: per turn the
     query chunk was stored before the reply chunk."""
     path = st._conv_path(conversation_id)
     lines: list[str] = []
@@ -116,7 +116,7 @@ def _agent_markdown(session_root: Path, conversation_id: str) -> list[str]:
                 blocks = record.get("data", {}).get("content") or []
                 text = "".join(b.get("text", "") for b in blocks
                                if isinstance(b, dict) and b.get("type") == "text")
-                if text.strip() and "strata-curated-context" not in text:
+                if text.strip() and "splinter-curated-context" not in text:
                     lines.append(f"**User:** {html.escape(text.strip())}\n")
             elif kind == "assistant/message":
                 blocks = record.get("data", {}).get("message", {}).get("content") or []
@@ -166,13 +166,13 @@ class ConsoleCommands:
         }
         self._descriptors = [
             CommandDescriptor("help", "list available commands"),
-            CommandDescriptor("new", "start a fresh conversation (strata + agent)"),
+            CommandDescriptor("new", "start a fresh conversation (splinter + agent)"),
             CommandDescriptor("save", "export the conversation transcript as markdown",
                               input_hint="[name]"),
             CommandDescriptor("model", "list local models or load one",
                               input_hint="[name]"),
             CommandDescriptor("mode", "switch the chat pane transport",
-                              input_hint="[strata|agent]"),
+                              input_hint="[splinter|agent]"),
             CommandDescriptor("provider", "list providers or set the default",
                               input_hint="[name]"),
             CommandDescriptor("engine", "list engines or set the default",
@@ -211,20 +211,20 @@ class ConsoleCommands:
     def _new(self, _args: str, _cid: str) -> CommandResult:
         new_id = f"console-{int(time.time() * 1000):x}"
         return CommandResult(
-            "success", "Fresh conversation started (strata store + agent session).",
+            "success", "Fresh conversation started (splinter store + agent session).",
             {"new_conversation_id": new_id})
 
     def _save(self, args: str, conversation_id: str) -> CommandResult:
         lines = ["# Conversation transcript — "
                  f"{conversation_id}", "",
                  f"_exported {time.strftime('%Y-%m-%d %H:%M:%S')}_", ""]
-        strata_lines = _hive_markdown(self.st, conversation_id)
+        splinter_lines = _hive_markdown(self.st, conversation_id)
         agent_lines = _agent_markdown(self.agent.session_root, conversation_id)
-        if strata_lines:
-            lines += ["## Strata conversation", ""] + strata_lines
+        if splinter_lines:
+            lines += ["## Splinter conversation", ""] + splinter_lines
         if agent_lines:
             lines += ["## Agent (dsh) session", ""] + agent_lines
-        if not strata_lines and not agent_lines:
+        if not splinter_lines and not agent_lines:
             return CommandResult("error",
                                  "nothing to save for this conversation yet")
         stamp = time.strftime("%Y%m%d_%H%M%S")
@@ -274,8 +274,8 @@ class ConsoleCommands:
 
     def _mode(self, args: str, _cid: str) -> CommandResult:
         mode = args.lower()
-        if mode not in ("strata", "agent"):
-            return CommandResult("error", "usage: /mode [strata|agent]")
+        if mode not in ("splinter", "agent"):
+            return CommandResult("error", "usage: /mode [splinter|agent]")
         return CommandResult("success", f"chat mode set to {mode}",
                              {"mode": mode})
 

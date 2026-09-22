@@ -3,9 +3,9 @@
 This repo (hivebench) holds the evaluation suite (`experiments/`, `testing/`,
 `tests/`) and the HiveBench Studio sidecar (`harness/`) with flat top-level
 import names; the system under test lives in the sibling checkout
-(`../strata-memory`, overridable via $STRATA_HOME). These tests pin the
+(`../splinter-memory`, overridable via $SPLINTER_HOME). These tests pin the
 invariants the split depends on: no stray package dirs at the root, pyproject
-declaring all trees, the vocab data present in the sibling `strata` tree, and
+declaring all trees, the vocab data present in the sibling `splinter` tree, and
 the test runner's path constants resolving.
 """
 
@@ -16,8 +16,13 @@ from pathlib import Path
 from setuptools import find_packages
 
 ROOT = Path(__file__).resolve().parents[2]
-STRATA_HOME = Path(os.environ.get("STRATA_HOME", str(ROOT.parent / "strata-memory")))
-HIVE = STRATA_HOME / "strata"
+_env_home = os.environ.get("SPLINTER_HOME") or os.environ.get("STRATA_HOME")
+if _env_home:
+    SPLINTER_HOME = Path(_env_home)
+else:
+    SPLINTER_HOME = next((ROOT.parent / _n for _n in ("splinter-memory", "strata-memory")
+                          if (ROOT.parent / _n).is_dir()), ROOT.parent / "splinter-memory")
+HIVE = SPLINTER_HOME / "splinter"
 
 PACKAGE_ROOTS = ("experiments", "testing", "tests", "harness")
 
@@ -53,7 +58,7 @@ def test_no_stray_package_dirs_at_root():
     stray = []
     for entry in sorted(ROOT.iterdir()):
         if entry.is_dir() and entry.name not in (*PACKAGE_ROOTS, *NONPKG_SCRIPT_DIRS):
-            # Nested git checkouts (e.g. CI's strata-sys sibling) are
+            # Nested git checkouts (e.g. CI's splinter-sys sibling) are
             # infrastructure, not package layout — exempt from the guard.
             if (entry / ".git").exists():
                 continue

@@ -3,10 +3,10 @@
 The sidecar exposes two ways to reach the same curation engine:
 
 - the **MCP path** — stateless JSON-RPC on ``POST /v1/mcp`` with the
-  ``strata_search`` / ``strata_remember`` tools (S2's fixed contract), and
+  ``splinter_search`` / ``splinter_remember`` tools (S2's fixed contract), and
 - the **raw REST path** — the sidecar's own endpoints
-  (``/v1/strata/turn`` for a full turn, ``/v1/strata/curate`` /
-  ``/v1/strata/observe`` for external-shell integrators).
+  (``/v1/splinter/turn`` for a full turn, ``/v1/splinter/curate`` /
+  ``/v1/splinter/observe`` for external-shell integrators).
 
 ``McpClient`` speaks the former (``initialize`` → ``tools/list`` →
 ``tools/call``); ``RawTurnClient`` speaks the latter. Both take ``base_url``
@@ -30,14 +30,14 @@ import requests
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8765"
 MCP_PATH = "/v1/mcp"
-TURN_PATH = "/v1/strata/turn"
-CURATE_PATH = "/v1/strata/curate"
-OBSERVE_PATH = "/v1/strata/observe"
-RESET_PATH = "/v1/strata/reset"
+TURN_PATH = "/v1/splinter/turn"
+CURATE_PATH = "/v1/splinter/curate"
+OBSERVE_PATH = "/v1/splinter/observe"
+RESET_PATH = "/v1/splinter/reset"
 
 DEFAULT_TIMEOUT = 120.0
 DEFAULT_CONVERSATION_ID = "hivebench-mcp"
-TOKEN_HEADER = "x-strata-token"
+TOKEN_HEADER = "x-splinter-token"
 
 
 class SidecarHttpError(RuntimeError):
@@ -178,14 +178,14 @@ class McpClient(_BaseClient):
 
     def remember(self, text: str, conversation_id: Optional[str] = None) -> CallResult:
         return self.call_tool(
-            "strata_remember", {"text": text}, conversation_id=conversation_id
+            "splinter_remember", {"text": text}, conversation_id=conversation_id
         )
 
     def search(
         self, query: str, top_k: int = 5, conversation_id: Optional[str] = None
     ) -> CallResult:
         return self.call_tool(
-            "strata_search",
+            "splinter_search",
             {"query": query, "top_k": top_k},
             conversation_id=conversation_id,
         )
@@ -201,8 +201,8 @@ class RawTurnClient(_BaseClient):
                 TURN_PATH, {"query": query, "conversation_id": cid}
             )
         except SidecarHttpError as exc:
-            return CallResult(False, {}, 0.0, str(exc), "strata_turn")
-        return CallResult(True, data, latency_ms, "", "strata_turn")
+            return CallResult(False, {}, 0.0, str(exc), "splinter_turn")
+        return CallResult(True, data, latency_ms, "", "splinter_turn")
 
     def curate(self, query: str, conversation_id: Optional[str] = None) -> CallResult:
         cid = conversation_id or self.conversation_id
@@ -211,8 +211,8 @@ class RawTurnClient(_BaseClient):
                 CURATE_PATH, {"query": query, "conversation_id": cid}
             )
         except SidecarHttpError as exc:
-            return CallResult(False, {}, 0.0, str(exc), "strata_curate")
-        return CallResult(True, data, latency_ms, "", "strata_curate")
+            return CallResult(False, {}, 0.0, str(exc), "splinter_curate")
+        return CallResult(True, data, latency_ms, "", "splinter_curate")
 
     def observe(self, reply: str, conversation_id: Optional[str] = None) -> CallResult:
         cid = conversation_id or self.conversation_id
@@ -221,13 +221,13 @@ class RawTurnClient(_BaseClient):
                 OBSERVE_PATH, {"reply": reply, "conversation_id": cid}
             )
         except SidecarHttpError as exc:
-            return CallResult(False, {}, 0.0, str(exc), "strata_observe")
-        return CallResult(True, data, latency_ms, "", "strata_observe")
+            return CallResult(False, {}, 0.0, str(exc), "splinter_observe")
+        return CallResult(True, data, latency_ms, "", "splinter_observe")
 
     def reset(self, conversation_id: Optional[str] = None) -> CallResult:
         cid = conversation_id or self.conversation_id
         try:
             data, latency_ms = self._post(RESET_PATH, {"conversation_id": cid})
         except SidecarHttpError as exc:
-            return CallResult(False, {}, 0.0, str(exc), "strata_reset")
-        return CallResult(True, data, latency_ms, "", "strata_reset")
+            return CallResult(False, {}, 0.0, str(exc), "splinter_reset")
+        return CallResult(True, data, latency_ms, "", "splinter_reset")
