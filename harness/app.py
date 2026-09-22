@@ -1427,7 +1427,7 @@ def create_app(
         else:
             vhdx = os.environ.get("VHDX_PATH", r"E:\dsh_storage.vhdx")
         mount = "/mnt/dsh_storage"
-        compose = os.environ.get("COMPOSE_PATH", r"C:\Users\penis\Documents\hivebench-studio\docker-compose.yml")
+        compose = os.environ.get("COMPOSE_PATH", os.path.expanduser(os.path.join("~", "Documents", "hivebench-studio", "docker-compose.yml")))
         # 1) VHDX exists — no auto-create (explicit Create Drive required)
         if not os.path.exists(vhdx):
             raise HTTPException(400, f"VHDX not found at {vhdx} — select a drive in Setup and click Create Drive first (explicit location required)")

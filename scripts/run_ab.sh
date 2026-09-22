@@ -11,8 +11,8 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 2
 ROOT=$PWD
 FORK=${FORK:-artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a}
-PIN=${PIN:-/home/penis/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN}
-PY=${PY:-/home/penis/Desktop/work/strata-memory/venv/bin/python}
+PIN=${PIN:-~/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN}
+PY=${PY:-~/Desktop/work/strata-memory/venv/bin/python}
 PORT=${PORT:-8090}
 MAX_CONVS=${MAX_CONVS:-10}
 DEADLINE=${DEADLINE:-7200}

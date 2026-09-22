@@ -15,13 +15,13 @@ their trained weights (Gate 3), so no local training is required.
 ## Serve / evaluate
 
 ```sh
-cd /home/penis/Desktop/work/hivebench
+cd ~/Desktop/work/hivebench
 FORK=artifacts/ternary/oracle/prism-fork/bin/llama-prism-b10709-9a9394a
-PIN=/home/penis/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN
+PIN=~/Desktop/work/worktrees/strata-memory/hivebench-STRATA-PIN
 
 HIP_VISIBLE_DEVICES=1 LD_LIBRARY_PATH=$PWD/$FORK \
 STRATA_HOME=$PIN PYTHONPATH=$PIN/strata \
-  /home/penis/Desktop/work/strata-memory/venv/bin/python -m experiments.ternary_eval \
+  ~/Desktop/work/strata-memory/venv/bin/python -m experiments.ternary_eval \
     --gguf artifacts/ternary/oracle/bonsai27/Ternary-Bonsai-2-27B-PQ2_0.gguf \
     --fork-bin $FORK/llama-server \
     --no-thinking --max-convs 10 \

@@ -17,7 +17,7 @@ CLAIMS_GATE=skip (the claims gate rejects vendor/** even as deletions).
 """
 import argparse, datetime, hashlib, os, subprocess, sys
 
-DEFAULT_FORK = "/home/penis/Desktop/work/deepseek-harness"
+DEFAULT_FORK = os.path.expanduser("~/Desktop/work/deepseek-harness")
 PKG_REL = "python/sdk/src/deepseek_harness"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VENDOR = os.path.join(ROOT, "vendor", "deepseek_harness")

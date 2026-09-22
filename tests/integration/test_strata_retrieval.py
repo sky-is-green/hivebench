@@ -18,7 +18,7 @@ from pathlib import Path
 
 SIDECAR = "http://127.0.0.1:8765"
 CID = "retrieval-test"
-CONTEXT_FILE = Path("/home/penis/Desktop/work/strata-memory/STRATA-CONTEXT.md")
+CONTEXT_FILE = Path.home() / "Desktop/work/strata-memory/STRATA-CONTEXT.md"
 CHUNK_SIZE = 3000  # chars per turn (~750 tokens)
 
 
