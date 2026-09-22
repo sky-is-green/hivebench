@@ -2,6 +2,14 @@
 
 [![CI](https://github.com/sky-is-green/hivebench/actions/workflows/ci.yml/badge.svg)](https://github.com/sky-is-green/hivebench/actions/workflows/ci.yml)
 
+[![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)](https://github.com/sky-is-green/hivebench)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://github.com/sky-is-green/hivebench)
+[![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat&logo=pytest&logoColor=white)](https://github.com/sky-is-green/hivebench)
+[![Hugging Face](https://img.shields.io/badge/Hugging_Face-FFD21E?style=flat&logo=huggingface&logoColor=black)](https://github.com/sky-is-green/hivebench)
+[![Top language](https://img.shields.io/github/languages/top/sky-is-green/hivebench?style=flat&logo=python&logoColor=white)](https://github.com/sky-is-green/hivebench)
+[![Last commit](https://img.shields.io/github/last-commit/sky-is-green/hivebench/main?style=flat&label=Last%20commit&logo=git)](https://github.com/sky-is-green/hivebench/commits/main)
+[![Repo size](https://img.shields.io/github/repo-size/sky-is-green/hivebench?style=flat&label=Repo%20size)](https://github.com/sky-is-green/hivebench)
+
 Evaluation suite + Studio sidecar harness for the [Splinter Memory](https://github.com/sky-is-green/splinter-memory) system.
 
 **Status: work in progress.** Carved out of splinter-memory on 2026-09-12 as its
