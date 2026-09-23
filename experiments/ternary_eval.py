@@ -15,8 +15,8 @@ Prism ROCm fork. The paired subset delegates to
 ``SPLINTER_HOME`` pin. ``--mock`` exercises the whole wiring offline with a stub
 manager, chat, and paired step — no GPU, network, or sibling checkout needed.
 
-``SPEC_SHA256`` pins the frozen wire contract consumed from
-``experiments/ternary/spec.md`` (``tbr-1.2``).
+``SPEC_SHA256`` pins the frozen wire contract consumed from the forensics
+package's ``bonsai_forensics/spec.md`` (``tbr-1.2``).
 """
 
 from __future__ import annotations

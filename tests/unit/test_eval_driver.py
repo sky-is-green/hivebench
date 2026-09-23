@@ -8,9 +8,7 @@ manager, chat and paired_ab calls are injected. The real
 
 from __future__ import annotations
 
-import hashlib
 import json
-import re
 import socket
 import tomllib
 from pathlib import Path
@@ -21,7 +19,6 @@ import pytest
 from experiments import ternary_eval as te
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC_PATH = ROOT / "experiments" / "ternary" / "spec.md"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
 SPEC_SHA256 = "0d2c008b4aee726351f9b90e44ec003c18b579d8690db24c77a089d9e1fc652b"
 
@@ -33,10 +30,10 @@ def _unused_port() -> int:
 
 
 def test_spec_hash_is_pinned() -> None:
-    text = SPEC_PATH.read_text(encoding="utf-8")
-    constants = json.loads(re.findall(r"```json\n(.*?)\n```", text, re.S)[0])
-    canon = json.dumps(constants, sort_keys=True, separators=(",", ":"))
-    assert hashlib.sha256(canon.encode()).hexdigest() == SPEC_SHA256 == te.SPEC_SHA256
+    # The spec file now lives with the ternary package in the forensics repo
+    # (`bonsai_forensics/spec.md`), where tests/ternary/test_spec.py pins its
+    # hash. Here we only pin the driver's copy of the constant.
+    assert te.SPEC_SHA256 == SPEC_SHA256
 
 
 def test_cli_entry_point_registered() -> None:
