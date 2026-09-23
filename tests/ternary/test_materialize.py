@@ -200,4 +200,3 @@ def test_materialized_checkpoint_loads_into_transformers(tmp_path):
     )
     assert params["model.embed_tokens.weight"].shape == (VOCAB, HIDDEN)
     assert params["lm_head.weight"].shape == (VOCAB, HIDDEN)
-                  
