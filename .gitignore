@@ -100,3 +100,6 @@ dep_scan.py
 
 # TBR ternary artifacts (HIVE-PLAN.md §3: GGUFs, run logs, oracle JSON)
 artifacts/ternary/
+
+# HF cache (CI sets HF_HOME to $GITHUB_WORKSPACE/.hf-cache)
+.hf-cache/
