@@ -12,7 +12,7 @@
       "cache_k": "q8_0",
       "cache_v": "q8_0",
       "pin": "HIP_VISIBLE_DEVICES=0,1",
-      "ts": "1,1"
+      "ts": "11,6"
     },
     {
       "role": "worker",
