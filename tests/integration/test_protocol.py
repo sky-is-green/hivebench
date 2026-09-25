@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from backend.lmstudio import LMStudioBackend
 from cortex.baselines.runner import load_conversations
 from cortex.e2e import FakeUltraSmall, MockTransport
@@ -23,8 +25,20 @@ def _suite():
     )
 
 
-def test_protocol_runs_all_ten_predictions():
-    results = _suite().run()
+@pytest.fixture(scope="module")
+def protocol_results():
+    """One P1-P11 run shared by the three protocol-shape tests.
+
+    ``run()`` drives the whole ten-prediction pipeline (~26 s locally, minutes
+    on a shared CI runner).  Each of the three tests used to build its own
+    suite and re-run it, which made this the suite's slowest block for no extra
+    coverage.  The result objects are read-only in these tests.
+    """
+    return _suite().run()
+
+
+def test_protocol_runs_all_ten_predictions(protocol_results):
+    results = protocol_results
     assert len(results) == 11
     assert [r.id for r in results] == [f"P{i}" for i in range(1, 12)]
     for r in results:
@@ -32,13 +46,13 @@ def test_protocol_runs_all_ten_predictions():
         assert r.status in ("PASS", "FAIL", "SKIP", "REPORT")
 
 
-def test_protocol_predictions_have_evidence_or_note():
-    for r in _suite().run():
+def test_protocol_predictions_have_evidence_or_note(protocol_results):
+    for r in protocol_results:
         assert r.evidence or r.note
 
 
-def test_protocol_stable_ids():
-    ids = {r.id for r in _suite().run()}
+def test_protocol_stable_ids(protocol_results):
+    ids = {r.id for r in protocol_results}
     assert ids == {f"P{i}" for i in range(1, 12)}
 
 
