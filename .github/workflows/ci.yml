@@ -10,10 +10,13 @@ on:
   workflow_dispatch:
     inputs:
       scope:
-        description: "Test scope (bisect aid: all / unit / integration)"
-        type: choice
-        options: [all, unit, integration]
+        description: "Test scope: all / unit / integration / unit:<start>-<end>"
+        type: string
         default: all
+      jobs:
+        description: "pytest-xdist workers (1 = serial)"
+        type: string
+        default: "4"
 
 concurrency:
   # A superseded push should cancel its running matrix: R18 pushed three times
@@ -182,4 +185,7 @@ jobs:
       # purpose: running the suite under Git Bash on Windows killed the hosted
       # runner mid-run (twice, with no log) while pwsh runs completed.
       - name: Run offline test suite
-        run: python -m pytest ${{ (inputs.scope == 'unit' && 'tests/unit') || (inputs.scope == 'integration' && 'tests/integration') || 'tests/unit tests/integration' }} -q -n 4
+        env:
+          CI_SCOPE: ${{ inputs.scope || 'all' }}
+          CI_JOBS: ${{ inputs.jobs || '4' }}
+        run: python scripts/ci_scope.py -q
