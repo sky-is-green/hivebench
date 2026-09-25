@@ -4,6 +4,10 @@ on:
   push:
     branches: [main, hivebench-test]
   pull_request:
+  # The slow windows leg also runs nightly, and on demand on any branch.
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
 
 concurrency:
   # A superseded push should cancel its running matrix: R18 pushed three times
@@ -12,7 +16,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  select_os:
+    # Compute the matrix before the runners queue.  The windows leg is the slow
+    # one (hosted runner + windows FS); it runs where merge-time correctness
+    # matters — main, PRs, nightly, manual dispatch — and not on every
+    # hivebench-test iteration push, which only needs the fast ubuntu signal.
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.matrix.outputs.os }}
+    steps:
+      - id: matrix
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo 'os=["ubuntu-latest"]' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'os=["ubuntu-latest","windows-latest"]' >> "${GITHUB_OUTPUT}"
+          fi
+
   tests:
+    needs: select_os
     # actions/checkout refuses paths outside the workspace, so the sibling
     # system checkout lives inside it; conftest + package bootstraps honour
     # $SPLINTER_HOME (their default is ../splinter-memory for local dev).
@@ -29,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.select_os.outputs.os) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -136,10 +159,5 @@ jobs:
         shell: bash
         run: |
           # Hosted runners have 4 vCPUs; xdist keeps identical coverage in
-          # roughly a third of the wall clock.  Windows stays serial until the
-          # parallel run is proven on the hosted image.
-          if [ "${RUNNER_OS}" = "Linux" ]; then
-            python -m pytest tests/unit tests/integration -q -n 4
-          else
-            python -m pytest tests/unit tests/integration -q
-          fi
+          # roughly a third of the wall clock (proven locally: 145 s -> 42 s).
+          python -m pytest tests/unit tests/integration -q -n 4
