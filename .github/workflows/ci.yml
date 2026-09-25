@@ -8,6 +8,12 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      scope:
+        description: "Test scope (bisect aid: all / unit / integration)"
+        type: choice
+        options: [all, unit, integration]
+        default: all
 
 concurrency:
   # A superseded push should cancel its running matrix: R18 pushed three times
@@ -49,6 +55,8 @@ jobs:
       HF_HOME: ${{ github.workspace }}/.hf-cache
       HF_HUB_DISABLE_TELEMETRY: "1"
       PYTHONUNBUFFERED: "1"
+      # A native crash (segfault/OOM kill) still leaves stacks in the log.
+      PYTHONFAULTHANDLER: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -135,6 +143,21 @@ jobs:
         shell: bash
         run: df -h / 2>/dev/null || true
 
+      # A crashed windows runner leaves no test log, so record every drive and
+      # the free RAM it started the suite with.
+      - name: Disk + memory headroom (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem |
+            Select-Object Name, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}},
+                                     @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}} |
+            Format-Table | Out-String | Write-Host
+          $os = Get-CimInstance Win32_OperatingSystem
+          Write-Host ("RAM free: {0} GB / total {1} GB" -f `
+            [math]::Round($os.FreePhysicalMemory/1MB,1), `
+            [math]::Round($os.TotalVisibleMemorySize/1MB,1))
+
       # The suite's only real encoder is paraphrase-MiniLM-L3-v2 (~90 MB);
       # cache it so repeat runs stay offline and no download can fail mid-test.
       - name: Cache encoder model
@@ -155,9 +178,8 @@ jobs:
 
       # Deterministic offline suite: unit + integration (perf benchmarks stay
       # out of CI - threshold assertions flake on shared runners)
+      # NOTE: no explicit shell here.  Default per-OS shells are used on
+      # purpose: running the suite under Git Bash on Windows killed the hosted
+      # runner mid-run (twice, with no log) while pwsh runs completed.
       - name: Run offline test suite
-        shell: bash
-        run: |
-          # Hosted runners have 4 vCPUs; xdist keeps identical coverage in
-          # roughly a third of the wall clock (proven locally: 145 s -> 42 s).
-          python -m pytest tests/unit tests/integration -q -n 4
+        run: python -m pytest ${{ (inputs.scope == 'unit' && 'tests/unit') || (inputs.scope == 'integration' && 'tests/integration') || 'tests/unit tests/integration' }} -q -n 4
