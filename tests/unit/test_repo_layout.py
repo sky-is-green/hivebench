@@ -2,26 +2,27 @@
 
 This repo (hivebench) holds the evaluation suite (`experiments/`, `testing/`,
 `tests/`) and the HiveBench Studio sidecar (`harness/`) with flat top-level
-import names; the system under test lives in the sibling checkout
-(`../splinter-memory`, overridable via $SPLINTER_HOME). These tests pin the
-invariants the split depends on: no stray package dirs at the root, pyproject
-declaring all trees, the vocab data present in the sibling `splinter` tree, and
-the test runner's path constants resolving.
+import names; the system under test lives in the sibling checkout. That
+checkout is resolved (env -> walk-up from the worktree -> primary checkout)
+by `conftest.resolve_splinter_home`, which also fails loudly rather than
+returning a non-existent path. These tests pin the invariants the split
+depends on: no stray package dirs at the root, pyproject declaring all trees,
+the vocab data present in the sibling `splinter` tree, the test runner's path
+constants resolving, and the sibling resolution order itself.
 """
 
-import os
 import tomllib
 from pathlib import Path
 
+import pytest
 from setuptools import find_packages
 
+import conftest
+
 ROOT = Path(__file__).resolve().parents[2]
-_env_home = os.environ.get("SPLINTER_HOME") or os.environ.get("STRATA_HOME")
-if _env_home:
-    SPLINTER_HOME = Path(_env_home)
-else:
-    SPLINTER_HOME = next((ROOT.parent / _n for _n in ("splinter-memory", "strata-memory")
-                          if (ROOT.parent / _n).is_dir()), ROOT.parent / "splinter-memory")
+# Resolve the sibling through the same order conftest uses (env -> walk-up ->
+# primary checkout) so the guard and the runner cannot disagree.
+SPLINTER_HOME = Path(conftest.resolve_splinter_home(str(ROOT)))
 HIVE = SPLINTER_HOME / "splinter"
 
 PACKAGE_ROOTS = ("experiments", "testing", "tests", "harness")
@@ -99,3 +100,91 @@ def test_runner_path_constants_resolve():
     assert runner.HIVE == HIVE
     for rel in runner.INTELLIGENCE:
         assert (ROOT / rel).is_file(), f"intelligence file missing: {rel}"
+
+
+# --- sibling-checkout resolution (worktree layout) -------------------------
+#
+# HIVE-OPS puts worktrees at <project>/worktrees/<repo>/hivebench-<Task_ID>,
+# where ROOT/../splinter-memory does not exist. These pin the resolution order
+# SPLINTER_HOME -> walk-up -> primary checkout, and the loud failure when none
+# resolve (never a silent run against the wrong tree).
+
+
+def test_resolve_splinter_prefers_env_override(tmp_path):
+    override = tmp_path / "custom-splinter"
+    override.mkdir()
+    root = tmp_path / "worktrees" / "hivebench" / "hivebench-T46"
+    root.mkdir(parents=True)
+
+    resolved = conftest.resolve_splinter_home(
+        str(root), env={"SPLINTER_HOME": str(override)}
+    )
+
+    assert Path(resolved) == override
+
+
+def test_resolve_splinter_walks_up_from_worktree(tmp_path):
+    root = tmp_path / "worktrees" / "hivebench" / "hivebench-T46"
+    root.mkdir(parents=True)
+    sibling = tmp_path / "splinter-memory"
+    sibling.mkdir()
+
+    resolved = conftest.resolve_splinter_home(str(root), env={})
+
+    assert Path(resolved) == sibling
+
+
+def test_resolve_splinter_walks_up_to_legacy_strata(tmp_path):
+    root = tmp_path / "worktrees" / "hivebench" / "hivebench-T46"
+    root.mkdir(parents=True)
+    legacy = tmp_path / "strata-memory"
+    legacy.mkdir()
+
+    resolved = conftest.resolve_splinter_home(str(root), env={})
+
+    assert Path(resolved) == legacy
+
+
+def test_resolve_splinter_falls_back_to_primary_checkout(tmp_path):
+    # A worktree whose primary checkout lives outside its ancestor chain.
+    primary = tmp_path / "primary" / "hivebench"
+    (primary / ".git" / "worktrees" / "wt").mkdir(parents=True)
+    sibling = tmp_path / "primary" / "splinter-memory"
+    sibling.mkdir()
+
+    root = tmp_path / "elsewhere" / "hivebench-T46"
+    root.mkdir(parents=True)
+    (root / ".git").write_text(
+        f"gitdir: {primary / '.git' / 'worktrees' / 'wt'}\n", encoding="utf-8"
+    )
+
+    resolved = conftest.resolve_splinter_home(str(root), env={})
+
+    assert Path(resolved) == sibling
+
+
+def test_resolve_splinter_rejects_missing_env_override(tmp_path):
+    missing = tmp_path / "does-not-exist"
+
+    with pytest.raises(conftest.SplinterHomeNotFound) as excinfo:
+        conftest.resolve_splinter_home(
+            str(tmp_path), env={"SPLINTER_HOME": str(missing)}
+        )
+
+    assert str(missing) in str(excinfo.value)
+
+
+def test_resolve_splinter_fails_loudly_when_nothing_resolves(tmp_path, monkeypatch):
+    root = tmp_path / "worktrees" / "hivebench" / "hivebench-T46"
+    root.mkdir(parents=True)
+    # Force every filesystem probe to miss, including the primary-checkout path.
+    monkeypatch.setattr(conftest, "_is_dir", lambda path: False)
+
+    with pytest.raises(conftest.SplinterHomeNotFound) as excinfo:
+        conftest.resolve_splinter_home(str(root), env={})
+
+    message = str(excinfo.value)
+    # Loud failure prints the paths it resolved to, rather than continuing.
+    assert str(root) in message
+    assert "splinter-memory" in message
+    assert "SPLINTER_HOME" in message
