@@ -471,6 +471,17 @@ _SLIDING_ATTENTION_LABELS = frozenset({
     "sliding_attention", "sliding_window", "sliding", "swa",
 })
 
+# Architectures whose GGUF writers omit ``<arch>.attention.layer_types`` even
+# though the backbone is hybrid.  The layout is structural — one full-attention
+# layer every N, the rest GatedDeltaNet/linear — so a per-arch period is enough,
+# and an explicit ``layer_types`` array always wins over this table.  Measured
+# on the real Qwen3.8-27B GGUFs: 65 blocks (64 + a trailing MTP/nextn block),
+# 16 full-attention layers, 64 KiB/token f16 / 34 KiB/token q8_0.
+_ARCH_FULL_ATTENTION_PERIOD: dict[str, int] = {
+    "qwen35": 4,
+    "qwen3_5_moe": 4,
+}
+
 
 def _kv_bytes_per_element(kv_cache_type: Optional[str]) -> float:
     """Bytes per cached element for ``kv_cache_type`` (``f16`` when unknown)."""
@@ -623,7 +634,9 @@ def attention_kv_estimate(model_path=None, *, gguf_meta: Optional[dict] = None,
 
     Reads ``<arch>.attention.layer_types`` when the arch ships it (hybrid
     GatedDeltaNet/Mamba backbones) and falls back to ``sliding_window`` +
-    ``sliding_window_pattern`` when it does not (Gemma-3 style), then to
+    ``sliding_window_pattern`` when it does not (Gemma-3 style), then to the
+    per-arch fixed-interval table when the writer omits both (``qwen35`` /
+    ``qwen3_5_moe``: one full-attention layer every 4), and finally to
     all-layers attention. Never raises: a missing or unreadable header returns
     None so callers keep their previous behaviour.
     """
@@ -663,6 +676,9 @@ def attention_kv_estimate(model_path=None, *, gguf_meta: Optional[dict] = None,
     window = _meta_first_int(meta, ".attention.sliding_window") or 0
     pattern = _meta_first_int(meta, ".attention.sliding_window_pattern") or 0
     labels = _meta_layer_types(meta)
+    arch_key = str(
+        meta.get("architecture") or meta.get("general.architecture") or ""
+    ).lower()
 
     full = sliding = linear = 0
     if labels:
@@ -685,9 +701,19 @@ def attention_kv_estimate(model_path=None, *, gguf_meta: Optional[dict] = None,
             sliding = n_layers
         full = n_layers - sliding
     else:
-        # No layer_types and no sliding window: a plain dense transformer,
-        # every layer carries a cache that grows with the window.
-        full = n_layers
+        period = _ARCH_FULL_ATTENTION_PERIOD.get(arch_key)
+        if period:
+            # No layer_types and no sliding window, but the arch is known to be
+            # hybrid at a fixed interval.  A block count one past the last whole
+            # period is the appended MTP/nextn head, which mainline llama.cpp
+            # ignores at serve time, so it is charged no growing cache.
+            main_layers = n_layers - 1 if n_layers % period == 1 else n_layers
+            full = max(1, main_layers // period)
+            linear = n_layers - full
+        else:
+            # A plain dense transformer: every layer carries a cache that grows
+            # with the window.
+            full = n_layers
 
     return KVEstimate(
         n_layers=n_layers,
