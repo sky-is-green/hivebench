@@ -302,7 +302,10 @@ def test_caveats_flag_a_colliding_engine_profile():
     assert report["arms"]["a"]["engine_profile"]["name"] == \
         report["arms"]["b"]["engine_profile"]["name"] == "Qwen3.8-27B-UD-Q6_K"
     assert any("same engines-A/B profile" in c for c in report["caveats"])
-    assert any("launch config unavailable" in c for c in report["caveats"])
+    # T34/T37 landed on the integration branch: the launch config resolves, so this
+    # caveat must NOT appear. The assertion here used to be the opposite, which only
+    # held while harness.stack.manager was absent from the tree.
+    assert not any("launch config unavailable" in c for c in report["caveats"])
     assert any("throughput not measured" in c for c in report["caveats"])
 
 
@@ -551,8 +554,9 @@ def test_main_live_reports_a_missing_stack(tmp_path, capsys):
     corpus.mkdir()
     (corpus / "c1.json").write_text(json.dumps(_conversations()[0]), encoding="utf-8")
     out = tmp_path / "results.json"
-    # T35 has not landed on this branch and there is no stacks/peer-2tier.json
-    # here either, so the stack cannot be read at all.
-    assert main(["--live", "--stack-a", "peer-2tier", "--stack-b", "peer-3tier",
+    # A stack name that cannot resolve. T35's default stacks now exist on the
+    # integration branch, so this must not rely on their absence to exercise the
+    # missing-stack path.
+    assert main(["--live", "--stack-a", "no-such-stack-a", "--stack-b", "no-such-stack-b",
                  "--conversations", str(corpus), "--output", str(out)]) == 2
     assert "error:" in capsys.readouterr().out
