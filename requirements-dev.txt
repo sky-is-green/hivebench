@@ -1,0 +1,38 @@
+# hivebench — test/bootstrap dependencies (the T46 test-env gate).
+#
+# Usage:
+#     scripts/bootstrap_test_env.sh
+#     .venv/bin/python -m pytest tests/unit -q
+#
+# Pinned to the versions the T33 gate ran green against, so the gate is
+# reproducible from this file alone. torch is CPU-only: its wheel is pulled
+# from PyTorch's CPU index rather than PyPI, which on Linux would otherwise
+# install the multi-GB CUDA build. Keep this list in sync with the imports
+# used by tests/unit and the `harness` sidecar.
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# tooling / test runner
+pytest==9.1.1
+setuptools==84.0.0
+
+# sidecar (harness)
+fastapi==0.141.1
+uvicorn==0.54.0
+pydantic==2.13.5
+python-multipart==0.0.32
+httpx==0.28.1
+
+# eval / analysis
+requests==2.34.2
+psutil==7.2.2
+numpy==2.5.3
+scipy==1.18.1
+scikit-learn==1.9.1
+zstandard==0.25.0
+
+# model tooling
+huggingface_hub==1.33.0
+tokenizers==0.23.2
+transformers==5.17.0
+torch==2.6.0+cpu
