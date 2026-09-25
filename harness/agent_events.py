@@ -19,6 +19,7 @@ consume it.
 
 from __future__ import annotations
 
+from itertools import count
 from typing import Any, Mapping, Optional
 
 #: Activity-event ``type`` values (the three existing ones + ``model``).
@@ -38,10 +39,13 @@ PARENT_KEY = "parent"
 #: Prefix for generated ``model`` ids (§B3 example: ``"m-7"``).
 MODEL_ID_PREFIX = "m-"
 
+#: Monotonic source for auto-generated ids (``m-1``, ``m-2``, ...).
+_MODEL_SEQ = count(1)
+
 
 def new_model_id(seq: int) -> str:
     """Deterministic ``model`` id for sequence number ``seq`` (``7`` → ``"m-7"``)."""
-    raise NotImplementedError
+    return f"{MODEL_ID_PREFIX}{seq}"
 
 
 def model_event(
@@ -62,12 +66,28 @@ def model_event(
     ``tier`` is the tier role (``"face"``, ``"worker"``, ...); ``parent`` is
     ``None`` for a face-tier dispatch.
     """
-    raise NotImplementedError
+    if phase not in MODEL_PHASES:
+        raise ValueError(
+            f"unknown model-event phase {phase!r}; expected one of {MODEL_PHASES}"
+        )
+    model_id = id if id is not None else new_model_id(next(_MODEL_SEQ))
+    return {
+        "type": EVENT_MODEL,
+        "tier": tier,
+        "model": model,
+        "parent": parent,
+        "id": model_id,
+        "phase": phase,
+        "task": task,
+        "duration_ms": duration_ms,
+        "output": output,
+    }
 
 
 def parent_id(event: Mapping[str, Any]) -> Optional[str]:
     """The parent id an event carries, or ``None``."""
-    raise NotImplementedError
+    value = event.get(PARENT_KEY)
+    return value if isinstance(value, str) else None
 
 
 def with_parent(event: Mapping[str, Any], parent: Optional[str]) -> dict[str, Any]:
@@ -76,14 +96,19 @@ def with_parent(event: Mapping[str, Any], parent: Optional[str]) -> dict[str, An
     ``parent=None`` returns a copy with no parent key; a worker tool event
     carries the id of the ``model`` start event that dispatched it.
     """
-    raise NotImplementedError
+    copy = dict(event)
+    if parent is None:
+        copy.pop(PARENT_KEY, None)
+    else:
+        copy[PARENT_KEY] = parent
+    return copy
 
 
 def is_model_event(event: Mapping[str, Any]) -> bool:
     """Whether ``event`` is a ``model`` event."""
-    raise NotImplementedError
+    return event.get("type") == EVENT_MODEL
 
 
 def is_tool_event(event: Mapping[str, Any]) -> bool:
     """Whether ``event`` is a ``tool`` event (a potential model child)."""
-    raise NotImplementedError
+    return event.get("type") == EVENT_TOOL
