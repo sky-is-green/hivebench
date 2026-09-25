@@ -1,0 +1,48 @@
+{
+  "name": "peer-3tier",
+  "version": 1,
+  "tiers": [
+    {
+      "role": "face",
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "file": "Qwen3.8-27B-UD-Q6_K.gguf",
+      "ctx": 131072,
+      "ngl": 99,
+      "backend": "vulkan",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "spec": {
+        "type": "draft-mtp",
+        "n_max": 3
+      },
+      "mmproj": "mmproj-F16.gguf",
+      "pin": "HIP_VISIBLE_DEVICES=0,1",
+      "ts": "1,1"
+    },
+    {
+      "role": "agency",
+      "repo": "ornith-ai/Ornith-1.5-9B-GGUF",
+      "file": "Ornith-1.5-9B-Q6_K.gguf",
+      "ctx": 32768,
+      "ngl": 99,
+      "backend": "vulkan",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "pin": "HIP_VISIBLE_DEVICES=1"
+    },
+    {
+      "role": "mechanics",
+      "repo": "empero-ai/Qwen3.8-2B-Distill",
+      "file": "Qwen3.8-2B-Q6_K.gguf",
+      "ctx": 16384,
+      "ngl": 99,
+      "backend": "vulkan",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "pin": "HIP_VISIBLE_DEVICES=1"
+    }
+  ],
+  "routing": {
+    "workers_as": "subagent"
+  }
+}
