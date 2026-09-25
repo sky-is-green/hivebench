@@ -17,6 +17,8 @@ silently run against that wrong tree, resolution fails loudly and prints the
 paths it searched.
 """
 
+import importlib
+import importlib.util
 import os
 import sys
 
@@ -126,7 +128,67 @@ def resolve_splinter_home(root, env=None):
     )
 
 
+def resolve_package_name(home):
+    """The sibling's python package dir: current ``splinter`` or legacy ``strata``.
+
+    The two layouts are mutually exclusive in practice; the current name is the
+    default so a checkout missing both surfaces as the usual ImportError rather
+    than a resolution error.
+    """
+    for name in ("splinter", "strata"):
+        if _is_dir(os.path.join(home, name)):
+            return name
+    return "splinter"
+
+
 SPLINTER = resolve_splinter_home(ROOT)
+
+# The sibling was renamed `strata` -> `splinter`.  Whichever package directory
+# the resolved checkout ships, expose it under both names for the process
+# lifetime: legacy `strata` consumers and current `splinter` consumers hit the
+# same module objects (T23).  `SPLINTER/<pkg>` is also what makes the
+# checkout's flat names (cortex, sieve, retention, ...) importable.
+PACKAGE_NAME = resolve_package_name(SPLINTER)
+LEGACY_PACKAGE_NAME = "strata" if PACKAGE_NAME == "splinter" else "splinter"
+
+
+class _AliasLoader:
+    """Loader seam: hand the import system the already-imported real module."""
+
+    def __init__(self, module):
+        self.module = module
+
+    def create_module(self, spec):
+        return self.module
+
+    def exec_module(self, module):
+        pass
+
+
+class LegacyAliasFinder:
+    """Resolve ``alias[.sub]`` imports to the ``real[.sub]`` modules.
+
+    The alias imports the real module first and returns the *same* object, so
+    no module is ever executed twice (duplicating singletons like the splinter
+    conversation store).  It is inserted at the front of ``sys.meta_path`` so
+    the remap also covers package internals, while a real on-disk package
+    still wins for its own name (the alias names a package that does not
+    exist on disk).
+    """
+
+    def __init__(self, alias, real):
+        self.alias = alias
+        self.real = real
+
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname != self.alias and not fullname.startswith(self.alias + "."):
+            return None
+        real_name = self.real + fullname[len(self.alias):]
+        module = importlib.import_module(real_name)
+        sys.modules[fullname] = module
+        return importlib.util.spec_from_loader(
+            fullname, _AliasLoader(module), is_package=hasattr(module, "__path__")
+        )
 
 # Export the resolved checkout so every downstream consumer in the process
 # (e.g. tests/run_hive_tests.py, subprocess test runners) agrees on one path
@@ -139,6 +201,23 @@ sys.path.insert(0, ROOT)
 # The vendored dsh Python SDK (deepseek_harness) — the agent bridge imports it.
 sys.path.insert(0, os.path.join(ROOT, "vendor"))
 # The checkout root (so `import splinter` works) and the package root (so flat
-# names like `cortex`, `sieve` work).
+# names like `cortex`, `sieve` work).  The package dir is current (`splinter`)
+# or legacy (`strata`) depending on what the checkout ships.
 sys.path.insert(0, SPLINTER)
-sys.path.insert(0, os.path.join(SPLINTER, "splinter"))
+sys.path.insert(0, os.path.join(SPLINTER, PACKAGE_NAME))
+
+# Legacy `strata.*` imports resolve to the `splinter.*` modules (and vice
+# versa on a pre-rename checkout) — see LegacyAliasFinder.  The finder runs
+# before PathFinder: package internals use absolute `splinter.*` imports, so on
+# a legacy tree they must also be remapped or the package would be loaded
+# twice under two names.
+if PACKAGE_NAME == "splinter":
+    # Current layout: the alias stays lazy; nothing imports the old name.
+    sys.meta_path.insert(0, LegacyAliasFinder("strata", "splinter"))
+else:
+    # Pre-rename checkout: hivebench imports the new name, and the package's
+    # own modules use it internally too.  Load the real package once under its
+    # real name, then alias `splinter` onto that exact object.
+    _real_package = importlib.import_module(PACKAGE_NAME)
+    sys.modules.setdefault(LEGACY_PACKAGE_NAME, _real_package)
+    sys.meta_path.insert(0, LegacyAliasFinder(LEGACY_PACKAGE_NAME, PACKAGE_NAME))
