@@ -77,7 +77,9 @@ def test_peer_2tier_is_face_plus_worker():
     assert face.ctx == 262144
     assert face.file == "Qwen3.8-27B-UD-Q5_K_S.gguf"
     assert (face.spec, face.mmproj) == (None, None)
-    assert face.ts == "1,1" and face.pin == "HIP_VISIBLE_DEVICES=0,1"
+    # asymmetric split (11,6): the display card carries the smaller share so the
+    # worker tier fits beside the face (cc5b601, LSC-T35-001 / LOCAL-STACKS §8)
+    assert face.ts == "11,6" and face.pin == "HIP_VISIBLE_DEVICES=0,1"
     # a 4B worker has no speculative block, no projector and no tensor split
     assert worker.ctx == 131072
     assert worker.file == "Qwen3.5-4B-UD-Q4_K_XL.gguf"
