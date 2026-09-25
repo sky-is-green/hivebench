@@ -5,6 +5,12 @@ on:
     branches: [main, hivebench-test]
   pull_request:
 
+concurrency:
+  # A superseded push should cancel its running matrix: R18 pushed three times
+  # in an hour, each spawning a full 40-minute windows job.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     # actions/checkout refuses paths outside the workspace, so the sibling
@@ -25,7 +31,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       # The hosted images ship several GB of SDKs this job never uses; reclaim
       # the space before the Python + torch install (the Windows image is the
@@ -42,8 +48,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "free before: $([math]::Round((Get-PSDrive C).Free/1GB,1)) GB"
-          # The Windows image ships ~20 GB of SDKs this Python job never uses.
+          $free = [math]::Round((Get-PSDrive C).Free/1GB, 1)
+          Write-Host "free before: $free GB"
+          # The suite + CPU torch need ~6 GB; the hosted image starts near 29.
+          # Purging these trees sequentially cost 19 minutes on 2026-09-25
+          # (VS 4m, dotnet 5m, Android 4m) and the job timeout is the binding
+          # constraint — so purge only when short on space, and in parallel.
+          if ($free -ge 12) {
+            Write-Host "12 GB or more free: skipping the SDK purge"
+            exit 0
+          }
           $paths = @(
             'C:\Program Files\Microsoft Visual Studio',
             'C:\Program Files (x86)\Microsoft Visual Studio',
@@ -59,12 +73,12 @@ jobs:
             'C:\hostedtoolcache\windows\PyPy', 'C:\hostedtoolcache\windows\Ruby',
             'C:\hostedtoolcache\windows\Go'
           )
-          foreach ($p in $paths) {
-            if (Test-Path $p) {
-              Remove-Item -Recurse -Force $p -ErrorAction SilentlyContinue
-              Write-Host "removed $p"
+          $paths | ForEach-Object -Parallel {
+            if (Test-Path $_) {
+              Remove-Item -Recurse -Force $_ -ErrorAction SilentlyContinue
+              Write-Host "removed $_"
             }
-          }
+          } -ThrottleLimit 4
           Write-Host "free after:  $([math]::Round((Get-PSDrive C).Free/1GB,1)) GB"
 
       - uses: actions/checkout@v4
@@ -92,6 +106,7 @@ jobs:
           # run blocks in single quotes, so $VAR expansion never happens there.
           pip install -e ${{ env.SPLINTER_HOME }}
           pip install -e .
+          pip install pytest-xdist==3.8.0
 
       - name: Disk headroom
         shell: bash
@@ -118,4 +133,13 @@ jobs:
       # Deterministic offline suite: unit + integration (perf benchmarks stay
       # out of CI - threshold assertions flake on shared runners)
       - name: Run offline test suite
-        run: python -m pytest tests/unit tests/integration -q
+        shell: bash
+        run: |
+          # Hosted runners have 4 vCPUs; xdist keeps identical coverage in
+          # roughly a third of the wall clock.  Windows stays serial until the
+          # parallel run is proven on the hosted image.
+          if [ "${RUNNER_OS}" = "Linux" ]; then
+            python -m pytest tests/unit tests/integration -q -n 4
+          else
+            python -m pytest tests/unit tests/integration -q
+          fi
