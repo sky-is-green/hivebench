@@ -7,6 +7,7 @@ half goes through an injected stand-in for the harness engines A/B
 with every printed number traceable to a JSON location.
 """
 
+import dataclasses
 import importlib
 import json
 import sys
@@ -23,6 +24,7 @@ from experiments.stack_ab import (
     bench_stacks,
     engine_profile,
     face_tier,
+    face_tier_object,
     format_report,
     main,
     per_turn_rows,
@@ -160,9 +162,73 @@ def test_stack_summary_reports_roles_and_launch_provenance():
             source == "harness.stack.manager.tier_load_options")
 
 
+def test_tier_load_options_receives_a_real_Tier(monkeypatch):
+    """T34 froze `tier_load_options(tier: Tier) -> dict`; T37 will read
+    attributes off the argument. A plain mapping would pass the stub (which
+    raises before touching it) and then break against the real body, so
+    `stack_summary` must hand it a real `Tier`."""
+    manager = _fake_t37(monkeypatch, lambda tier: {})
+    schema = _ensure_frozen_schema(monkeypatch)
+    seen = []
+    monkeypatch.setattr(manager, "tier_load_options",
+                        lambda tier: (seen.append(tier), {})[1])
+    stack_summary(synthetic_stack("attrs", ["face", "worker"]))
+    assert len(seen) == 1
+    assert isinstance(seen[0], schema.Tier)
+    assert seen[0].role == "face"
+    assert seen[0].ctx == 8192
+    assert seen[0].ngl == 99
+    # Tier.from_dict is a T34 stub; the dataclass constructor stands in for it
+    # and carries the same fields.
+
+
+def test_face_tier_object_is_none_without_the_frozen_module(monkeypatch):
+    monkeypatch.setitem(sys.modules, "harness.stack.schema", None)
+    assert face_tier_object({"role": "face", "repo": "r", "file": "f"}) is None
+
+
+def _ensure_frozen_schema(monkeypatch):
+    """The frozen `harness.stack.schema` module, real (T34 merged) or a stand-in
+    carrying T34's `Tier` field set, so the launch tests mean the same thing in
+    both merge states."""
+    try:
+        return importlib.import_module("harness.stack.schema")
+    except ImportError:
+        pass
+
+    @dataclasses.dataclass
+    class Tier:  # mirrors T34's frozen field set, stub body included
+        role: str
+        repo: str
+        file: str
+        ctx: int = 8192
+        ngl: int = 99
+        backend: str = "vulkan"
+        cache_k: str = "q8_0"
+        cache_v: str = "q8_0"
+        spec: object = None
+        mmproj: object = None
+        pin: object = None
+        ts: object = None
+
+        def to_dict(self):
+            return dataclasses.asdict(self)
+
+        @classmethod
+        def from_dict(cls, data):
+            raise NotImplementedError  # T34 froze the signature; T35 owns the body
+
+    schema = types.ModuleType("harness.stack.schema")
+    schema.Tier = Tier
+    schema.from_dict_stub = True
+    monkeypatch.setitem(sys.modules, "harness.stack.schema", schema)
+    return schema
+
+
 def _fake_t37(monkeypatch, fn):
-    """Install a stand-in T37 `tier_load_options`, creating the frozen module
+    """Install a stand-in T37 `tier_load_options`, creating the frozen modules
     when T34 has not been merged into this branch yet."""
+    _ensure_frozen_schema(monkeypatch)
     try:
         manager = importlib.import_module("harness.stack.manager")
     except ImportError:
@@ -190,8 +256,9 @@ def test_launch_block_survives_the_frozen_t34_stub(monkeypatch):
 
 
 def test_launch_block_uses_t37_when_it_has_landed(monkeypatch):
+    # T37's body reads attributes off the Tier, as the frozen signature says
     _fake_t37(monkeypatch,
-              lambda tier: {"context": tier["ctx"], "gpu_layers": tier["ngl"]})
+              lambda tier: {"context": tier.ctx, "gpu_layers": tier.ngl})
     summary = stack_summary(synthetic_stack("live", ["face", "worker"]))
     assert summary["launch"]["source"] == "harness.stack.manager.tier_load_options"
     assert summary["launch"]["load_options"] == {"context": 8192, "gpu_layers": 99}

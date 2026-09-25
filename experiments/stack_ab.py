@@ -142,6 +142,29 @@ def _unavailable_launch(reason: str) -> dict[str, Any]:
     return {"source": f"unavailable ({reason})"}
 
 
+def face_tier_object(face: dict[str, Any]) -> Any:
+    """The face tier as a real ``harness.stack.schema.Tier``.
+
+    ``tier_load_options`` is frozen as ``(tier: Tier) -> dict`` — T37 will read
+    attributes off it, so handing it the plain mapping would break the moment
+    T37 lands.  ``Tier.from_dict`` is the validating parser once T35 has it;
+    until then the dataclass constructor does the same job.  ``None`` when the
+    frozen module is absent.
+    """
+    try:
+        from harness.stack.schema import Tier
+    except Exception:
+        return None
+    try:
+        return Tier.from_dict(face)
+    except NotImplementedError:
+        pass
+    except (TypeError, ValueError):
+        return None
+    known = {f for f in getattr(Tier, "__dataclass_fields__", {})}
+    return Tier(**{k: v for k, v in face.items() if k in known})
+
+
 def stack_summary(stack: Any) -> dict[str, Any]:
     """Report block for one arm: identity, roles, face tier, launch config.
 
@@ -173,17 +196,23 @@ def stack_summary(stack: Any) -> dict[str, Any]:
     except Exception:
         summary["launch"] = _unavailable_launch("harness.stack.manager not importable")
     else:
-        try:
-            load_options = tier_load_options(face)
-        except NotImplementedError:
-            # T34 froze the signature; T37 owns the body. During the wave the
-            # stub is the correct answer, not a crash.
-            summary["launch"] = _unavailable_launch("tier_load_options not implemented yet")
+        tier = face_tier_object(face)
+        if tier is None:
+            summary["launch"] = _unavailable_launch(
+                "harness.stack.schema.Tier not importable")
         else:
-            summary["launch"] = {
-                "source": "harness.stack.manager.tier_load_options",
-                "load_options": load_options,
-            }
+            try:
+                load_options = tier_load_options(tier)
+            except NotImplementedError:
+                # T34 froze the signature; T37 owns the body. During the wave
+                # the stub is the correct answer, not a crash.
+                summary["launch"] = _unavailable_launch(
+                    "tier_load_options not implemented yet")
+            else:
+                summary["launch"] = {
+                    "source": "harness.stack.manager.tier_load_options",
+                    "load_options": load_options,
+                }
     return summary
 
 
