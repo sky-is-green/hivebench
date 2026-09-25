@@ -137,12 +137,18 @@ def face_tier(doc: dict[str, Any]) -> dict[str, Any]:
     return dict(tiers[0])
 
 
+def _unavailable_launch(reason: str) -> dict[str, Any]:
+    """The ``launch`` block for a frozen signature that has no body yet."""
+    return {"source": f"unavailable ({reason})"}
+
+
 def stack_summary(stack: Any) -> dict[str, Any]:
     """Report block for one arm: identity, roles, face tier, launch config.
 
     ``launch`` comes from ``harness.stack.manager.tier_load_options`` once T37
-    has landed, and is marked ``unavailable`` otherwise — this module carries no
-    second copy of the tier→``load_options`` mapping (ADR-L7).
+    has landed, and is marked ``unavailable`` before that (T34 freezes the
+    signature, so the stub is a real state to run against) — this module carries
+    no second copy of the tier→``load_options`` mapping (ADR-L7).
     """
     doc = stack_doc(stack)
     face = face_tier(doc)
@@ -165,12 +171,19 @@ def stack_summary(stack: Any) -> dict[str, Any]:
     try:
         from harness.stack.manager import tier_load_options
     except Exception:
-        summary["launch"] = {"source": "unavailable (harness.stack.manager not importable)"}
+        summary["launch"] = _unavailable_launch("harness.stack.manager not importable")
     else:
-        summary["launch"] = {
-            "source": "harness.stack.manager.tier_load_options",
-            "load_options": tier_load_options(face),
-        }
+        try:
+            load_options = tier_load_options(face)
+        except NotImplementedError:
+            # T34 froze the signature; T37 owns the body. During the wave the
+            # stub is the correct answer, not a crash.
+            summary["launch"] = _unavailable_launch("tier_load_options not implemented yet")
+        else:
+            summary["launch"] = {
+                "source": "harness.stack.manager.tier_load_options",
+                "load_options": load_options,
+            }
     return summary
 
 
@@ -425,7 +438,12 @@ def load_stack_document(name: str, root: str | Path = "stacks") -> dict[str, Any
     except Exception:
         load_stack = None
     if load_stack is not None:
-        return stack_doc(load_stack(name))
+        try:
+            return stack_doc(load_stack(name))
+        except NotImplementedError:
+            # T34 froze the signature; T35 owns the body (and the on-disk
+            # stacks). Fall through to the raw §B3 document.
+            pass
     path = Path(root) / f"{name}.json"
     if not path.is_file():
         raise FileNotFoundError(

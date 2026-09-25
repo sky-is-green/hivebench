@@ -7,7 +7,10 @@ half goes through an injected stand-in for the harness engines A/B
 with every printed number traceable to a JSON location.
 """
 
+import importlib
 import json
+import sys
+import types
 
 import numpy as np
 import pytest
@@ -147,13 +150,54 @@ def test_stack_summary_reports_roles_and_launch_provenance():
     assert sb["tier_count"] == 3 and sb["roles"] == ["face", "worker", "mechanics"]
     assert sb["routing"] == {"workers_as": "subagent"}
     # The launch block names its source; it never carries a second copy of the
-    # tier -> load_options mapping (ADR-L7). T37's presence decides which.
+    # tier -> load_options mapping (ADR-L7). Three legitimate states, all
+    # recorded: T37 landed, T34's stub is present, or the module is absent.
     for summary in (sa, sb):
         source = summary["launch"]["source"]
-        assert source in ("harness.stack.manager.tier_load_options",
-                          "unavailable (harness.stack.manager not importable)")
+        assert source == "harness.stack.manager.tier_load_options" or \
+            source.startswith("unavailable (")
         assert ("load_options" in summary["launch"]) == (
             source == "harness.stack.manager.tier_load_options")
+
+
+def _fake_t37(monkeypatch, fn):
+    """Install a stand-in T37 `tier_load_options`, creating the frozen module
+    when T34 has not been merged into this branch yet."""
+    try:
+        manager = importlib.import_module("harness.stack.manager")
+    except ImportError:
+        manager = types.ModuleType("harness.stack.manager")
+        pkg = sys.modules.get("harness.stack")
+        if pkg is None:
+            pkg = types.ModuleType("harness.stack")
+            pkg.__path__ = []
+            monkeypatch.setitem(sys.modules, "harness.stack", pkg)
+        monkeypatch.setitem(sys.modules, "harness.stack.manager", manager)
+        monkeypatch.setattr(pkg, "manager", manager, raising=False)
+    monkeypatch.setattr(manager, "tier_load_options", fn, raising=False)
+    return manager
+
+
+def test_launch_block_survives_the_frozen_t34_stub(monkeypatch):
+    """T34 froze `tier_load_options`'s signature; its body is T37's. T43 runs in
+    the same wave as the stub, so `NotImplementedError` must degrade to a named
+    `unavailable` block, not crash the A/B."""
+    _fake_t37(monkeypatch, lambda tier: (_ for _ in ()).throw(NotImplementedError))
+    summary = stack_summary(synthetic_stack("stubbed", ["face", "worker"]))
+    assert summary["launch"] == {
+        "source": "unavailable (tier_load_options not implemented yet)"}
+    assert "load_options" not in summary["launch"]
+
+
+def test_launch_block_uses_t37_when_it_has_landed(monkeypatch):
+    _fake_t37(monkeypatch,
+              lambda tier: {"context": tier["ctx"], "gpu_layers": tier["ngl"]})
+    summary = stack_summary(synthetic_stack("live", ["face", "worker"]))
+    assert summary["launch"]["source"] == "harness.stack.manager.tier_load_options"
+    assert summary["launch"]["load_options"] == {"context": 8192, "gpu_layers": 99}
+    # and the profile carries them into the engines-A/B request
+    assert engine_profile(summary, "http://h:1")["load_options"] == \
+        {"context": 8192, "gpu_layers": 99}
 
 
 def test_stack_doc_accepts_a_to_dict_object():
