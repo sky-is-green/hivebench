@@ -83,6 +83,11 @@ from harness.reports import (
     render_server_page,
     resolve_run_dir,
 )
+from harness.stack import (
+    StackManager,
+    create_router as create_stack_router,
+    list_stacks,
+)
 from harness.training import (
     ENGINE_HIVE_TERNARY,
     build_run_report,
@@ -93,6 +98,7 @@ from harness.training import (
     run_status as training_run_status,
     write_run_report,
 )
+from harness.ui import invocation_cards, stack_tab
 from logs.event_logger import EventLogger
 from retention.store import ContextStore
 from splinter.server import create_app as create_splinter_app
@@ -145,6 +151,135 @@ _NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0  # suppress c
 
 # HTML consoles change with the code; never let a browser cache them.
 _NO_STORE = {"Cache-Control": "no-store"}
+
+# ---------------------------------------------------------------------------
+# Stack tab page shell (T44).  The fragments in harness/ui/* are pure
+# renderers; this shell inlines them and their module-symbol CSS, and wires the
+# data-action buttons to the §B3 routes.  Kept as plain strings so the fragment
+# CSS can carry braces without format-string escaping.
+# ---------------------------------------------------------------------------
+_STACK_PAGE_SHELL = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stacks — Splinter Studio</title>
+<style>
+:root { color-scheme: dark; }
+body { margin: 0; padding: 1.25rem; background: #141100; color: #FFDD00;
+       font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: #FFDD00; }
+.stk-page { max-width: 76rem; margin: 0 auto; }
+.stk-page .stk-back { display: inline-block; margin-bottom: .8rem; font-size: .86rem; }
+__STACK_CSS__
+__CARDS_CSS__
+</style>
+</head>
+<body>
+<div class="stk-page">
+<a class="stk-back" href="/server">&larr; Studio</a>
+__STACK_TAB__
+<section>
+<div class="stk-head"><h2 style="margin-top:0">Invocations</h2>
+<span class="stk-note">tier dispatches — harness.agent_events / invocation_cards (T39/T42)</span>
+</div>
+__CARDS__
+</section>
+</div>
+<script>
+__SCRIPT__
+</script>
+</body>
+</html>
+"""
+
+_STACK_PAGE_SCRIPT = """(function () {
+  "use strict";
+  function msg(text) {
+    var el = document.getElementById("stk-msg-main");
+    if (el) { el.textContent = text; }
+  }
+  function call(method, path, body) {
+    var opts = { method: method, headers: { "Accept": "application/json" } };
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(path, opts).then(function (response) {
+      return response.json().catch(function () { return {}; }).then(function (data) {
+        if (!response.ok) {
+          throw new Error(data.detail || (path + ": HTTP " + response.status));
+        }
+        return data;
+      });
+    });
+  }
+  function stackName() {
+    var el = document.getElementById("stk-name");
+    return el && el.value ? el.value.trim() : "";
+  }
+  function reloadSoon() {
+    window.setTimeout(function () { window.location.reload(); }, 600);
+  }
+  document.addEventListener("click", function (event) {
+    var target = event.target;
+    var button = target && target.closest ? target.closest("[data-action]") : null;
+    if (!button) { return; }
+    var action = button.getAttribute("data-action");
+    var stack = button.getAttribute("data-stack") || stackName();
+    if (!stack && action !== "stack-unload") {
+      msg("name a stack first");
+      return;
+    }
+    event.preventDefault();
+    var run;
+    if (action === "stack-load") {
+      run = call("GET", "/v1/stacks/" + encodeURIComponent(stack)).then(function (data) {
+        var input = document.getElementById("stk-name");
+        if (input) { input.value = data.name || stack; }
+        msg("loaded " + stack + " — review fields, then Validate or Apply");
+      });
+    } else if (action === "stack-delete") {
+      run = call("DELETE", "/v1/stacks/" + encodeURIComponent(stack)).then(reloadSoon);
+    } else if (action === "stack-validate") {
+      run = call("POST", "/v1/stacks/" + encodeURIComponent(stack) + "/validate").then(function (data) {
+        var cards = (data.per_card || []).map(function (card) {
+          return card.card + ": " + card.total + "/" + card.budget + " GiB";
+        }).join(" · ");
+        msg("validate " + (data.ok ? "OK" : "REFUSED") + (cards ? " — " + cards : ""));
+      });
+    } else if (action === "stack-apply") {
+      run = call("POST", "/v1/stacks/" + encodeURIComponent(stack) + "/apply").then(function (data) {
+        msg("applied " + stack + " — " + (data.tiers || []).length + " tier(s)");
+        reloadSoon();
+      });
+    } else if (action === "stack-unload") {
+      run = call("POST", "/v1/stacks/" + encodeURIComponent(stack) + "/unload").then(function () {
+        msg("unloaded");
+        reloadSoon();
+      });
+    } else {
+      return;
+    }
+    run.catch(function (error) { msg(String(error.message || error)); });
+  });
+})();
+"""
+
+
+def _render_stack_page(tab_html: str, cards_html: str, stack_css: str,
+                       cards_css: str) -> str:
+    """The ``/stacks`` page: both fragments, their CSS, and the action script."""
+    page = _STACK_PAGE_SHELL
+    for token, value in (
+        ("__STACK_CSS__", stack_css),
+        ("__CARDS_CSS__", cards_css),
+        ("__STACK_TAB__", tab_html),
+        ("__CARDS__", cards_html),
+        ("__SCRIPT__", _STACK_PAGE_SCRIPT),
+    ):
+        page = page.replace(token, value)
+    return page
 
 def _hardware_summary() -> dict:
     """Host VRAM/RAM summary for fit estimates (nvidia-smi + AMD registry + psutil)."""
@@ -1981,6 +2116,14 @@ def create_app(
                                             port=llama_port)
     app.state.models = models_manager
 
+    # Local Stack Control (LSC): the §B3 router is a factory (T38) and this is
+    # the single integration mount (T44).  The manager shares the app's
+    # LlamaServerManager, so stack tiers show up in /v1/models/local like any
+    # other loaded model.
+    stack_manager = StackManager(models_manager)
+    app.state.stack_manager = stack_manager
+    app.include_router(create_stack_router(stack_manager))
+
     def register_local_remove(key: str) -> None:
         """Retire a local instance's provider + engine profile."""
         prov_name = f"local-{key}"
@@ -3363,6 +3506,28 @@ def create_app(
     @app.get("/server", response_class=HTMLResponse)
     def server_page():
         return HTMLResponse(render_server_page(), headers=_NO_STORE)
+
+    # ------------------------------------------------------------------
+    # Stack tab (T44 mount): the T41 fragment + T42 invocation cards, fed by
+    # the §B3 /v1/stacks/* routes registered above.
+    @app.get("/stacks", response_class=HTMLResponse)
+    def stacks_page():
+        try:
+            stacks = list_stacks()
+        except Exception:  # noqa: BLE001 - an empty library is a valid page
+            stacks = []
+        try:
+            models = models_manager.list_local()
+        except Exception:  # noqa: BLE001 - the picker degrades to empty
+            models = []
+        tab = stack_tab.render_stack_tab(
+            stacks=stacks, models=models, status=stack_manager.status())
+        cards = invocation_cards.render_invocation_cards(())
+        return HTMLResponse(
+            _render_stack_page(tab, cards, stack_tab.css(),
+                               invocation_cards.css()),
+            headers=_NO_STORE,
+        )
 
     # ------------------------------------------------------------------
     @app.post("/v1/protocol/run")
