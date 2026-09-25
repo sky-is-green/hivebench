@@ -1,10 +1,13 @@
 """Unit tests for the attention-aware KV estimator (``harness/models.py``).
 
-All offline and synthetic: no GPU, no network, no GGUF download. The reference
-rates are the measured ones in ``LOCAL-STACKS.md`` section 5, which the
-estimator must reproduce — a naive "every layer carries a KV cache that grows
-with the window" model over-charges a hybrid architecture by 4-8x and makes the
-library refuse contexts that fit.
+All offline and synthetic: no GPU, no network, no GGUF download.  One
+regression test reads a real GGUF from ``artifacts/ternary/refs/`` when it is
+present and is skipped otherwise, so the arch-fallback path can never again be
+exercised only by synthetic metadata.  The reference rates are the measured
+ones in ``LOCAL-STACKS.md`` section 5, which the estimator must reproduce — a
+naive "every layer carries a KV cache that grows with the window" model
+over-charges a hybrid architecture by 4-8x and makes the library refuse
+contexts that fit.
 
 Covers the three regression architectures the task calls for: hybrid
 (linear-attention + full-attention), dense, and sliding-window, plus the
@@ -13,6 +16,7 @@ GGUF-header parse that feeds the estimator.
 
 from __future__ import annotations
 
+import os
 import struct
 from pathlib import Path
 
@@ -403,6 +407,126 @@ def test_unparseable_layer_types_placeholder_falls_back_to_dense():
 
     assert est is not None
     assert est.full_layers == 32 and est.layer_types == ()
+
+
+# ---------------------------------------------------------------------------
+# Arch-level fallback when the writer omits layer_types (T47)
+# ---------------------------------------------------------------------------
+def _qwen35_meta(**overrides) -> dict:
+    """The real Qwen3.8-27B header shape: 65 blocks, 4 KV heads, 256-dim heads."""
+    meta = {
+        "general.architecture": "qwen35",
+        "qwen35.block_count": 65,
+        "qwen35.embedding_length": 5120,
+        "qwen35.attention.head_count": 24,
+        "qwen35.attention.head_count_kv": 4,
+        "qwen35.attention.key_length": 256,
+        "qwen35.attention.value_length": 256,
+    }
+    meta.update(overrides)
+    return meta
+
+
+def test_qwen35_without_layer_types_falls_back_to_one_full_in_four():
+    """The released GGUFs carry no layer_types; the arch table must hold.
+
+    16 full-attention layers give the measured 64 KiB/token f16 and
+    34 KiB/token q8_0 that LOCAL-STACKS.md section 5 pins; the trailing
+    MTP/nextn block (block 65) is charged no growing cache.
+    """
+    est = mm.attention_kv_estimate(gguf_meta=_qwen35_meta())
+
+    assert est is not None
+    assert est.architecture == "qwen35"
+    assert (est.full_layers, est.sliding_layers, est.linear_layers) == (16, 0, 49)
+    assert _within(est.bytes_per_token("f16") / KIB, 64.0)
+    assert _within(est.bytes_per_token("q8_0") / KIB, 34.0)
+
+
+def test_explicit_layer_types_wins_over_the_arch_fallback():
+    """A writer that ships the label array keeps its per-layer classification."""
+    meta = _qwen35_meta()
+    meta["qwen35.attention.layer_types"] = [
+        "full_attention" if (i % 4 == 3 or i == 64) else "linear_attention"
+        for i in range(65)
+    ]
+    est = mm.attention_kv_estimate(gguf_meta=meta)
+
+    # 16 main full-attention layers + the explicitly-labelled MTP block, so the
+    # table (which excludes the MTP block) does not apply.
+    assert est.full_layers == 17
+    assert est.linear_layers == 48
+    assert est.layer_types  # explicit labels were used, not the table
+
+
+def test_unknown_dense_arch_still_charges_every_layer():
+    """The fallback table is per-arch; an unlisted dense model is unchanged."""
+    est = mm.attention_kv_estimate(gguf_meta={
+        "llama.block_count": 32,
+        "llama.embedding_length": 4096,
+        "llama.attention.head_count": 32,
+        "llama.attention.head_count_kv": 8,
+        "llama.attention.key_length": 128,
+        "llama.attention.value_length": 128,
+    })
+
+    assert est.full_layers == 32
+    assert est.linear_layers == 0
+
+
+def test_qwen3_5_moe_falls_back_to_one_full_in_four():
+    """The 35B-A3B MoE is the same hybrid pattern: 10 full in 40 layers."""
+    est = mm.attention_kv_estimate(gguf_meta={
+        "general.architecture": "qwen3_5_moe",
+        "qwen3_5_moe.block_count": 40,
+        "qwen3_5_moe.embedding_length": 2048,
+        "qwen3_5_moe.attention.head_count": 16,
+        "qwen3_5_moe.attention.head_count_kv": 2,
+        "qwen3_5_moe.attention.key_length": 128,
+        "qwen3_5_moe.attention.value_length": 128,
+    })
+
+    assert (est.full_layers, est.linear_layers) == (10, 30)
+
+
+# --- real-GGUF regression: skip-if-absent, never synthetic-only ------------
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REAL_GGUF_CANDIDATES = (
+    _REPO_ROOT / "artifacts" / "ternary" / "refs" / "Qwen3.8-27B-UD-Q5_K_S.gguf",
+    _REPO_ROOT / "artifacts" / "ternary" / "refs" / "Qwen3.8-27B-UD-Q4_K_M.gguf",
+    _REPO_ROOT / "artifacts" / "ternary" / "refs" / "Qwen3.8-27B-Q8_0.gguf",
+)
+
+
+def _real_qwen35_gguf():
+    override = os.environ.get("T47_GGUF", "")
+    if override and Path(override).is_file():
+        return Path(override)
+    for candidate in _REAL_GGUF_CANDIDATES:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def test_real_qwen35_gguf_reports_sixteen_full_layers():
+    """The regression that synthetic metadata alone kept missing.
+
+    Reads a real Qwen3.8-27B GGUF (skipped when none is staged; ``T47_GGUF``
+    routes to another file): 65 blocks, 4 KV heads, 256-dim heads, 16
+    full-attention layers, 64 KiB/token f16 / 34 KiB/token q8_0.
+    """
+    path = _real_qwen35_gguf()
+    if path is None:
+        pytest.skip("no real Qwen3.8 GGUF under artifacts/ternary/refs (set T47_GGUF)")
+
+    est = mm.attention_kv_estimate(path)
+
+    assert est is not None
+    assert est.architecture == "qwen35"
+    assert est.full_layers == 16
+    assert est.linear_layers == 49
+    assert _within(est.bytes_per_token("f16") / KIB, 64.0)
+    assert _within(est.bytes_per_token("q8_0") / KIB, 34.0)
 
 
 # ---------------------------------------------------------------------------
