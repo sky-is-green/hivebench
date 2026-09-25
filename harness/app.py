@@ -101,7 +101,12 @@ from harness.training import (
 from harness.ui import invocation_cards, stack_tab
 from logs.event_logger import EventLogger
 from retention.store import ContextStore
-from splinter.server import create_app as create_splinter_app
+try:  # current sibling layout: <home>/splinter
+    from splinter.server import create_app as create_splinter_app
+except ModuleNotFoundError as exc:  # legacy pre-rename checkout: <home>/strata
+    if (exc.name or "").split(".")[0] != "splinter":
+        raise
+    from strata.server import create_app as create_splinter_app
 
 
 def _list_runs(runs_root: Path) -> list[dict]:
