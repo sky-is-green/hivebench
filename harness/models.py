@@ -50,6 +50,13 @@ _FILE_TYPE_NAMES: dict[int, str] = {
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HF_API = "https://huggingface.co/api"
 
+# Header-parse guards. The GGUF reader is best-effort and runs on every
+# library poll, so a corrupt or hostile header must cost us the parse, never
+# an unbounded allocation or a hang.
+_MAX_STRING_LEN = 1 << 20
+_MAX_ARRAY_ELEMS = 1 << 24
+_MAX_LAYER_TYPES = 4096  # no model has more than a few hundred layers
+
 # LM Studio default models location (Windows) — checked first
 def _lmstudio_models_dir() -> Optional[Path]:
     candidates = [
@@ -249,7 +256,11 @@ def _read_gguf_metadata(path: Path) -> dict:
 
     Reads the GGUF magic + version + KV section and extracts
     general.architecture, general.file_type (→ quantization label),
-    and <arch>.context_length. Missing or unreadable files return {}.
+    <arch>.context_length, the attention keys ``fit_gpu_layers`` and
+    ``attention_kv_estimate`` need (block/head counts, key/value lengths,
+    sliding window + pattern) and the ``<arch>.attention.layer_types`` array
+    that marks each layer ``full_attention`` / ``sliding_attention`` /
+    ``linear_attention``. Missing or unreadable files return {}.
     Mirrors the TypeScript gguf-metadata parser's FILE_TYPE_NAMES.
     """
     try:
@@ -316,12 +327,26 @@ def _read_gguf_metadata(path: Path) -> dict:
                     elif ktype == 9:
                         atype = struct.unpack("<I", fh.read(4))[0]
                         alen = struct.unpack("<Q" if ver >= 3 else "<I", fh.read(8 if ver >= 3 else 4))[0]
+                        if alen > _MAX_ARRAY_ELEMS:
+                            raise ValueError("implausible array length")
                         if atype == 8:
+                            strings: list[str] = []
+                            keep = key.endswith(".attention.layer_types")
                             for __ in range(int(alen)):
                                 sl = struct.unpack("<Q" if ver >= 3 else "<I", fh.read(8 if ver >= 3 else 4))[0]
-                                fh.read(int(sl))
-                            val = f"<array:{alen}>"
+                                if sl > _MAX_STRING_LEN:
+                                    raise ValueError("implausible string length")
+                                raw = fh.read(int(sl))
+                                if keep and len(strings) < _MAX_LAYER_TYPES:
+                                    strings.append(raw.decode("utf-8", errors="ignore"))
+                            # Only the layer-type labels carry meaning; every
+                            # other array stays a marker so the header stays
+                            # cheap to parse.
+                            val = strings if keep else f"<array:{alen}>"
                         else:
+                            # Non-string arrays carry raw elements, not a
+                            # length prefix: skip by element size or the
+                            # stream desyncs and every later key is garbage.
                             size = {0: 1, 1: 1, 2: 2, 3: 2, 4: 4, 5: 4, 6: 4, 7: 1, 10: 8, 11: 8, 12: 8}.get(atype, 1)
                             fh.read(int(alen) * size)
                             val = f"<array:{alen}>"
@@ -353,13 +378,31 @@ def _read_gguf_metadata(path: Path) -> dict:
                         or key.endswith(".attention.head_count")
                         or key.endswith(".attention.head_count_kv")
                         or key.endswith(".attention.key_length")
-                        or key.endswith(".attention.value_length")):
+                        or key.endswith(".attention.value_length")
+                        or key.endswith(".attention.sliding_window")
+                        or key.endswith(".attention.sliding_window_pattern")):
                     out[key] = int(val)
-                # keep reading until the fit-relevant keys are present, not just
-                # the hover ones (block_count/head counts often come later)
+                elif isinstance(val, list) and key.endswith(".attention.layer_types"):
+                    out[key] = val
+                # Keep reading until the fit-relevant keys are present, not
+                # just the hover ones (block_count/head counts often come
+                # later). The attention plan needs one more: layer_types
+                # (hybrid archs) or sliding_window (Gemma-3 style). A dense
+                # arch ships neither, so that case would otherwise scan to the
+                # end of the KV section and through the 100k-entry tokenizer
+                # vocab arrays on every library poll — hence the tokenizer
+                # stop below, which no fit key ever lives behind.
                 has_fit = (any(k.endswith(".block_count") for k in out)
                            and any(k.endswith(".attention.head_count_kv") for k in out))
-                if arch is not None and file_type is not None and has_fit:
+                # The plan needs layer_types (hybrid archs) or the sliding
+                # window pair (Gemma-3 style) — the pattern key is what turns
+                # a window into a per-layer count, so both must be in.
+                has_attention = (
+                    any(k.endswith(".attention.layer_types") for k in out)
+                    or (any(k.endswith(".attention.sliding_window") for k in out)
+                        and any(k.endswith(".attention.sliding_window_pattern") for k in out)))
+                if arch is not None and file_type is not None and has_fit and (
+                        has_attention or key.startswith("tokenizer.")):
                     break
             if arch is not None:
                 out["architecture"] = arch
@@ -376,31 +419,315 @@ def _read_gguf_metadata(path: Path) -> dict:
         return {}
 
 
+# --- KV cache sizing (T33) -------------------------------------------------
+#
+# Not every layer carries a cache that grows with the context window. Hybrid
+# architectures interleave a few full-attention layers with linear-attention
+# (GatedDeltaNet/Mamba) layers, which hold a fixed-size recurrent state, and
+# sliding-window (SWA) layers, which are bounded by the window. An estimator
+# that prices every layer at the full context size over-counts a 27B-class
+# hybrid by 4-8x and then refuses contexts that fit comfortably. See
+# LOCAL-STACKS.md section 5 for the measured reference rates.
+#
+# kv_per_token = kv_layers x kv_heads x (key_len + val_len) x 2 (K and V) x
+#                bytes_per_element
+#
+# Reference rates reproduced by this module (Qwen3.8-27B shape: 64 layers, 16
+# of them full attention, 8 KV heads, 128 head dim):
+#   f16  -> 64 KiB/token, q8_0 -> 34 KiB/token, 2.1 GiB at 64K context.
+
+# Bytes per stored element for llama.cpp's KV cache types, derived from each
+# type's block layout: (block bytes) / (block elements). K-quants use a 256-
+# element super-block. Values that do not divide evenly still price correctly
+# in aggregate, since llama.cpp stores whole blocks.
+_KV_TYPE_BYTES_PER_ELEMENT: dict[str, float] = {
+    "f32": 4.0,
+    "f16": 2.0,
+    "bf16": 2.0,
+    "q8_0": 34.0 / 32.0,        # 32 int8 + 1 fp16 scale per 32 elements
+    "q5_1": 24.0 / 32.0,
+    "q5_0": 22.0 / 32.0,
+    "q4_1": 20.0 / 32.0,
+    "q4_0": 18.0 / 32.0,
+    "q6_k": 210.0 / 256.0,
+    "q5_k": 176.0 / 256.0,
+    "q4_k": 144.0 / 256.0,
+    "q3_k": 110.0 / 256.0,
+    "q2_k": 84.0 / 256.0,
+}
+
+# Fallback for a KV type this build does not know: f16 is the llama.cpp default
+# and the largest entry here, so an unknown type is priced conservatively
+# (over-estimating memory) rather than silently freeing headroom that is not
+# there.
+_KV_TYPE_FALLBACK = "f16"
+
+# Layer-type labels llama.cpp writes into <arch>.attention.layer_types.
+_LINEAR_ATTENTION_LABELS = frozenset({
+    "linear_attention", "linear", "mamba", "recurrent", "recurrent_attention",
+    "ssm", "gated_delta_net", "gated_delta", "rwkv", "meson",
+})
+_SLIDING_ATTENTION_LABELS = frozenset({
+    "sliding_attention", "sliding_window", "sliding", "swa",
+})
+
+
+def _kv_bytes_per_element(kv_cache_type: Optional[str]) -> float:
+    """Bytes per cached element for ``kv_cache_type`` (``f16`` when unknown)."""
+    if not kv_cache_type:
+        return _KV_TYPE_BYTES_PER_ELEMENT[_KV_TYPE_FALLBACK]
+    return _KV_TYPE_BYTES_PER_ELEMENT.get(
+        str(kv_cache_type).strip().lower(),
+        _KV_TYPE_BYTES_PER_ELEMENT[_KV_TYPE_FALLBACK],
+    )
+
+
+def _meta_first_int(meta: dict, suffix: str) -> Optional[int]:
+    """First ``<arch><suffix>`` value in ``meta`` that parses as an int."""
+    for key, value in meta.items():
+        if not key.endswith(suffix):
+            continue
+        if isinstance(value, bool):
+            continue
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _meta_layer_types(meta: dict) -> list[str]:
+    """The ``<arch>.attention.layer_types`` labels, normalised to lower case.
+
+    A GGUF from an older build (or a truncated parse) may leave the placeholder
+    ``"<array:64>"`` string behind, which is not a label list; that yields [].
+    """
+    for key, value in meta.items():
+        if not key.endswith(".attention.layer_types"):
+            continue
+        if isinstance(value, str):
+            return []
+        if not isinstance(value, (list, tuple)):
+            continue
+        return [str(item).strip().lower() for item in value]
+    return []
+
+
+@dataclass(frozen=True)
+class KVEstimate:
+    """Attention-aware KV cache size for one GGUF at a given KV quantisation.
+
+    Splits the block count into the three layer kinds that matter:
+
+    - ``full_layers`` — carry a KV cache that grows with the context window.
+    - ``sliding_layers`` — carry a KV cache bounded by ``sliding_window``.
+    - ``linear_layers`` — hold a fixed-size recurrent state instead of a KV
+      cache, so they cost the same at 1K and at 256K context.
+
+    ``n_layers == full + sliding + linear``; the sum is what the naive
+    ``2 * n_layers * ...`` formula in older revisions of
+    ``fit_gpu_layers`` assumed carried a cache.
+    """
+
+    n_layers: int
+    full_layers: int
+    sliding_layers: int
+    linear_layers: int
+    sliding_window: int
+    kv_heads: int
+    key_len: int
+    val_len: int
+    architecture: Optional[str] = None
+    layer_types: tuple = ()
+
+    @property
+    def elements_per_layer(self) -> int:
+        """Cached scalars per token per layer (K and V together)."""
+        return self.kv_heads * (self.key_len + self.val_len)
+
+    def bytes_per_token(self, kv_cache_type: str = "f16") -> float:
+        """Marginal bytes the cache grows by for one more token.
+
+        Only full-attention layers grow with the window, so this is the rate
+        that matters when sizing a context: 64 KiB/token f16 and 34 KiB/token
+        q8_0 for the 27B hybrid, versus 256/136 KiB for the all-layers
+        assumption.
+        """
+        return self.full_layers * self.elements_per_layer * _kv_bytes_per_element(kv_cache_type)
+
+    def bytes_at(self, ctx_size: int, kv_cache_type: str = "f16") -> float:
+        """Total KV bytes at a fully-filled ``ctx_size`` window.
+
+        Sliding layers saturate at ``sliding_window``; linear layers are
+        excluded entirely (constant state, not a per-token cache).
+        """
+        ctx = max(0, int(ctx_size))
+        per_layer = self.elements_per_layer * _kv_bytes_per_element(kv_cache_type)
+        growing = self.full_layers * ctx
+        sliding = self.sliding_layers * min(ctx, max(0, self.sliding_window))
+        return (growing + sliding) * per_layer
+
+    def naive_bytes_at(self, ctx_size: int, kv_cache_type: str = "f16") -> float:
+        """The pre-T33 estimate, verbatim: every layer charged at the full
+        window, with K and V multiplied twice on top
+        (``2 * n_layers * kv_heads * (key_len + val_len) * ctx * bytes``).
+
+        Kept as the comparison baseline — it is the number the library used to
+        refuse contexts that actually fit. On a 27B hybrid (64 layers, 16 of
+        them full attention) that is 512 KiB/token against a real 64 KiB, an
+        8x over-charge.
+        """
+        per_layer = self.kv_heads * (self.key_len + self.val_len)
+        return (2 * self.n_layers * per_layer * int(ctx_size)
+                * _kv_bytes_per_element(kv_cache_type))
+
+    def overcount_factor(self, ctx_size: int, kv_cache_type: str = "f16") -> float:
+        """How much the naive formula over-charged at ``ctx_size`` (1.0 = dense)."""
+        truth = self.bytes_at(ctx_size, kv_cache_type)
+        naive = self.naive_bytes_at(ctx_size, kv_cache_type)
+        if truth <= 0:
+            return float("inf") if naive > 0 else 1.0
+        return naive / truth
+
+    def to_dict(self, ctx_size: Optional[int] = None,
+                kv_cache_type: str = "f16") -> dict:
+        """JSON-safe view for the stack validator's per-card residency plan."""
+        out = {
+            "architecture": self.architecture,
+            "n_layers": self.n_layers,
+            "full_attention_layers": self.full_layers,
+            "sliding_layers": self.sliding_layers,
+            "linear_layers": self.linear_layers,
+            "sliding_window": self.sliding_window,
+            "kv_heads": self.kv_heads,
+            "key_len": self.key_len,
+            "val_len": self.val_len,
+            "kv_cache_type": kv_cache_type,
+            "bytes_per_token": int(self.bytes_per_token(kv_cache_type)),
+            "kib_per_token": round(self.bytes_per_token(kv_cache_type) / 1024.0, 2),
+        }
+        if ctx_size is not None:
+            ctx = int(ctx_size)
+            out["ctx_size"] = ctx
+            out["kv_bytes"] = int(self.bytes_at(ctx, kv_cache_type))
+            out["kv_gib"] = round(self.bytes_at(ctx, kv_cache_type) / (1024 ** 3), 3)
+            out["naive_kv_gib"] = round(
+                self.naive_bytes_at(ctx, kv_cache_type) / (1024 ** 3), 3)
+            out["overcount_factor"] = round(self.overcount_factor(ctx, kv_cache_type), 2)
+        return out
+
+
+def attention_kv_estimate(model_path=None, *, gguf_meta: Optional[dict] = None,
+                           kv_cache_type: str = "f16") -> Optional[KVEstimate]:
+    """Layer-type-aware KV estimate for a GGUF, or None if the header is thin.
+
+    Reads ``<arch>.attention.layer_types`` when the arch ships it (hybrid
+    GatedDeltaNet/Mamba backbones) and falls back to ``sliding_window`` +
+    ``sliding_window_pattern`` when it does not (Gemma-3 style), then to
+    all-layers attention. Never raises: a missing or unreadable header returns
+    None so callers keep their previous behaviour.
+    """
+    if gguf_meta is None:
+        try:
+            meta = _read_gguf_metadata(Path(model_path))
+        except Exception:  # noqa: BLE001 - best-effort metadata, never block
+            return None
+    else:
+        meta = gguf_meta
+    if not meta:
+        return None
+
+    n_layers = _meta_first_int(meta, ".block_count")
+    head = _meta_first_int(meta, ".attention.head_count")
+    emb = _meta_first_int(meta, ".embedding_length")
+    kv_heads = _meta_first_int(meta, ".attention.head_count_kv")
+    key_len = _meta_first_int(meta, ".attention.key_length")
+    val_len = _meta_first_int(meta, ".attention.value_length")
+    if not n_layers or not kv_heads:
+        return None
+    # key_length/value_length are optional in practice (llama.cpp defaults them
+    # to embedding_length / head_count, i.e. the head dim). Fall back the same
+    # way, independently for each: a GGUF carrying key_length but not
+    # value_length is ordinary, and dropping the whole estimate over the
+    # missing one would put a dense model back on the naive path.
+    if not key_len and emb and head:
+        key_len = emb // head
+    if not val_len:
+        val_len = key_len
+    if not key_len or not val_len:
+        # Nothing left to derive from: a truncated parse is not worth guessing
+        # at, since pricing the cache wrong is worse than deferring to the
+        # caller's fallback.
+        return None
+
+    window = _meta_first_int(meta, ".attention.sliding_window") or 0
+    pattern = _meta_first_int(meta, ".attention.sliding_window_pattern") or 0
+    labels = _meta_layer_types(meta)
+
+    full = sliding = linear = 0
+    if labels:
+        for label in labels:
+            if label in _LINEAR_ATTENTION_LABELS:
+                linear += 1
+            elif label in _SLIDING_ATTENTION_LABELS:
+                sliding += 1
+            else:
+                full += 1
+        # A short array (truncated header) still leaves layers unclassified;
+        # charge them as full attention rather than under-counting.
+        for _ in range(max(0, n_layers - len(labels))):
+            full += 1
+    elif window > 0:
+        if pattern > 0:
+            # llama.cpp: layer il slides when il % pattern == 0.
+            sliding = len(range(0, n_layers, pattern))
+        else:
+            sliding = n_layers
+        full = n_layers - sliding
+    else:
+        # No layer_types and no sliding window: a plain dense transformer,
+        # every layer carries a cache that grows with the window.
+        full = n_layers
+
+    return KVEstimate(
+        n_layers=n_layers,
+        full_layers=full,
+        sliding_layers=sliding,
+        linear_layers=linear,
+        sliding_window=window,
+        kv_heads=kv_heads,
+        key_len=key_len,
+        val_len=val_len,
+        architecture=meta.get("architecture") or meta.get("general.architecture"),
+        layer_types=tuple(labels),
+    )
+
+
 def fit_gpu_layers(model_path, *, ctx_size: int = 8192,
                    hardware: Optional[dict] = None,
-                   gguf_meta: Optional[dict] = None) -> Optional[int]:
+                   gguf_meta: Optional[dict] = None,
+                   kv_cache_type: str = "f16") -> Optional[int]:
     """Max transformer layers that fit on the visible GPU(s), unsloth-style.
 
-    Leaves ~10% VRAM headroom and subtracts the f16 KV cache for ``ctx_size``;
+    Leaves ~10% VRAM headroom and subtracts the KV cache for ``ctx_size``;
     llama.cpp offloads the remaining layers to CPU/GTT. Returns None when the
-    GGUF lacks the metadata to estimate reliably (caller falls back to all)."""
+    GGUF lacks the metadata to estimate reliably (caller falls back to all).
+
+    The KV charge comes from :func:`attention_kv_estimate`, so only layers that
+    actually carry a growing (or sliding-window) cache are counted. The older
+    formula charged all ``n_layers`` and multiplied K and V twice, which
+    over-charged a 27B-class hybrid by 8x and made the library refuse contexts
+    that fit. ``kv_cache_type`` should match ``-ctk``/``-ctv`` at serve time;
+    it defaults to f16, the llama.cpp default.
+    """
     path = Path(model_path)
     try:
         model_bytes = path.stat().st_size
     except OSError:
         return None
-    meta = gguf_meta if gguf_meta is not None else _read_gguf_metadata(path)
 
-    def first(suffix: str) -> Optional[int]:
-        for key, value in meta.items():
-            if key.endswith(suffix):
-                try:
-                    return int(value)
-                except (TypeError, ValueError):
-                    return None
-        return None
-
-    n_layers = first(".block_count")
+    n_layers = _meta_first_int(gguf_meta, ".block_count") if gguf_meta is not None \
+        else _meta_first_int(_read_gguf_metadata(path), ".block_count")
     if not n_layers:
         return None
     if hardware is None:
@@ -414,14 +741,10 @@ def fit_gpu_layers(model_path, *, ctx_size: int = 8192,
         vram_free = hardware.get("combined_vram_gb") or hardware.get("vram_gb")
     if not vram_free:
         return None
-    head_kv = first(".attention.head_count_kv")
-    head = first(".attention.head_count")
-    emb = first(".embedding_length")
-    key_len = first(".attention.key_length") or (emb // head if emb and head else None)
-    val_len = first(".attention.value_length") or key_len
-    kv_bytes = 0
-    if head_kv and key_len and val_len:
-        kv_bytes = 2 * n_layers * head_kv * (key_len + val_len) * int(ctx_size) * 2
+
+    estimate = attention_kv_estimate(path, gguf_meta=gguf_meta,
+                                     kv_cache_type=kv_cache_type)
+    kv_bytes = estimate.bytes_at(ctx_size, kv_cache_type) if estimate else 0
     budget = float(vram_free) * (1024 ** 3) * 0.90 - kv_bytes
     per_layer = model_bytes / n_layers
     if per_layer <= 0:
