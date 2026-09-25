@@ -5,24 +5,19 @@
     {
       "role": "face",
       "repo": "unsloth/Qwen3.8-27B-GGUF",
-      "file": "Qwen3.8-27B-UD-Q6_K.gguf",
-      "ctx": 131072,
+      "file": "Qwen3.8-27B-UD-Q5_K_S.gguf",
+      "ctx": 196608,
       "ngl": 99,
       "backend": "vulkan",
       "cache_k": "q8_0",
       "cache_v": "q8_0",
-      "spec": {
-        "type": "draft-mtp",
-        "n_max": 3
-      },
-      "mmproj": "mmproj-F16.gguf",
       "pin": "HIP_VISIBLE_DEVICES=0,1",
       "ts": "1,1"
     },
     {
       "role": "agency",
-      "repo": "ornith-ai/Ornith-1.5-9B-GGUF",
-      "file": "Ornith-1.5-9B-Q6_K.gguf",
+      "repo": "AtomicChat/Ornith-1.5-9B-GGUF",
+      "file": "Ornith-1.5-9B-AD-Q5_K-Q4_K.gguf",
       "ctx": 32768,
       "ngl": 99,
       "backend": "vulkan",

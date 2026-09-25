@@ -72,13 +72,15 @@ def test_peer_2tier_is_face_plus_worker():
     stack = load_stack("peer-2tier")
     assert stack.roles == ["face", "worker"]
     face, worker = stack.tiers
-    # the face tier owns the full 256K window, the MTP draft and the projector
+    # the face tier owns the full 256K window; LOCAL-STACKS §8 ships without
+    # the optional MTP draft / vision projector (extras trade against face ctx)
     assert face.ctx == 262144
-    assert face.spec == {"type": "draft-mtp", "n_max": 3}
-    assert face.mmproj == "mmproj-F16.gguf"
+    assert face.file == "Qwen3.8-27B-UD-Q5_K_S.gguf"
+    assert (face.spec, face.mmproj) == (None, None)
     assert face.ts == "1,1" and face.pin == "HIP_VISIBLE_DEVICES=0,1"
     # a 4B worker has no speculative block, no projector and no tensor split
     assert worker.ctx == 131072
+    assert worker.file == "Qwen3.5-4B-UD-Q4_K_XL.gguf"
     assert (worker.spec, worker.mmproj, worker.ts) == (None, None, None)
     assert worker.pin == "HIP_VISIBLE_DEVICES=1"
     for tier in stack.tiers:
@@ -89,9 +91,9 @@ def test_peer_2tier_is_face_plus_worker():
 def test_peer_3tier_is_face_plus_agency_plus_mechanics():
     stack = load_stack("peer-3tier")
     assert stack.roles == ["face", "agency", "mechanics"]
-    # LOCAL-STACKS §8: 128K + 32K + 16K, the trade against the 2-tier's 256K face
-    assert [tier.ctx for tier in stack.tiers] == [131072, 32768, 16384]
-    assert stack.tiers[0].file == "Qwen3.8-27B-UD-Q6_K.gguf"
+    # LOCAL-STACKS §8: 192K + 32K + 16K, the trade against the 2-tier's 256K face
+    assert [tier.ctx for tier in stack.tiers] == [196608, 32768, 16384]
+    assert stack.tiers[0].file == "Qwen3.8-27B-UD-Q5_K_S.gguf"
     assert "Ornith-1.5-9B" in stack.tiers[1].file
     assert "2B" in stack.tiers[2].file
 
