@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 
 import harness.models as mm
+from testing.sparse import sized_file
 
 
 KIB = 1024.0
@@ -30,11 +31,8 @@ GIB = 1024.0 ** 3
 
 
 def _sparse(path: Path, gb: float) -> Path:
-    """A file of the right size without spending the disk."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("wb") as handle:
-        handle.truncate(int(gb * GIB))
-    return path
+    """A file of the right size without spending the disk (sparse on NTFS too)."""
+    return sized_file(path, gb)
 
 
 def _hybrid_meta(**overrides) -> dict:

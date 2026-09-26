@@ -20,6 +20,7 @@ from backend.openai_compat import OpenAICompatBackend
 from cortex.e2e import FakeUltraSmall, MockTransport
 from harness.app import create_app
 from harness.models import LlamaServerManager
+from testing.sparse import sized_file
 
 json  # re-exported for the SSE tests below
 
@@ -827,9 +828,7 @@ def test_server_page_serves(client):
 # OOM guard (preflight + startup detection)
 # ---------------------------------------------------------------------------
 def _sparse(path: Path, gb: float) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("wb") as handle:
-        handle.truncate(int(gb * 1024 ** 3))
+    sized_file(path, gb)
 
 
 def _free_port() -> int:

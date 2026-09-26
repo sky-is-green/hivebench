@@ -147,7 +147,10 @@ jobs:
         run: df -h / 2>/dev/null || true
 
       # A crashed windows runner leaves no test log, so record every drive and
-      # the free RAM it started the suite with.
+      # the free RAM it started the suite with.  Also point the suite's temp at
+      # the big D: drive: pytest tmp_path lives on C: by default, and a few
+      # tests size multi-GB files (sparse on NTFS after testing.sparse, but
+      # D:'s ~147 GB is the right home for them anyway).
       - name: Disk + memory headroom (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -160,6 +163,9 @@ jobs:
           Write-Host ("RAM free: {0} GB / total {1} GB" -f `
             [math]::Round($os.FreePhysicalMemory/1MB,1), `
             [math]::Round($os.TotalVisibleMemorySize/1MB,1))
+          $tmp = Join-Path $env:RUNNER_WORKSPACE ".tmp"
+          New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+          Write-Host "suite TMP: $tmp"
 
       # The suite's only real encoder is paraphrase-MiniLM-L3-v2 (~90 MB);
       # cache it so repeat runs stay offline and no download can fail mid-test.
@@ -188,4 +194,7 @@ jobs:
         env:
           CI_SCOPE: ${{ inputs.scope || 'all' }}
           CI_JOBS: ${{ inputs.jobs || '4' }}
+          # Windows pytest temp goes to the roomy D: drive (created above).
+          TMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
+          TEMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
         run: python scripts/ci_scope.py -q

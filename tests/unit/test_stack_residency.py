@@ -26,6 +26,7 @@ from harness.stack.residency import (
     plan_residency,
 )
 from harness.stack.schema import Stack, Tier
+from testing.sparse import sized_file
 
 GIB = 1024.0 ** 3
 KIB = 1024.0
@@ -76,9 +77,7 @@ def _write_gguf(path: Path, kv: dict, *, version: int = 3) -> Path:
 
 def _sized(path: Path, gib: float) -> Path:
     """Grow a GGUF to ``gib`` on disk without spending the disk."""
-    with path.open("r+b") as handle:
-        handle.truncate(int(gib * GIB))
-    return path
+    return sized_file(path, gib)
 
 
 def _face_meta() -> dict:
