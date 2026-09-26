@@ -87,7 +87,7 @@ class _ModelSpan:
     """One live child-session dispatch awaiting its §B3 ``model`` span."""
 
     __slots__ = ("model_id", "parent", "role", "model", "task", "started",
-                 "output", "pending")
+                 "output", "pending", "calls")
 
     def __init__(self, model_id: str, parent: str, started: float) -> None:
         self.model_id = model_id
@@ -98,6 +98,9 @@ class _ModelSpan:
         self.started = started
         self.output = ""
         self.pending: list[dict] = []
+        #: ``callId -> tool name`` for a ``tool/result``, whose own payload
+        #: carries only the call id (in the message's source).
+        self.calls: dict[str, str] = {}
 
 
 class ActivityShaper:
@@ -221,25 +224,34 @@ class ActivityShaper:
             self._resolve(span, provider, model)
         elif kind == "user/message":
             if span.task is None:
-                text = _content_text((data.get("message") or {}).get("content"))
+                # The event data *is* the user message; tolerate a wrapped one.
+                message = data.get("message") or data
+                text = _content_text(message.get("content") if isinstance(message, dict) else None)
                 span.task = text[:400] or None
         elif kind == "assistant/message":
             text = _content_text((data.get("message") or {}).get("content"))
             if text:
                 span.output = text
         elif kind == "tool/call":
+            name = str(data.get("name") or "tool")
+            call_id = str(data.get("callId") or "")
+            if call_id:
+                span.calls[call_id] = name
             self._child_tool(span, {
                 "type": agent_events.EVENT_TOOL,
-                "tool": str(data.get("name") or "tool"),
+                "tool": name,
                 "phase": "call",
                 "args": _json_or_text(data.get("arguments")),
             })
         elif kind == "tool/result":
             message = data.get("message") or {}
+            source = message.get("source") if isinstance(message, dict) else None
+            call_id = str((source or {}).get("callId") or "") if isinstance(source, dict) else ""
+            name = span.calls.pop(call_id) if call_id in span.calls else None
             result = _content_text(message.get("content")) if isinstance(message, dict) else ""
             self._child_tool(span, {
                 "type": agent_events.EVENT_TOOL,
-                "tool": str(data.get("name") or "tool"),
+                "tool": name or "tool",
                 "phase": "result",
                 "result": result,
             })

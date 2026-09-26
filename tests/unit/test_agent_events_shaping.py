@@ -80,15 +80,17 @@ def test_dispatch_becomes_model_span_with_parented_tools():
     assert events == []  # the tier is not known until the child's request
 
     shaper(_event("child-1", "user/message", {
-        "message": {"content": [{"type": "text", "text": "summarise the thread"}]},
+        "content": [{"type": "text", "text": "summarise the thread"}],
     }))
     shaper(_event("child-1", "request/context", {
         "provider": "tier-worker", "model": "Qwen3.5-4B-UD-Q4_K_XL",
     }))
     shaper(_tool_call("child-1", "read_file", '{"path": "a.md"}'))
     shaper(_event("child-1", "tool/result", {
-        "name": "read_file",
-        "message": {"content": [{"type": "text", "text": "contents"}]},
+        "message": {
+            "content": [{"type": "text", "text": "contents"}],
+            "source": {"kind": "tool", "callId": "c1"},
+        },
     }))
     shaper(_finished("child-1", output="final answer"))
 
