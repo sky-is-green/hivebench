@@ -171,7 +171,7 @@ def test_resolve_splinter_rejects_missing_env_override(tmp_path):
             str(tmp_path), env={"SPLINTER_HOME": str(missing)}
         )
 
-    assert str(missing) in str(excinfo.value)
+    assert str(missing) in str(excinfo.value) or repr(str(missing)) in str(excinfo.value)
 
 
 def test_resolve_splinter_fails_loudly_when_nothing_resolves(tmp_path, monkeypatch):

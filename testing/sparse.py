@@ -19,11 +19,32 @@ from pathlib import Path
 import sys
 
 _FSCTL_SET_SPARSE = 0x000900C4
+_FSCTL_SET_ZERO_DATA = 0x000980C8
 _GENERIC_WRITE = 0x40000000
 _OPEN_EXISTING = 3
 _FILE_SHARE_READ = 0x00000001
 _FILE_SHARE_WRITE = 0x00000002
 _INVALID_HANDLE = -1  # windows INVALID_HANDLE_VALUE, as an unsigned pointer
+
+
+def _open_for_write(path: Path):
+    """A kernel32 handle for ``path`` (``None`` on failure), windows only."""
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateFileW.restype = wintypes.HANDLE
+    kernel32.CreateFileW.argtypes = [
+        wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
+        wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
+    ]
+    handle = kernel32.CreateFileW(
+        str(path), _GENERIC_WRITE, _FILE_SHARE_READ | _FILE_SHARE_WRITE,
+        None, _OPEN_EXISTING, 0, None,
+    )
+    if not handle or handle == ctypes.c_void_p(_INVALID_HANDLE).value:
+        return None, kernel32
+    return handle, kernel32
 
 
 def mark_sparse(path: Path) -> bool:
@@ -34,12 +55,14 @@ def mark_sparse(path: Path) -> bool:
     import ctypes
     from ctypes import wintypes
 
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    kernel32.CreateFileW.restype = wintypes.HANDLE
-    kernel32.CreateFileW.argtypes = [
-        wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
-        wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p,
-    ]
+    handle, kernel32 = _open_for_write(path)
+    if handle is None:
+        print(
+            f"testing.sparse: CreateFileW failed on {path!r}; the sized file "
+            "will allocate real blocks",
+            file=sys.stderr,
+        )
+        return False
     kernel32.DeviceIoControl.restype = wintypes.BOOL
     kernel32.DeviceIoControl.argtypes = [
         wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
@@ -47,18 +70,6 @@ def mark_sparse(path: Path) -> bool:
         ctypes.c_void_p,
     ]
     kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-
-    handle = kernel32.CreateFileW(
-        str(path), _GENERIC_WRITE, _FILE_SHARE_READ | _FILE_SHARE_WRITE,
-        None, _OPEN_EXISTING, 0, None,
-    )
-    if not handle or handle == ctypes.c_void_p(_INVALID_HANDLE).value:
-        print(
-            f"testing.sparse: CreateFileW failed on {path!r}; the sized file "
-            "will allocate real blocks",
-            file=sys.stderr,
-        )
-        return False
     try:
         returned = wintypes.DWORD(0)
         ok = kernel32.DeviceIoControl(
@@ -77,12 +88,52 @@ def mark_sparse(path: Path) -> bool:
         kernel32.CloseHandle(handle)
 
 
+def deallocate(path: Path, size: int) -> bool:
+    """Free the clusters of a sparse file's ``[0, size)`` range (windows).
+
+    ``truncate`` on NTFS reserves the extended range even when the file has
+    the sparse attribute; ``FSCTL_SET_ZERO_DATA`` then marks it unallocated.
+    """
+    if os.name != "nt":
+        return True
+
+    import ctypes
+    from ctypes import wintypes
+
+    class ZeroData(ctypes.Structure):
+        _fields_ = [("FileOffset", ctypes.c_longlong),
+                    ("BeyondFinalZero", ctypes.c_longlong)]
+
+    handle, kernel32 = _open_for_write(path)
+    if handle is None:
+        return False
+    kernel32.DeviceIoControl.restype = wintypes.BOOL
+    kernel32.DeviceIoControl.argtypes = [
+        wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD,
+        ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+        ctypes.c_void_p,
+    ]
+    kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+    info = ZeroData(0, size)
+    try:
+        returned = wintypes.DWORD(0)
+        return bool(kernel32.DeviceIoControl(
+            handle, _FSCTL_SET_ZERO_DATA,
+            ctypes.byref(info), ctypes.sizeof(info),
+            None, 0, ctypes.byref(returned), None,
+        ))
+    finally:
+        kernel32.CloseHandle(handle)
+
+
 def sized_file(path: Path, gib: float) -> Path:
     """Create ``path`` with size ``gib`` GiB, sparse where the fs supports it."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.touch(exist_ok=True)
     mark_sparse(path)
+    size = int(gib * 1024 ** 3)
     with path.open("r+b") as handle:
-        handle.truncate(int(gib * 1024 ** 3))
+        handle.truncate(size)
+    deallocate(path, size)
     return path
