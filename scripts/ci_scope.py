@@ -56,7 +56,10 @@ def pytest_args() -> list[str]:
     args = list(sys.argv[1:])
     jobs = os.environ.get("CI_JOBS", "").strip()
     if jobs.isdigit() and int(jobs) > 1:
-        args += ["-n", jobs]
+        # One worker per test file: module-scoped fixtures (e.g. the 24 GiB
+        # library in test_stack_residency) are built once per worker, not once
+        # per test.
+        args += ["-n", jobs, "--dist=loadfile"]
     return args + resolve(os.environ.get("CI_SCOPE", "all"))
 
 

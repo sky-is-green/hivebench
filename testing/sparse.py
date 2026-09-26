@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import sys
 
 _FSCTL_SET_SPARSE = 0x000900C4
 _GENERIC_WRITE = 0x40000000
@@ -52,6 +53,11 @@ def mark_sparse(path: Path) -> bool:
         None, _OPEN_EXISTING, 0, None,
     )
     if not handle or handle == ctypes.c_void_p(_INVALID_HANDLE).value:
+        print(
+            f"testing.sparse: CreateFileW failed on {path!r}; the sized file "
+            "will allocate real blocks",
+            file=sys.stderr,
+        )
         return False
     try:
         returned = wintypes.DWORD(0)
@@ -59,6 +65,13 @@ def mark_sparse(path: Path) -> bool:
             handle, _FSCTL_SET_SPARSE, None, 0, None, 0,
             ctypes.byref(returned), None,
         )
+        if not ok:
+            print(
+                f"testing.sparse: FSCTL_SET_SPARSE failed on {path!r} "
+                f"(winerror {ctypes.get_last_error()}); the sized file will "
+                "allocate real blocks",
+                file=sys.stderr,
+            )
         return bool(ok)
     finally:
         kernel32.CloseHandle(handle)

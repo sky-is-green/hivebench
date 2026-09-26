@@ -167,6 +167,17 @@ jobs:
           New-Item -ItemType Directory -Force -Path $tmp | Out-Null
           Write-Host "suite TMP: $tmp"
 
+      # Prove the NTFS sparse flag works before the suite relies on it.
+      - name: Sparse-file probe (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $before = (Get-PSDrive D).Free
+          python -c "from pathlib import Path; from testing.sparse import sized_file; sized_file(Path(r'D:\a\sparse-probe.bin'), 20)"
+          $after = (Get-PSDrive D).Free
+          Write-Host ("sparse probe: D: free delta {0} GB (expect ~0)" -f [math]::Round(($before-$after)/1GB,2))
+          Remove-Item D:\a\sparse-probe.bin -Force -ErrorAction SilentlyContinue
+
       # The suite's only real encoder is paraphrase-MiniLM-L3-v2 (~90 MB);
       # cache it so repeat runs stay offline and no download can fail mid-test.
       - name: Cache encoder model
@@ -198,3 +209,12 @@ jobs:
           TMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
           TEMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
         run: python scripts/ci_scope.py -q
+
+      # How much the suite actually wrote, even when it passes.
+      - name: Disk after suite (Windows)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem |
+            Select-Object Name, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}} |
+            Format-Table | Out-String | Write-Host

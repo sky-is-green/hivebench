@@ -133,10 +133,16 @@ class FakeLibrary:
         ]
 
 
-@pytest.fixture()
-def library(tmp_path) -> FakeLibrary:
-    """A 2-tier library: a 27B Q6_K face and a 4B Q6_K worker (LOCAL-STACKS §7)."""
-    root = tmp_path / "gguf"
+@pytest.fixture(scope="module")
+def library(tmp_path_factory) -> FakeLibrary:
+    """A 2-tier library: a 27B Q6_K face and a 4B Q6_K worker (LOCAL-STACKS §7).
+
+    Module-scoped: the 20.47 + 3.32 GiB sizing is metadata-only on a sparse
+    filesystem, but building it per-test filled the hosted windows runner
+    (29 tests x ~24 GB of NTFS-allocated files).  Tests that need extra
+    entries build their own view (see the projector test).
+    """
+    root = tmp_path_factory.mktemp("library") / "gguf"
     entries = {
         "Qwen3.8-27B-UD-Q6_K.gguf": _sized(
             _write_gguf(root / "Qwen3.8-27B-UD-Q6_K.gguf", _face_meta()), 20.47),
@@ -586,14 +592,16 @@ def test_vision_projector_and_draft_head_are_charged(library, tmp_path):
     """§7 sizes the face at 20.47 + 1.28 (MTP) + 0.86 (mmproj) GiB."""
     root = library.models_dir
     proj = _sized(_write_gguf(root / "mmproj-F16.gguf", _worker_meta()), 0.86)
-    library._entries["mmproj-F16.gguf"] = proj
+    # A private view of the shared library: the module-scoped fixture must not
+    # gain the extra entry for later tests.
+    lib = FakeLibrary(root, {**library._entries, "mmproj-F16.gguf": proj})
 
     stack = _two_tier(spec={"type": "draft-mtp", "n_max": 3})
     stack.tiers[0].pin = "HIP_VISIBLE_DEVICES=0"
     stack.tiers[0].ts = None
     stack.tiers[0].mmproj = "mmproj-F16.gguf"
 
-    plan = _plan(stack, library, _box())
+    plan = _plan(stack, lib, _box())
 
     assert plan.per_card[0].weights == pytest.approx(20.47 + 1.2 + 0.86, abs=1e-6)
     assert any("draft head" in w for w in plan.warnings)
