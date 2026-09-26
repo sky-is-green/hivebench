@@ -88,13 +88,15 @@ def mark_sparse(path: Path) -> bool:
         kernel32.CloseHandle(handle)
 
 
-def deallocate(path: Path, size: int) -> bool:
-    """Free the clusters of a sparse file's ``[0, size)`` range (windows).
+def deallocate(path: Path, start: int, end: int) -> bool:
+    """Free the clusters of a sparse file's ``[start, end)`` range (windows).
 
     ``truncate`` on NTFS reserves the extended range even when the file has
     the sparse attribute; ``FSCTL_SET_ZERO_DATA`` then marks it unallocated.
+    Only the *extension* may be zeroed: the range before ``start`` is real
+    content the caller wrote (a GGUF header), and zeroing it would wipe it.
     """
-    if os.name != "nt":
+    if os.name != "nt" or end <= start:
         return True
 
     import ctypes
@@ -114,7 +116,7 @@ def deallocate(path: Path, size: int) -> bool:
         ctypes.c_void_p,
     ]
     kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-    info = ZeroData(0, size)
+    info = ZeroData(start, end)
     try:
         returned = wintypes.DWORD(0)
         return bool(kernel32.DeviceIoControl(
@@ -127,13 +129,18 @@ def deallocate(path: Path, size: int) -> bool:
 
 
 def sized_file(path: Path, gib: float) -> Path:
-    """Create ``path`` with size ``gib`` GiB, sparse where the fs supports it."""
+    """Create ``path`` with size ``gib`` GiB, sparse where the fs supports it.
+
+    Existing bytes (a GGUF header the caller just wrote) are preserved.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.touch(exist_ok=True)
+    original = path.stat().st_size
     mark_sparse(path)
     size = int(gib * 1024 ** 3)
-    with path.open("r+b") as handle:
-        handle.truncate(size)
-    deallocate(path, size)
+    if size > original:
+        with path.open("r+b") as handle:
+            handle.truncate(size)
+        deallocate(path, original, size)
     return path
