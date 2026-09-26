@@ -690,8 +690,11 @@ def test_download_lifecycle_and_local_listing(manager, monkeypatch):
     monkeypatch.setattr(models_module, "_hf_download", fake_download)
     job = manager.download("some/repo", "model-q4.gguf")
     assert job["state"] in ("queued", "downloading", "done")
-    assert started.wait(timeout=5)
-    deadline = time.time() + 5
+    # Generous waits: the download runs on a worker thread, and a loaded
+    # xdist worker on a hosted runner can take double-digit seconds to get
+    # scheduled (this flaked once at 5s on windows).
+    assert started.wait(timeout=20)
+    deadline = time.time() + 20
     statuses = {j.key: j for j in manager._downloads.values()}
     done = statuses["some/repo:model-q4.gguf"]
     while done.state != "done" and time.time() < deadline:
