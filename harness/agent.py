@@ -20,8 +20,12 @@ import os
 import re
 import sys
 import threading
+import time
+from itertools import count as _count
 from pathlib import Path
 from typing import Callable, Optional
+
+from harness import agent_events
 
 # The vendored dsh Python SDK ships inside this repo (vendor/deepseek_harness)
 # so the sidecar runs from a clean checkout without an editable install of the
@@ -59,6 +63,197 @@ def _shape_notification(notification) -> Optional[dict]:
     return None
 
 
+def _content_text(blocks) -> str:
+    """Text of an OpenAI-style content-block list (dicts or SDK objects)."""
+    texts: list[str] = []
+    for block in blocks or []:
+        text = block.get("text") if isinstance(block, dict) else getattr(block, "text", None)
+        if isinstance(text, str) and text:
+            texts.append(text)
+    return "".join(texts)
+
+
+def _json_or_text(value):
+    """A tool-call argument blob as parsed JSON when it parses, else raw text."""
+    if not isinstance(value, str):
+        return value
+    try:
+        return json.loads(value) if value.strip() else {}
+    except json.JSONDecodeError:
+        return value
+
+
+class _ModelSpan:
+    """One live child-session dispatch awaiting its §B3 ``model`` span."""
+
+    __slots__ = ("model_id", "parent", "role", "model", "task", "started",
+                 "output", "pending")
+
+    def __init__(self, model_id: str, parent: str, started: float) -> None:
+        self.model_id = model_id
+        self.parent = parent
+        self.role: Optional[str] = None
+        self.model: Optional[str] = None
+        self.task: Optional[str] = None
+        self.started = started
+        self.output = ""
+        self.pending: list[dict] = []
+
+
+class ActivityShaper:
+    """Per-turn activity shaper: face events + §B3 model spans (T48).
+
+    dsh runs the delegation, so the notifications carry the attribution:
+    ``subagent.started``/``finished`` delimit a child session, and the child's
+    ``request/context`` (or ``request/header.config``) names its provider route
+    (``tier-worker``) and model.  That is the structural parent id for the
+    §B3 ``model`` start/end pair — never inferred from timing — and the child's
+    own ``tool/*`` events are forwarded parented to that model id so the cards
+    nest (ADR-L6).
+    """
+
+    def __init__(self, session_id: str, on_event: Callable[[dict], None]) -> None:
+        self._root = session_id
+        self._on_event = on_event
+        self._spans: dict[str, _ModelSpan] = {}
+        self._seq = _count(1)
+
+    def __call__(self, notification) -> None:
+        method = getattr(notification, "method", "")
+        payload = getattr(notification, "payload", None) or {}
+        if not isinstance(payload, dict):
+            return
+        try:
+            if method == "subagent.started":
+                self._started(payload)
+            elif method == "subagent.finished":
+                self._finished(payload)
+            elif method == "session.event":
+                self._session_event(payload, notification)
+        except Exception:  # noqa: BLE001 - a consumer queue must not kill the run
+            pass
+
+    # -- emission -----------------------------------------------------------
+    def _emit(self, event: dict) -> None:
+        try:
+            self._on_event(event)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _emit_child(self, span: _ModelSpan, event: dict) -> None:
+        event = dict(event)
+        event["tier"] = span.role or ""
+        self._emit(agent_events.with_parent(event, span.model_id))
+
+    def _model_start(self, span: _ModelSpan) -> None:
+        self._emit(agent_events.model_event(
+            tier=span.role or "unknown", model=span.model or "",
+            phase=agent_events.PHASE_START, id=span.model_id, task=span.task,
+        ))
+        for event in span.pending:
+            self._emit_child(span, event)
+        span.pending = []
+
+    def _child_tool(self, span: _ModelSpan, event: dict) -> None:
+        if span.role is None:
+            span.pending.append(event)  # the start event carries the parent id
+        else:
+            self._emit_child(span, event)
+
+    # -- notifications ------------------------------------------------------
+    def _started(self, payload: dict) -> None:
+        child = payload.get("childSessionId")
+        parent = payload.get("parentSessionId")
+        if not isinstance(child, str) or not child:
+            return
+        if parent != self._root and parent not in self._spans:
+            return  # another tree's child (or a nested one we do not own)
+        self._spans[child] = _ModelSpan(
+            agent_events.new_model_id(next(self._seq)),
+            str(parent or self._root),
+            time.perf_counter(),
+        )
+
+    def _finished(self, payload: dict) -> None:
+        child = payload.get("childSessionId")
+        span = self._spans.pop(child, None) if isinstance(child, str) else None
+        if span is None:
+            return
+        if span.role is None:
+            # The child finished without a request event we understood; keep
+            # the pair (an unknown-tier card) rather than losing the dispatch.
+            span.role = "unknown"
+            span.model = span.model or ""
+            self._model_start(span)
+        output = _content_text(payload.get("lastAssistantMessage")) or span.output
+        self._emit(agent_events.model_event(
+            tier=span.role, model=span.model or "", phase=agent_events.PHASE_END,
+            id=span.model_id, task=span.task,
+            duration_ms=int((time.perf_counter() - span.started) * 1000),
+            output=output or None,
+        ))
+
+    def _session_event(self, payload: dict, notification) -> None:
+        session_id = payload.get("sessionId")
+        event = payload.get("event")
+        if not isinstance(event, dict):
+            return
+        if session_id is None or session_id == self._root:
+            # No sessionId is the legacy/fake shape: shape it as a face event,
+            # exactly as before delegation existed.  Real notifications always
+            # carry the id.
+            shaped = _shape_notification(notification)
+            if shaped is not None:
+                self._emit(shaped)
+            return
+        span = self._spans.get(session_id) if isinstance(session_id, str) else None
+        if span is None:
+            return
+
+        kind = event.get("type", "")
+        data = event.get("data") or {}
+        if kind in ("request/context", "request/header"):
+            if kind == "request/context":
+                provider, model = data.get("provider"), data.get("model")
+            else:
+                config = (data.get("header") or {}).get("config") or {}
+                provider, model = config.get("provider"), config.get("model")
+            self._resolve(span, provider, model)
+        elif kind == "user/message":
+            if span.task is None:
+                text = _content_text((data.get("message") or {}).get("content"))
+                span.task = text[:400] or None
+        elif kind == "assistant/message":
+            text = _content_text((data.get("message") or {}).get("content"))
+            if text:
+                span.output = text
+        elif kind == "tool/call":
+            self._child_tool(span, {
+                "type": agent_events.EVENT_TOOL,
+                "tool": str(data.get("name") or "tool"),
+                "phase": "call",
+                "args": _json_or_text(data.get("arguments")),
+            })
+        elif kind == "tool/result":
+            message = data.get("message") or {}
+            result = _content_text(message.get("content")) if isinstance(message, dict) else ""
+            self._child_tool(span, {
+                "type": agent_events.EVENT_TOOL,
+                "tool": str(data.get("name") or "tool"),
+                "phase": "result",
+                "result": result,
+            })
+
+    def _resolve(self, span: _ModelSpan, provider, model) -> None:
+        if span.role is not None:
+            return
+        route = str(provider or "").strip()
+        role = route[len("tier-"):] if route.startswith("tier-") else route
+        span.role = role or "unknown"
+        span.model = str(model or "").strip()
+        self._model_start(span)
+
+
 def _windows_bash_path() -> Optional[str]:
     """Git for Windows ships bash but rarely puts it on PATH."""
     for candidate in (
@@ -93,9 +288,14 @@ class DshAgentService:
     rebuilt runtime on the next message (same session id + session_root).
     """
 
-    def __init__(self, default_cwd: Path, session_root: Path) -> None:
+    def __init__(self, default_cwd: Path, session_root: Path, *,
+                 runtime_config: Optional[Callable[[], Optional[str]]] = None) -> None:
         self.default_cwd = Path(default_cwd)
         self.session_root = Path(session_root)
+        #: Called before each runtime build; returns the profile config path for
+        #: the currently applied stack (``None`` = the runtime's own default).
+        self._runtime_config = runtime_config
+        self._cordis_path: Optional[str] = None
         self._lock = threading.Lock()
         self._harness = None
         self._target: Optional[tuple] = None
@@ -193,7 +393,8 @@ class DshAgentService:
         return "full-access (auto-approve; the runtime's own permissions apply)"
 
     def _ensure(self, base_url: str, api_key: str, model: str):
-        key = (base_url, api_key, model)
+        cordis = self._runtime_cordis()
+        key = (base_url, api_key, model, cordis)
         with self._lock:
             if self._harness is not None and self._target == key:
                 return self._harness
@@ -221,10 +422,26 @@ class DshAgentService:
                 model=model,
                 cwd=str(self.default_cwd),
                 session_root=str(self.session_root),
+                cordis=cordis,
                 env=_runtime_env(),
             )
             self._target = key
             return self._harness
+
+    def _runtime_cordis(self) -> Optional[str]:
+        """The applied-stack profile path, refreshed before each runtime build.
+
+        A broken generator must never block chat: on error the previously
+        resolved path (or ``None``) is reused.
+        """
+        if self._runtime_config is None:
+            return None
+        try:
+            path = self._runtime_config()
+        except Exception:  # noqa: BLE001
+            return self._cordis_path
+        self._cordis_path = str(path) if path else None
+        return self._cordis_path
 
     def cancel(self) -> dict:
         """Request cancellation of the in-flight run.
@@ -270,15 +487,11 @@ class DshAgentService:
         handoff = self._handoff_prefix(conversation_id)
         message_to_send = handoff + message if handoff else message
 
+        shaper = ActivityShaper(session_id, on_event) if on_event is not None else None
+
         def on_notification(notification) -> None:
-            if on_event is None:
-                return
-            shaped = _shape_notification(notification)
-            if shaped is not None:
-                try:
-                    on_event(shaped)
-                except Exception:  # noqa: BLE001 - consumer queues must not kill the run
-                    pass
+            if shaper is not None:
+                shaper(notification)
 
         with self._run_lock:
             self._inflight = True

@@ -88,6 +88,7 @@ from harness.stack import (
     create_router as create_stack_router,
     list_stacks,
 )
+from harness.stack_runtime import default_base_config, generate_runtime_config
 from harness.training import (
     ENGINE_HIVE_TERNARY,
     build_run_report,
@@ -2387,9 +2388,27 @@ def create_app(
     async def ab_bench_alias(request: Request):
         return await _ab_handle(request)
 
+    def _stack_runtime_config() -> Optional[str]:
+        """The dsh profile for the currently applied stack (T48).
+
+        Called lazily before every runtime build, so a stack apply or unload
+        is picked up on the next agent turn without touching the SSE path.
+        ``None`` keeps the runtime's bundled profile (no delegation) when no
+        stack is applied or no base profile can be resolved.
+        """
+        try:
+            status = stack_manager.status()
+            home = Path(os.environ.get("DSH_HOME") or (REPO_ROOT / ".dsh-home"))
+            generated = generate_runtime_config(
+                status, base_path=default_base_config(), out_dir=home)
+        except Exception:  # noqa: BLE001 - a broken generator must not block chat
+            return None
+        return str(generated.path) if generated.path else None
+
     agent_service = DshAgentService(
         default_cwd=REPO_ROOT,
         session_root=REPO_ROOT / "harness_state" / "dsh_sessions",
+        runtime_config=_stack_runtime_config,
     )
     app.state.agent = agent_service
 
