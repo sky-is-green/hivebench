@@ -53,7 +53,11 @@ jobs:
       # Keep downloads off the runner disk: the hosted Windows image is tight,
       # and pip's cache costs GBs. `PIP_NO_CACHE_DIR` makes this binding for
       # every `pip install` below (and is why setup-python has no `cache: pip`).
-      PIP_NO_CACHE_DIR: "1"
+      # [ci-speed] That rationale predates the disk measurements: the linux
+      # runner has 114 GB free and the Windows workspace lives on D: (147 GB).
+      # The wheel cache now goes to the workspace and is restored weekly by the
+      # cache step below.
+      PIP_CACHE_DIR: ${{ runner.workspace }}/.pip-cache
       # Encoder weights live in the workspace so they can be cached; ~90 MB.
       HF_HOME: ${{ github.workspace }}/.hf-cache
       HF_HUB_DISABLE_TELEMETRY: "1"
@@ -73,6 +77,15 @@ jobs:
       - name: Free disk space (Linux)
         if: runner.os == 'Linux'
         run: |
+          free=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
+          echo "free before: ${free} GB"
+          # [ci-speed] The purge cost 152s and freed space this runner never
+          # needed (114 GB available after it). Same guard the Windows step
+          # already had: only purge when actually short.
+          if [ "${free}" -ge 12 ]; then
+            echo "12 GB or more free: skipping the SDK purge"
+            exit 0
+          fi
           sudo rm -rf /usr/share/dotnet /usr/share/swift /opt/ghc /usr/local/.ghcup \
                       /usr/local/lib/android /opt/hostedtoolcache/CodeQL \
                       /usr/local/share/boost /opt/az /usr/local/share/powershell 2>/dev/null || true
@@ -124,11 +137,23 @@ jobs:
           ref: SplinterMemory-test
           path: splinter-sys
 
-      # No `cache: pip` on purpose: the pip cache is GBs of runner disk and the
-      # env above keeps pip from writing one anyway.
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # [ci-speed] Wheel cache: saves the torch download (~200 MB linux,
+      # ~124 MB windows) plus dependency wheels on repeat runs. The key rotates
+      # weekly so an unpinned torch bump cannot serve a stale wheel forever.
+      - name: Cache key (week)
+        id: week
+        shell: bash
+        run: echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pip wheels
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.workspace }}/.pip-cache
+          key: pip-${{ runner.os }}-${{ steps.week.outputs.week }}
 
       # CPU-only torch keeps the install lean (default wheels pull CUDA)
       - name: Install CPU torch
@@ -173,7 +198,9 @@ jobs:
         shell: pwsh
         run: |
           $before = (Get-PSDrive D).Free
-          python -c "from pathlib import Path; from testing.sparse import sized_file; sized_file(Path(r'D:\a\sparse-probe.bin'), 20)"
+          # [ci-speed] 2 GiB proves the sparse flag + zero-data path; the old
+          # 20 GiB probe cost ~50s on NTFS for the same signal.
+          python -c "from pathlib import Path; from testing.sparse import sized_file; sized_file(Path(r'D:\a\sparse-probe.bin'), 2)"
           $after = (Get-PSDrive D).Free
           Write-Host ("sparse probe: D: free delta {0} GB (expect ~0)" -f [math]::Round(($before-$after)/1GB,2))
           Remove-Item D:\a\sparse-probe.bin -Force -ErrorAction SilentlyContinue
@@ -208,7 +235,7 @@ jobs:
           # Windows pytest temp goes to the roomy D: drive (created above).
           TMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
           TEMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
-        run: python scripts/ci_scope.py -q
+        run: python scripts/ci_scope.py -q --durations=30
 
       # How much the suite actually wrote, even when it passes.
       - name: Disk after suite (Windows)
