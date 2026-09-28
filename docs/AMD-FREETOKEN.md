@@ -20,10 +20,14 @@ ROCm).
   expert banks (via `-ncmoe`/`-cmoe`/`-ot`) keep hot experts per layer in VRAM,
   decode fetches misses over PCIe and computes every routed expert on the GPU.
   Measured warm on the 125B (185-token prompt, 64-token greedy): all-resident
-  62.6 t/s; `-ncmoe 12` 46.2 → **56.6** with `-msc 256` (82% hit rate);
-  `-ncmoe 24` 38.3 → **48.8**; `-ncmoe 36` (24 GiB of experts off-VRAM) 34.2 →
-  **44.6** (+30%), outputs token-identical to the all-resident run. On the
-  35B-A3B (one card) 64 slots (2.5 GiB) buy 59.9 t/s vs 40.7 t/s CPU-only.
+  28.0 t/s; `-ncmoe 12` (8.1 GiB off) 19.1 → **24.1** with `-msc 256` (62% hit
+  rate); `-ncmoe 24` (16.2 GiB off) 12.9 → **20.8** (+61%); `-ncmoe 36`
+  (24.3 GiB off) 4.4 → **8.2** (+86%), outputs token-identical to the
+  all-resident run. When the slots cover a layer (`-msc auto`, or a size >= the
+  expert count) the bank is promoted once and runs at all-GPU speed
+  (`-ncmoe 12 -msc 512`: 27.4 t/s). On the 35B-A3B (one card) 64 slots
+  (2.5 GiB) buy 60.0 t/s vs 37.8 t/s CPU-only, and full coverage equals the
+  all-GPU 108.9 t/s.
   `stacks/amd-freetoken-125b-lowvram.json` is this config through the harness.
   (Upstream FreeToken's RDNA3 foundation and q*/cache-budget policies are
   reviewed in the engine rig's `SLOT-CACHE-20260928.md`.)
@@ -168,9 +172,12 @@ Two harness bugs blocked the first end-to-end run and are fixed on this branch:
 2. **Sparse per-token expert dispatch** — first cut landed on the engine
    branch `engine/moe-slot-cache`: per-step LRU ensure + slot mapping + H2D
    fetch (`GGML_OP_MOE_CACHE_MAP`), all routed experts computed on the GPU,
-   `-msc auto` sizing from free VRAM. Measured warm (see the engine rig note
-   `SLOT-CACHE-20260928.md`): 125B `-ncmoe 36 -msc 336` 34.2 → 44.6 t/s
-   (+30%, 80.5% hit rate); 35B-A3B `-cmoe -msc 64` (2.5 GiB) 40.7 → 59.9 t/s.
+   `-msc auto` sizing from free VRAM, and full-coverage banks promoted once at
+   load (identity, no per-step overhead, graph capture stays on). Measured warm
+   (see the engine rig note `SLOT-CACHE-20260928.md`): 125B `-ncmoe 24 -msc 256`
+   12.9 → 20.8 t/s (+61%); `-ncmoe 36 -msc 336` 4.4 → 8.2 t/s (+86%, 64.8% hit
+   rate); 35B-A3B `-cmoe -msc 64` (2.5 GiB) 37.8 → 60.0 t/s, full coverage =
+   all-GPU 108.9 t/s.
    Remaining for parity: a device-side ensure/gather to drop the per-layer
    host sync (~150 µs/layer, currently the biggest tok/s cost on cached arms),
    prefill double-buffered streaming (cached layers still fall back to CPU
