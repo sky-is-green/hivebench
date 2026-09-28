@@ -91,7 +91,7 @@ def test_amd_freetoken_lowvram_uses_the_slot_cache():
     assert validate_shape(stack) == []
     (face,) = stack.tiers
     assert face.backend == "rocm"
-    assert face.engine_args == ["-ncmoe", "12", "-msc", "128",
+    assert face.engine_args == ["-ncmoe", "12", "-msc", "auto",
                                 "--lazy-mode", "on", "-np", "1"]
     # the slot-cache and CPU-MoE knobs are first-class engine args now
     assert "-msc" in ENGINE_ARGS_ALLOWED and "--moe-slot-cache" in ENGINE_ARGS_ALLOWED

@@ -17,7 +17,7 @@
         "-ncmoe",
         "12",
         "-msc",
-        "128",
+        "auto",
         "--lazy-mode",
         "on",
         "-np",
