@@ -16,14 +16,17 @@ ROCm).
 - **Engine-flags seam** (T4): validated `engine_args` on a tier; the 125B
   stack pins `--lazy-mode on -np 1` (see below).
 - **FreeToken expert cache (T5, first cut)**: the engine branch
-  `engine/moe-slot-cache` adds `--moe-slot-cache N` — host-placed expert banks
-  (via `-ncmoe`/`-cmoe`/`-ot`) keep `N` hot experts per layer in VRAM, decode
-  fetches misses over PCIe and computes every routed expert on the GPU.
-  Measured on the 125B: `-ncmoe 12 -msc 128` (2.0 GiB of slots) recovers
-  23.3 t/s decode vs 19.6 t/s plain, hit rate 62%; `-ncmoe 24 -msc 256`
-  (8.1 GiB) gives 19.0 vs 14.6 t/s. On the 35B-A3B (one card) 2.5 GiB of
-  slots buys 60 t/s vs 37.8 t/s CPU-only, token-identical to the all-GPU run.
+  `engine/moe-slot-cache` adds `--moe-slot-cache N` (or `auto`): host-placed
+  expert banks (via `-ncmoe`/`-cmoe`/`-ot`) keep hot experts per layer in VRAM,
+  decode fetches misses over PCIe and computes every routed expert on the GPU.
+  Measured warm on the 125B (185-token prompt, 64-token greedy): all-resident
+  62.6 t/s; `-ncmoe 12` 46.2 → **56.6** with `-msc 256` (82% hit rate);
+  `-ncmoe 24` 38.3 → **48.8**; `-ncmoe 36` (24 GiB of experts off-VRAM) 34.2 →
+  **44.6** (+30%), outputs token-identical to the all-resident run. On the
+  35B-A3B (one card) 64 slots (2.5 GiB) buy 59.9 t/s vs 40.7 t/s CPU-only.
   `stacks/amd-freetoken-125b-lowvram.json` is this config through the harness.
+  (Upstream FreeToken's RDNA3 foundation and q*/cache-budget policies are
+  reviewed in the engine rig's `SLOT-CACHE-20260928.md`.)
 - **Not done** (T5 remainder): prefill streaming for cached layers (prefill
   still falls back to CPU compute), the q* CPU overflow split for capped
   fetches, runtime cache resizing, and telemetry endpoints. The legacy Bonsai
@@ -164,13 +167,15 @@ Two harness bugs blocked the first end-to-end run and are fixed on this branch:
    (`ggml_cuda_op_moe_weighted_reduction`).
 2. **Sparse per-token expert dispatch** — first cut landed on the engine
    branch `engine/moe-slot-cache`: per-step LRU ensure + slot mapping + H2D
-   fetch (`GGML_OP_MOE_CACHE_MAP`), all routed experts computed on the GPU.
-   Measured (see `docs`/rig note `SLOT-CACHE-20260928.md`): 125B `-ncmoe 12
-   -msc 128` → 23.3 t/s vs 19.6; 35B-A3B `-cmoe -msc 64` (2.5 GiB) → 60.3 t/s
-   vs 37.8. Remaining for parity: prefill double-buffered streaming (cached
-   layers still fall back to CPU compute in prefill), the q* CPU/GPU split
-   (`fetch_fraction = pcie_bw / cpu_bw`) for capped fetches, and runtime cache
-   resizing.
+   fetch (`GGML_OP_MOE_CACHE_MAP`), all routed experts computed on the GPU,
+   `-msc auto` sizing from free VRAM. Measured warm (see the engine rig note
+   `SLOT-CACHE-20260928.md`): 125B `-ncmoe 36 -msc 336` 34.2 → 44.6 t/s
+   (+30%, 80.5% hit rate); 35B-A3B `-cmoe -msc 64` (2.5 GiB) 40.7 → 59.9 t/s.
+   Remaining for parity: a device-side ensure/gather to drop the per-layer
+   host sync (~150 µs/layer, currently the biggest tok/s cost on cached arms),
+   prefill double-buffered streaming (cached layers still fall back to CPU
+   compute in prefill), the q* CPU/GPU split (only worth it once the CPU MoE
+   path beats ~2× PCIe, per FreeToken's own criterion), and runtime resizing.
 3. **Context curation (Strata side)** stays on the harness layer; stack
    profiles already shape per-tier context. `/v1/stacks/status` has schema
    fields for live `vram_gb` / `tok_s` per tier, but **nothing samples them

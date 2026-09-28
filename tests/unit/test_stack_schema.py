@@ -287,6 +287,15 @@ def test_tier_engine_args_accept_short_forms_and_numeric_values():
     assert tier.engine_args == ["-t", "-1", "-fa", "auto"]
 
 
+def test_tier_engine_args_accept_auto_value():
+    """`-msc auto` (size the FreeToken slot cache from free VRAM) is a value, not a flag."""
+    tier = Tier.from_dict({
+        "role": "face", "repo": "a/b", "file": "b.gguf",
+        "engine_args": ["-ncmoe", "36", "-msc", "auto"],
+    })
+    assert tier.engine_args == ["-ncmoe", "36", "-msc", "auto"]
+
+
 @pytest.mark.parametrize("tier_data, match", [
     ({"repo": "a/b", "file": "b.gguf"}, "missing required field"),
     ({"role": "", "repo": "a/b", "file": "b.gguf"}, "must not be empty"),
