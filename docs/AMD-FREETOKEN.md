@@ -6,6 +6,20 @@ does not fit VRAM still runs at useful speed (dispatch-budget-aware kernels,
 hot-expert residency, curated context), on consumer AMD (2× RX 7900 XT 20 GB,
 ROCm).
 
+## Status (2026-09-28 evening)
+
+- **Verified end-to-end** (T1/T3): the 125B MoE applies through the stack API
+  on the prism ROCm binary, loads in ~42 s and serves at 446–534 t/s prefill /
+  26–28 t/s decode; status reports `backend: "rocm"` per tier.
+- **Engine A/B** (T2): prism vs a stock `origin/master` build on the same
+  stack — +33–37% prefill, +11% decode, byte-identical greedy output.
+- **Engine-flags seam** (T4): validated `engine_args` on a tier; the 125B
+  stack pins `--lazy-mode on -np 1` (see below).
+- **Not done** (T5): sparse per-token expert dispatch / hot-expert residency —
+  the actual FreeToken capability — is still future engine work. The legacy
+  Bonsai `PQ2_0` stack cannot load on `engine/amd-rig` (fork-private tensor
+  type 142 lives only on `moe-corr-runtime`).
+
 ## The engine
 
 Repo: `sky-is-green/prism-ml-llama.cpp`, branch **`engine/amd-rig`**
