@@ -57,6 +57,9 @@ _STACK_FIELDS: tuple[str, ...] = ("name", "version", "tiers", "routing")
 ENGINE_ARGS_ALLOWED: tuple[str, ...] = (
     "--device", "-dev",
     "--n-cpu-moe", "-ncmoe",
+    "--cpu-moe", "-cmoe",
+    "--n-cpu-ffn", "-ncffn",
+    "--moe-slot-cache", "-msc",
     "--lazy-mode", "-lzm",
     "--flash-attn", "-fa",
     "--threads", "-t",

@@ -15,9 +15,19 @@ ROCm).
   stack — +33–37% prefill, +11% decode, byte-identical greedy output.
 - **Engine-flags seam** (T4): validated `engine_args` on a tier; the 125B
   stack pins `--lazy-mode on -np 1` (see below).
-- **Not done** (T5): sparse per-token expert dispatch / hot-expert residency —
-  the actual FreeToken capability — is still future engine work. The legacy
-  Bonsai `PQ2_0` stack cannot load on `engine/amd-rig` (fork-private tensor
+- **FreeToken expert cache (T5, first cut)**: the engine branch
+  `engine/moe-slot-cache` adds `--moe-slot-cache N` — host-placed expert banks
+  (via `-ncmoe`/`-cmoe`/`-ot`) keep `N` hot experts per layer in VRAM, decode
+  fetches misses over PCIe and computes every routed expert on the GPU.
+  Measured on the 125B: `-ncmoe 12 -msc 128` (2.0 GiB of slots) recovers
+  23.3 t/s decode vs 19.6 t/s plain, hit rate 62%; `-ncmoe 24 -msc 256`
+  (8.1 GiB) gives 19.0 vs 14.6 t/s. On the 35B-A3B (one card) 2.5 GiB of
+  slots buys 60 t/s vs 37.8 t/s CPU-only, token-identical to the all-GPU run.
+  `stacks/amd-freetoken-125b-lowvram.json` is this config through the harness.
+- **Not done** (T5 remainder): prefill streaming for cached layers (prefill
+  still falls back to CPU compute), the q* CPU overflow split for capped
+  fetches, runtime cache resizing, and telemetry endpoints. The legacy Bonsai
+  `PQ2_0` stack still cannot load on `engine/amd-rig` (fork-private tensor
   type 142 lives only on `moe-corr-runtime`).
 
 ## The engine
@@ -131,10 +141,12 @@ curated engine knobs are accepted (see `ENGINE_ARGS_ALLOWED`): `--device`,
 `--n-cpu-moe`, `--lazy-mode`, `--flash-attn`, `--threads`,
 `--threads-batch`, `--parallel`, `--load-mode`, `--batch-size`,
 `--ubatch-size`, `--split-mode`, `--main-gpu`, `--n-gpu-layers`, `--no-mmap`,
-`--mlock`, `--no-op-offload` (long and short forms; values pass through).
+`--mlock`, `--no-op-offload`, `--cpu-moe`/`-cmoe`, `--n-cpu-moe`/`-ncmoe`,
+`--moe-slot-cache`/`-msc` (long and short forms; values pass through).
 Model path, host, port and sampling flags stay owned by the managed launch, so
 an authored stack cannot hijack them. `amd-freetoken-125b` uses it for the
-rig's `--lazy-mode on -np 1`.
+rig's `--lazy-mode on -np 1`; `amd-freetoken-125b-lowvram` adds
+`-ncmoe 12 -msc 128` (12 layers' experts host-side, 128 GPU slots each).
 
 Two harness bugs blocked the first end-to-end run and are fixed on this branch:
 
@@ -150,16 +162,20 @@ Two harness bugs blocked the first end-to-end run and are fixed on this branch:
 1. **Kernel count is the budget lever** (measured): fold repeated elementwise
    chains; upstream already fuses the MoE expert reduction
    (`ggml_cuda_op_moe_weighted_reduction`).
-2. **Sparse per-token expert dispatch** for the hot/cold split: the archived
-   sidecar (static hot set) was performance-neutral because the cold pass still
-   computes every expert; the real feature is variable-k dispatch with the hot
-   set resident. Hivebench will need per-tier engine-policy fields for it
-   (cache size, q* split, telemetry).
+2. **Sparse per-token expert dispatch** — first cut landed on the engine
+   branch `engine/moe-slot-cache`: per-step LRU ensure + slot mapping + H2D
+   fetch (`GGML_OP_MOE_CACHE_MAP`), all routed experts computed on the GPU.
+   Measured (see `docs`/rig note `SLOT-CACHE-20260928.md`): 125B `-ncmoe 12
+   -msc 128` → 23.3 t/s vs 19.6; 35B-A3B `-cmoe -msc 64` (2.5 GiB) → 60.3 t/s
+   vs 37.8. Remaining for parity: prefill double-buffered streaming (cached
+   layers still fall back to CPU compute in prefill), the q* CPU/GPU split
+   (`fetch_fraction = pcie_bw / cpu_bw`) for capped fetches, and runtime cache
+   resizing.
 3. **Context curation (Strata side)** stays on the harness layer; stack
    profiles already shape per-tier context. `/v1/stacks/status` has schema
    fields for live `vram_gb` / `tok_s` per tier, but **nothing samples them
    yet** (they are always `null`) — filling them is part of the telemetry seam
-   below.
+   below, which should also surface the slot-cache hit rate.
 
 ### Measured end-to-end (2026-09-28 evening, this box)
 
