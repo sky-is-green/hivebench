@@ -9,6 +9,7 @@
 [![Top language](https://img.shields.io/github/languages/top/sky-is-green/hivebench?style=flat&logo=python&logoColor=white)](https://github.com/sky-is-green/hivebench)
 [![Last commit](https://img.shields.io/github/last-commit/sky-is-green/hivebench/main?style=flat&label=Last%20commit&logo=git)](https://github.com/sky-is-green/hivebench/commits/main)
 [![Repo size](https://img.shields.io/github/repo-size/sky-is-green/hivebench?style=flat&label=Repo%20size)](https://github.com/sky-is-green/hivebench)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Evaluation suite + Studio sidecar harness for the [Splinter Memory](https://github.com/sky-is-green/splinter-memory) system.
 
@@ -160,3 +161,7 @@ The live benchmark talks to an OpenAI-compatible backend (e.g. LM Studio on
 
 The system under test, its white paper, and the measured-outcome table behind
 every claim: the [Splinter Memory](https://github.com/sky-is-green/splinter-memory) repo.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE). Copyright (c) 2026 HiveBench Studio contributors.
