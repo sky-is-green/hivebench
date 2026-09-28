@@ -1,0 +1,20 @@
+{
+  "name": "amd-freetoken-35b",
+  "version": 1,
+  "tiers": [
+    {
+      "role": "face",
+      "repo": "local/amd-freetoken",
+      "file": "Qwen3.8-35B-A3B-IQ2_M.gguf",
+      "ctx": 4096,
+      "ngl": 99,
+      "backend": "rocm",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "pin": "HIP_VISIBLE_DEVICES=1"
+    }
+  ],
+  "routing": {
+    "workers_as": "subagent"
+  }
+}

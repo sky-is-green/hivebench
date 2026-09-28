@@ -192,8 +192,8 @@ def test_apply_passes_the_tier_launch_config_to_load(tmp_path, monkeypatch):
     assert face_cmd[face_cmd.index("-ngl") + 1] == "99"
     assert "--cache-type-k" in face_cmd and "q8_0" in face_cmd
     assert "--mmproj" in face_cmd and "mmproj-F16.gguf" in face_cmd
-    assert ["--split-mode", "layer", "--ts", "1,1"] == \
-        face_cmd[face_cmd.index("--split-mode"):face_cmd.index("--ts") + 2]
+    assert ["--split-mode", "layer", "--tensor-split", "1,1"] == \
+        face_cmd[face_cmd.index("--split-mode"):face_cmd.index("--tensor-split") + 2]
     assert ["--spec-type", "draft-mtp", "--draft-max", "3"] == \
         face_cmd[face_cmd.index("--spec-type"):face_cmd.index("--draft-max") + 2]
     # per-tier env: face pinned to both cards, worker to one
@@ -321,7 +321,7 @@ def test_tier_env_parses_the_pin_assignment():
 def test_tier_extra_args_emits_split_and_spec_flags():
     tier = _tier("face", ts="1,1", spec={"type": "draft-mtp", "n_max": 3})
     assert tier_extra_args(tier) == [
-        "--split-mode", "layer", "--ts", "1,1",
+        "--split-mode", "layer", "--tensor-split", "1,1",
         "--spec-type", "draft-mtp", "--draft-max", "3",
     ]
     assert tier_extra_args(_tier("worker")) == []

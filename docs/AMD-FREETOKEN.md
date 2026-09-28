@@ -46,13 +46,18 @@ The script checks the engine checkout/branch, builds
 
 ## Use
 
-- **Stack**: `stacks/amd-freetoken.json` — Bonsai-2 27B `PQ2_0` face plus the
-  1.7B worker, both on the headless card (`HIP_VISIBLE_DEVICES=1`). Apply it
-  through the stack API/UI as usual (POST `/v1/stacks/amd-freetoken/apply`);
-  every tier launches the prism binary with `backend: rocm`.
-  The models are read from the local model library (this box:
-  `~/.lmstudio/models`, which already has both Bonsai GGUFs from the T29
-  runtime work).
+- **Stack**: `stacks/amd-freetoken-125b.json` — the actual FreeToken shape: the
+  125B Qwen3.8-Flash-Next MoE (Q2_0 experts, `--lazy-mode auto` streams the
+  15.3 GiB PLE table) split headless-first across both cards
+  (`pin HIP_VISIBLE_DEVICES=1,0`, `ts 0.522,0.478`; see the note below on why
+  the env order, not `--device`, carries the ordering). Apply it through the
+  stack API (`POST /v1/stacks/amd-freetoken-125b/apply`); the tier launches the
+  prism binary with `backend: rocm`.
+- **Legacy Bonsai stack**: `stacks/amd-freetoken.json` (Bonsai-2 27B/1.7B) is
+  **not loadable on `engine/amd-rig`**: the released PQ2_0 GGUFs use the
+  fork-private tensor type 142 (`GGML_TYPE_PQ2_0`, `general.file_type 141`),
+  which only the legacy `moe-corr-runtime` line carries. Keep the stack file
+  for that forward-port; smoke the engine with the 125B stack instead.
 - **One-off**: `HARNESS_LLAMA_SERVER=$PWD/tools/backends/rocm/llama-server
   python -m harness` forces the engine for every managed server.
 
@@ -85,16 +90,44 @@ Tier shape (both shards are discovered from the first file):
 and the tensor split keeps all 48 expert layers resident across both cards.
 Measured on the engine rig: 44 s load, 460–497 t/s prefill, 24–28 t/s decode.
 
+`stacks/amd-freetoken-125b.json` is this recipe as an applied stack. Two
+deliberate differences from the bare rig command:
+
+- `pin` is `HIP_VISIBLE_DEVICES=1,0` because the rig's `--device ROCm1,ROCm0`
+  cannot be expressed by the stack schema yet (the `engine_args` seam below);
+  the env order gives llama.cpp the same device order (headless first).
+- `ts` is `0.522,0.478` (not `0.53,0.47`): the T36 residency planner charges
+  the whole shard-1 file plus a 1.5 GiB compute buffer per tier and refuses
+  0.53 on the headless card by ~0.2 GiB. The nudge keeps 53/47 in spirit; the
+  measured residency (19.5 / 18.4 GiB used) shows the planner's estimate is
+  conservative, not wrong (see the verified-end-to-end section).
+
 ## Engine flags the stack schema cannot carry yet
 
 `Tier` fields today: `role`, `repo`, `file`, `ctx`, `ngl`, `backend`,
-`cache_k`, `cache_v`, `spec`, `mmproj`, `pin`, `ts`. That covers the MoE recipe
-via defaults (mmap load, lazy-auto, flash-attn auto) but not, for example,
-`--device` ordering, `-t/--threads`, `--ncmoe`, `-np`, or an explicit
-`--lazy-mode`. Adding a tier field (e.g. `engine_args` or the individual keys)
+`cache_k`, `cache_v`, `spec`, `mmproj`, `pin`, `ts`. `ts` is emitted as
+`--split-mode layer --tensor-split <ts>` and `pin` is the process env
+(`HIP_VISIBLE_DEVICES=...`), so the MoE recipe runs on defaults (mmap load,
+`--lazy-mode auto`, flash-attn auto, threads auto — the engine picked 8 threads
+on this box by itself, matching the rig's `-t 8`).
+
+Still not expressible first-class: `--device` ordering (the 125B stack reaches
+the same order through `pin: HIP_VISIBLE_DEVICES=1,0`), `-np`
+(the server comes up with 4 slots and unified KV), `--ncmoe` for
+VRAM-constrained variants, an explicit `--lazy-mode` to A/B `auto` vs `on`, and
+`-t`/`-b`/`-ub`. Adding a tier field (e.g. a validated `engine_args` list)
 touches `harness/stack/schema.py` + `harness/stack/manager.py`; that seam is
 planned as a follow-up so the AMD-specific knobs become first-class instead of
 env-only.
+
+Two harness bugs blocked the first end-to-end run and are fixed on this branch:
+
+- `harness/models.py` resolved the repo root one level too high (left over
+  from the flat-package move), so `tools/backends/rocm/llama-server` was never
+  found; backend selection always refused.
+- `harness/stack/manager.py` emitted `--ts`, which no llama.cpp understands
+  (`-ts` / `--tensor-split` is the real flag); every stack with a `ts` died at
+  startup with `invalid argument: --ts`.
 
 ## Roadmap toward FreeToken parity (engine side)
 
@@ -107,12 +140,70 @@ env-only.
    set resident. Hivebench will need per-tier engine-policy fields for it
    (cache size, q* split, telemetry).
 3. **Context curation (Strata side)** stays on the harness layer; stack
-   profiles already shape per-tier context, and `/v1/stacks/status` reports
-   live `tok_s` / VRAM per tier for the A/B batteries.
+   profiles already shape per-tier context. `/v1/stacks/status` has schema
+   fields for live `vram_gb` / `tok_s` per tier, but **nothing samples them
+   yet** (they are always `null`) — filling them is part of the telemetry seam
+   below.
+
+### Measured end-to-end (2026-09-28 evening, this box)
+
+First run of the engine through Hivebench (`amd-freetoken-125b` applied via
+`POST /v1/stacks/amd-freetoken-125b/apply`):
+
+| measurement | harness stack | engine rig (reference) |
+|---|---|---|
+| load-to-healthy | 42.9 s | 44 s |
+| prefill (185-token prompt) | 446–527 t/s | 460–497 t/s |
+| decode | 26.0–28.2 t/s | 24–28 t/s |
+| VRAM used, headless / display | 19.49 / 18.39 GiB | 19.4 / 18.4 GiB |
+
+- Process: `tools/backends/rocm/llama-server` with `HIP_VISIBLE_DEVICES=1,0`,
+  argv `-ngl 99 -c 4096 --cache-type-k/v q8_0 --jinja --split-mode layer
+  --tensor-split 0.522,0.478` (defaults: mmap, `--lazy-mode auto`, `-fa auto`,
+  8 threads, 4 unified-KV slots).
+- `/v1/stacks/status` reports the tier's `backend: "rocm"`, port, ctx, model,
+  and the per-card plan; a chat completion round-trips
+  (`"The capital of France is"` → reasoning content + completion).
+- The Bonsai `amd-freetoken` stack cannot load on this engine (type 142, see
+  above) — that needs the `moe-corr-runtime` PQ2_0 forward-port, not a
+  harness change.
+
+### Engine A/B vs the stock arm (2026-09-28)
+
+`amd-freetoken-35b` (Qwen3.8-35B-A3B-IQ2_M, single card, MoE path) applied
+through the harness twice, swapping only `tools/backends/rocm/llama-server`:
+
+| arm | build | prefill (185 tok) | decode (128 tok) | greedy 64 tok |
+|---|---|---:|---:|---|
+| prism `engine/amd-rig` | 0.5.0-dev b11240 @2d1f9b104 | 1400–1445 t/s | 101.7–102.1 t/s | identical |
+| stock `origin/master` | 0.3.0-dev b10686 @dc178a7cf | 1056 t/s | 91.4–91.6 t/s | identical |
+
+- The prism build is ~+33–37% prefill / ~+11% decode on this model; both arms
+  emit byte-identical greedy output (temperature 0, seed 42, 64 tokens), so the
+  delta is kernel/engine work, not a sampling difference. The builds also
+  differ by upstream drift (the engine branch merged current upstream), so the
+  split between fork commits and upstream is not attributed here.
+- The stock binary was built from `origin/master` in a worktree
+  (`git -C ~/Desktop/work/prism-ml-llama.cpp worktree add ../prism-stock origin/master`,
+  cmake flags as in `scripts/install_amd_engine.sh`).
+- `experiments/stack_ab.py --live` cannot A/B these two arms: the harness holds
+  at most one applied stack, and two 125B-class servers do not co-reside in
+  40 GiB. The A/B above is therefore sequential (apply → bench → unload →
+  swap binary → apply), same stack document and flags on both arms.
+- The 125B dual-resident load has **no stock arm**: without the HSA bounce the
+  dual-GPU load hangs (documented in the engine rig's `LOAD-HANG-RESULTS.md`);
+  reproducing it risks driver state. Stock cannot serve the 125B on this box;
+  the prism build does (T3 above).
 
 ## Verification
 
 ```sh
-pytest tests/unit/test_stack_schema.py -q     # amd-freetoken shape + round-trip
-scripts/install_amd_engine.sh && tools/backends/rocm/llama-server --version
+pytest tests/unit/test_stack_schema.py tests/integration/test_stack_manager.py -q
+bash scripts/install_amd_engine.sh && tools/backends/rocm/llama-server --version
+
+# the FreeToken smoke: apply the 125B stack and read the status back
+.venv/bin/python -m harness --no-open --no-auto-start &
+curl -sX POST localhost:8765/v1/stacks/amd-freetoken-125b/validate
+curl -sX POST localhost:8765/v1/stacks/amd-freetoken-125b/apply
+curl -s localhost:8765/v1/stacks/status
 ```

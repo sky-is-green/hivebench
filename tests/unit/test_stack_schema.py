@@ -48,7 +48,7 @@ def _tier(role, **over):
 # --- the authored default stacks -------------------------------------------
 
 
-@pytest.mark.parametrize("name", ["peer-2tier", "peer-3tier", "amd-freetoken"])
+@pytest.mark.parametrize("name", ["peer-2tier", "peer-3tier", "amd-freetoken", "amd-freetoken-125b", "amd-freetoken-35b"])
 def test_authored_stacks_validate(name):
     """Both default stacks are on disk, parse, and pass shape validation."""
     assert (STACKS / f"{name}.json").is_file(), f"stacks/{name}.json is missing"
@@ -69,9 +69,23 @@ def test_amd_freetoken_uses_the_rocm_engine():
     assert validate_shape(stack) == []
 
 
+def test_amd_freetoken_125b_is_the_moe_recipe():
+    """The working FreeToken stack: 125B MoE, dual-card split, headless first."""
+    stack = load_stack("amd-freetoken-125b")
+    assert validate_shape(stack) == []
+    (face,) = stack.tiers
+    assert face.role == ROLE_FACE
+    assert face.file == "Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf"
+    assert (face.ctx, face.ngl) == (4096, 99)
+    assert face.backend == "rocm"
+    # the rig's --device ROCm1,ROCm0 ordering, via the env order the schema can carry
+    assert face.pin == "HIP_VISIBLE_DEVICES=1,0"
+    assert face.ts is not None
+
+
 def test_authored_stacks_round_trip_through_the_data_model():
     """to_dict is byte-faithful: reloading a re-serialised stack is identical."""
-    for name in ("peer-2tier", "peer-3tier", "amd-freetoken"):
+    for name in ("peer-2tier", "peer-3tier", "amd-freetoken", "amd-freetoken-125b", "amd-freetoken-35b"):
         raw = json.loads((STACKS / f"{name}.json").read_text(encoding="utf-8"))
         assert Stack.from_dict(raw).to_dict() == raw, f"{name} is not canonical"
 
@@ -110,7 +124,7 @@ def test_peer_3tier_is_face_plus_agency_plus_mechanics():
 
 def test_saving_the_authored_stacks_reproduces_the_files(tmp_path):
     """save(load(authored)) == authored, so the files stay hand-editable."""
-    for name in ("peer-2tier", "peer-3tier", "amd-freetoken"):
+    for name in ("peer-2tier", "peer-3tier", "amd-freetoken", "amd-freetoken-125b", "amd-freetoken-35b"):
         original = (STACKS / f"{name}.json").read_text(encoding="utf-8")
         path = save_stack(load_stack(name), root=tmp_path)
         assert path == tmp_path / "stacks" / f"{name}.json"

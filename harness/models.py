@@ -47,7 +47,12 @@ _FILE_TYPE_NAMES: dict[int, str] = {
     141: 'PQ2_0',
 }
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+# The harness package lives flat under the repo root (harness/models.py), so
+# the repo root is one level up.  (Before the package was flattened this was
+# harness/harness/models.py and parents[2] pointed at the root; the flattening
+# left the constant behind and every repo-relative path — tools/backends in
+# particular — resolved into the parent workspace instead.)
+REPO_ROOT = Path(__file__).resolve().parents[1]
 HF_API = "https://huggingface.co/api"
 
 # Header-parse guards. The GGUF reader is best-effort and runs on every

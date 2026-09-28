@@ -4,7 +4,7 @@ Each tier is spawned as one ``ServerInstance`` through
 ``harness.models.LlamaServerManager.load``.  The launch config is expressed as
 an ``EngineProfile.load_options`` dict (ADR-L4) so there is no parallel config
 format; the few llama-server flags that ``load_options`` cannot carry
-(``--split-mode layer --ts``, ``--spec-type draft-mtp``) travel as extra args /
+(``--split-mode layer --tensor-split``, ``--spec-type draft-mtp``) travel as extra args /
 env.  ``apply`` runs the T36 residency plan first and refuses an over-budget
 stack before spawning anything (ADR-L5).
 
@@ -117,14 +117,14 @@ def tier_env(tier: Tier) -> dict[str, str]:
 def tier_extra_args(tier: Tier) -> list[str]:
     """Flags the ``load_options`` seam cannot carry.
 
-    Emits ``--split-mode layer --ts <ts>`` when ``tier.ts`` is set, and the
+    Emits ``--split-mode layer --tensor-split <ts>`` when ``tier.ts`` is set, and the
     speculative-decoding flags for ``tier.spec`` (``--spec-type draft-mtp``,
     ``--draft-max <n_max>``) when present.
     """
     args: list[str] = []
     tensor_split = _tier_field(tier, "ts", None)
     if tensor_split:
-        args += ["--split-mode", "layer", "--ts", str(tensor_split)]
+        args += ["--split-mode", "layer", "--tensor-split", str(tensor_split)]
     spec = _tier_field(tier, "spec", None)
     if isinstance(spec, Mapping):
         spec_type = spec.get("type")
