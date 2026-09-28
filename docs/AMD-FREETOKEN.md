@@ -102,23 +102,25 @@ deliberate differences from the bare rig command:
   measured residency (19.5 / 18.4 GiB used) shows the planner's estimate is
   conservative, not wrong (see the verified-end-to-end section).
 
-## Engine flags the stack schema cannot carry yet
+## Engine flags: the `engine_args` seam
 
 `Tier` fields today: `role`, `repo`, `file`, `ctx`, `ngl`, `backend`,
-`cache_k`, `cache_v`, `spec`, `mmproj`, `pin`, `ts`. `ts` is emitted as
-`--split-mode layer --tensor-split <ts>` and `pin` is the process env
-(`HIP_VISIBLE_DEVICES=...`), so the MoE recipe runs on defaults (mmap load,
-`--lazy-mode auto`, flash-attn auto, threads auto — the engine picked 8 threads
-on this box by itself, matching the rig's `-t 8`).
+`cache_k`, `cache_v`, `spec`, `mmproj`, `pin`, `ts`, `engine_args`. `ts` is
+emitted as `--split-mode layer --tensor-split <ts>` and `pin` is the process
+env (`HIP_VISIBLE_DEVICES=...`); everything else the MoE recipe needs runs on
+defaults (mmap load, flash-attn auto, threads auto — the engine picked 8
+threads on this box by itself).
 
-Still not expressible first-class: `--device` ordering (the 125B stack reaches
-the same order through `pin: HIP_VISIBLE_DEVICES=1,0`), `-np`
-(the server comes up with 4 slots and unified KV), `--ncmoe` for
-VRAM-constrained variants, an explicit `--lazy-mode` to A/B `auto` vs `on`, and
-`-t`/`-b`/`-ub`. Adding a tier field (e.g. a validated `engine_args` list)
-touches `harness/stack/schema.py` + `harness/stack/manager.py`; that seam is
-planned as a follow-up so the AMD-specific knobs become first-class instead of
-env-only.
+`schema.py` adds a **validated `engine_args`** list to a tier: tokens are
+appended to the launch verbatim, last, after the managed flags. Only the
+curated engine knobs are accepted (see `ENGINE_ARGS_ALLOWED`): `--device`,
+`--n-cpu-moe`, `--lazy-mode`, `--flash-attn`, `--threads`,
+`--threads-batch`, `--parallel`, `--load-mode`, `--batch-size`,
+`--ubatch-size`, `--split-mode`, `--main-gpu`, `--n-gpu-layers`, `--no-mmap`,
+`--mlock`, `--no-op-offload` (long and short forms; values pass through).
+Model path, host, port and sampling flags stay owned by the managed launch, so
+an authored stack cannot hijack them. `amd-freetoken-125b` uses it for the
+rig's `--lazy-mode on -np 1`.
 
 Two harness bugs blocked the first end-to-end run and are fixed on this branch:
 
@@ -152,7 +154,7 @@ First run of the engine through Hivebench (`amd-freetoken-125b` applied via
 
 | measurement | harness stack | engine rig (reference) |
 |---|---|---|
-| load-to-healthy | 42.9 s | 44 s |
+| load-to-healthy | 41.9–42.9 s | 44 s |
 | prefill (185-token prompt) | 446–527 t/s | 460–497 t/s |
 | decode | 26.0–28.2 t/s | 24–28 t/s |
 | VRAM used, headless / display | 19.49 / 18.39 GiB | 19.4 / 18.4 GiB |
@@ -161,6 +163,10 @@ First run of the engine through Hivebench (`amd-freetoken-125b` applied via
   argv `-ngl 99 -c 4096 --cache-type-k/v q8_0 --jinja --split-mode layer
   --tensor-split 0.522,0.478` (defaults: mmap, `--lazy-mode auto`, `-fa auto`,
   8 threads, 4 unified-KV slots).
+- With `engine_args: ["--lazy-mode", "on", "-np", "1"]` the argv carries the
+  rig's streaming/slot settings and the same benchmark reads 498–534 t/s
+  prefill / 26.4–28.3 t/s decode (load 41.9 s) — i.e. the seam reproduces the
+  rig config, defaults were already within a few percent.
 - `/v1/stacks/status` reports the tier's `backend: "rocm"`, port, ctx, model,
   and the per-card plan; a chat completion round-trips
   (`"The capital of France is"` → reasoning content + completion).

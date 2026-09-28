@@ -81,6 +81,7 @@ def test_amd_freetoken_125b_is_the_moe_recipe():
     # the rig's --device ROCm1,ROCm0 ordering, via the env order the schema can carry
     assert face.pin == "HIP_VISIBLE_DEVICES=1,0"
     assert face.ts is not None
+    assert face.engine_args == ["--lazy-mode", "on", "-np", "1"]
 
 
 def test_authored_stacks_round_trip_through_the_data_model():
@@ -215,7 +216,7 @@ def test_tier_to_dict_omits_unset_optional_fields():
     out = _tier("worker").to_dict()
     assert set(out) == {
         "role", "repo", "file", "ctx", "ngl", "backend", "cache_k", "cache_v"}
-    for key in ("spec", "mmproj", "pin", "ts"):
+    for key in ("spec", "mmproj", "pin", "ts", "engine_args"):
         assert key not in out
 
 
@@ -230,6 +231,46 @@ def test_tier_from_dict_coerces_numeric_strings():
     tier = Tier.from_dict({
         "role": "face", "repo": "a/b", "file": "b.gguf", "ctx": "4096", "ngl": "99"})
     assert (tier.ctx, tier.ngl) == (4096, 99)
+
+
+def test_tier_engine_args_round_trip():
+    """The validated engine_args list survives a file -> model -> file trip."""
+    raw = {
+        "role": "face", "repo": "a/b", "file": "b.gguf",
+        "engine_args": ["--device", "ROCm1,ROCm0", "-np", "1", "--lazy-mode", "on"],
+    }
+    tier = Tier.from_dict(raw)
+    assert tier.engine_args == ["--device", "ROCm1,ROCm0", "-np", "1",
+                                "--lazy-mode", "on"]
+    canonical = tier.to_dict()
+    assert canonical["engine_args"] == ["--device", "ROCm1,ROCm0", "-np", "1",
+                                        "--lazy-mode", "on"]
+    assert Tier.from_dict(canonical).to_dict() == canonical
+
+    # absent by default and omitted from the document
+    assert Tier.from_dict({"role": "face", "repo": "a/b", "file": "b.gguf"}).engine_args is None
+    assert "engine_args" not in _tier("face").to_dict()
+
+
+@pytest.mark.parametrize("value, match", [
+    ("--lazy-mode on", "must be a list"),
+    (["--lazy-mode", ""], "non-blank string"),
+    (["--lazy-mode", 0], "non-blank string"),
+    (["--model", "x.gguf"], "not an allowed engine flag"),
+    (["--port", "1234"], "not an allowed engine flag"),
+])
+def test_tier_engine_args_reject_malformed_lists(value, match):
+    with pytest.raises(ValueError, match=match):
+        Tier.from_dict({"role": "face", "repo": "a/b", "file": "b.gguf",
+                        "engine_args": value})
+
+
+def test_tier_engine_args_accept_short_forms_and_numeric_values():
+    tier = Tier.from_dict({
+        "role": "face", "repo": "a/b", "file": "b.gguf",
+        "engine_args": ["-t", "-1", "-fa", "auto"],
+    })
+    assert tier.engine_args == ["-t", "-1", "-fa", "auto"]
 
 
 @pytest.mark.parametrize("tier_data, match", [

@@ -327,6 +327,13 @@ def test_tier_extra_args_emits_split_and_spec_flags():
     assert tier_extra_args(_tier("worker")) == []
 
 
+def test_tier_extra_args_appends_engine_args_verbatim():
+    tier = _tier("face", engine_args=["--lazy-mode", "on", "-np", "1"])
+    assert tier_extra_args(tier)[-4:] == ["--lazy-mode", "on", "-np", "1"]
+    plain = tier_extra_args(_tier("face"))
+    assert "--lazy-mode" not in plain and "on" not in plain
+
+
 def test_tier_runtime_to_dict_is_the_status_row():
     runtime = TierRuntime(role="face", key="k", port=1234, ctx=8192,
                           model="m", per_card=[_CARD])

@@ -119,7 +119,10 @@ def tier_extra_args(tier: Tier) -> list[str]:
 
     Emits ``--split-mode layer --tensor-split <ts>`` when ``tier.ts`` is set, and the
     speculative-decoding flags for ``tier.spec`` (``--spec-type draft-mtp``,
-    ``--draft-max <n_max>``) when present.
+    ``--draft-max <n_max>``) when present.  ``tier.engine_args``
+    (schema-validated: only the curated engine knobs) is appended
+    verbatim, last, so a stack can pin e.g. ``--device``, ``-np`` or
+    ``--lazy-mode`` for a tier.
     """
     args: list[str] = []
     tensor_split = _tier_field(tier, "ts", None)
@@ -135,6 +138,9 @@ def tier_extra_args(tier: Tier) -> list[str]:
             args += ["--draft-max", str(n_max)]
     elif spec:
         args += ["--spec-type", str(spec)]
+    engine_args = _tier_field(tier, "engine_args", None)
+    if engine_args:
+        args += [str(arg) for arg in engine_args]
     return args
 
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,8 +45,65 @@ _TIER_REQUIRED: tuple[str, ...] = ("role", "repo", "file")
 _TIER_FIELDS: tuple[str, ...] = (
     "role", "repo", "file", "ctx", "ngl", "backend", "cache_k", "cache_v",
 )
-_TIER_OPTIONAL: tuple[str, ...] = ("spec", "mmproj", "pin", "ts")
+_TIER_OPTIONAL: tuple[str, ...] = ("spec", "mmproj", "pin", "ts", "engine_args")
 _STACK_FIELDS: tuple[str, ...] = ("name", "version", "tiers", "routing")
+
+#: llama-server flags a tier's ``engine_args`` list may carry.  Curated on
+#: purpose: the AMD knobs the ``load_options`` seam cannot express (device
+#: order, CPU-expert offload, PLE streaming, flash-attn, threads, slots, load
+#: mode, split controls).  Anything outside this set — model paths, ports,
+#: hosts, sampling — stays owned by the managed launch.  Long and short forms
+#: are both accepted.
+ENGINE_ARGS_ALLOWED: tuple[str, ...] = (
+    "--device", "-dev",
+    "--n-cpu-moe", "-ncmoe",
+    "--lazy-mode", "-lzm",
+    "--flash-attn", "-fa",
+    "--threads", "-t",
+    "--threads-batch", "-tb",
+    "--parallel", "-np",
+    "--load-mode", "-lm",
+    "--batch-size", "-b",
+    "--ubatch-size", "-ub",
+    "--split-mode", "-sm",
+    "--main-gpu", "-mg",
+    "--n-gpu-layers", "-ngl",
+    "--no-mmap",
+    "--mlock",
+    "--no-op-offload", "--op-offload",
+)
+
+_NUMERIC = re.compile(r"^-?\d+(?:\.\d+)?$")
+
+
+def validate_engine_args(value: Any, *, where: str = "tier engine_args") -> list[str]:
+    """A tier's ``engine_args``: a list of tokens, flags from the allowed set.
+
+    Every element must be a non-blank string.  A token that looks like a flag
+    (starts with ``-`` and is not a number, so ``-t -1`` stays expressible)
+    must be one of :data:`ENGINE_ARGS_ALLOWED`; everything else is a value and
+    passes through.  The point is to keep managed launch invariants (binary,
+    model, host, port, API keys) out of authored stacks, not to validate the
+    full flag grammar — llama-server does that at startup.
+    """
+    if value is None:
+        return []
+    if not isinstance(value, (list, tuple)):
+        raise ValueError(
+            f"{where} must be a list of strings, got {type(value).__name__}")
+    out: list[str] = []
+    for position, item in enumerate(value, start=1):
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError(
+                f"{where}[{position}] must be a non-blank string, got {item!r}")
+        token = item.strip()
+        if token.startswith("-") and not _NUMERIC.match(token):
+            if token not in ENGINE_ARGS_ALLOWED:
+                raise ValueError(
+                    f"{where}[{position}]: {token!r} is not an allowed engine "
+                    f"flag; allowed: {', '.join(ENGINE_ARGS_ALLOWED)}")
+        out.append(token)
+    return out
 
 
 def _as_text(value: Any, field_name: str) -> str:
@@ -110,6 +168,7 @@ class Tier:
     mmproj: Optional[str] = None
     pin: Optional[str] = None
     ts: Optional[str] = None
+    engine_args: Optional[list[str]] = None
 
     def to_dict(self) -> dict[str, Any]:
         """The tier as it appears in a ``stacks/<name>.json`` file."""
@@ -131,6 +190,8 @@ class Tier:
             out["pin"] = self.pin
         if self.ts is not None:
             out["ts"] = self.ts
+        if self.engine_args is not None:
+            out["engine_args"] = list(self.engine_args)
         return out
 
     @classmethod
@@ -162,6 +223,8 @@ class Tier:
             mmproj=_as_optional_text(data.get("mmproj"), "tier mmproj"),
             pin=_as_optional_text(data.get("pin"), "tier pin"),
             ts=_as_optional_text(data.get("ts"), "tier ts"),
+            engine_args=(validate_engine_args(data.get("engine_args"))
+                         if data.get("engine_args") is not None else None),
         )
 
 

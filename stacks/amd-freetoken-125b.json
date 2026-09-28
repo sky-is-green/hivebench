@@ -12,7 +12,13 @@
       "cache_k": "q8_0",
       "cache_v": "q8_0",
       "pin": "HIP_VISIBLE_DEVICES=1,0",
-      "ts": "0.522,0.478"
+      "ts": "0.522,0.478",
+      "engine_args": [
+        "--lazy-mode",
+        "on",
+        "-np",
+        "1"
+      ]
     }
   ],
   "routing": {
