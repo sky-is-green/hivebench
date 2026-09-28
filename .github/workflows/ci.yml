@@ -4,9 +4,47 @@ on:
   push:
     branches: [main, hivebench-test]
   pull_request:
+  # The slow windows leg also runs nightly, and on demand on any branch.
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Test scope: all / unit / integration / unit:<start>-<end>"
+        type: string
+        default: all
+      jobs:
+        description: "pytest-xdist workers (1 = serial)"
+        type: string
+        default: "4"
+
+concurrency:
+  # A superseded push should cancel its running matrix: R18 pushed three times
+  # in an hour, each spawning a full 40-minute windows job.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  select_os:
+    # Compute the matrix before the runners queue.  The windows leg is the slow
+    # one (hosted runner + windows FS); it runs where merge-time correctness
+    # matters — main, PRs, nightly, manual dispatch — and not on every
+    # hivebench-test iteration push, which only needs the fast ubuntu signal.
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.matrix.outputs.os }}
+    steps:
+      - id: matrix
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo 'os=["ubuntu-latest"]' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'os=["ubuntu-latest","windows-latest"]' >> "${GITHUB_OUTPUT}"
+          fi
+
   tests:
+    needs: select_os
     # actions/checkout refuses paths outside the workspace, so the sibling
     # system checkout lives inside it; conftest + package bootstraps honour
     # $SPLINTER_HOME (their default is ../splinter-memory for local dev).
@@ -20,12 +58,14 @@ jobs:
       HF_HOME: ${{ github.workspace }}/.hf-cache
       HF_HUB_DISABLE_TELEMETRY: "1"
       PYTHONUNBUFFERED: "1"
+      # A native crash (segfault/OOM kill) still leaves stacks in the log.
+      PYTHONFAULTHANDLER: "1"
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ fromJSON(needs.select_os.outputs.os) }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       # The hosted images ship several GB of SDKs this job never uses; reclaim
       # the space before the Python + torch install (the Windows image is the
@@ -42,8 +82,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Write-Host "free before: $([math]::Round((Get-PSDrive C).Free/1GB,1)) GB"
-          # The Windows image ships ~20 GB of SDKs this Python job never uses.
+          $free = [math]::Round((Get-PSDrive C).Free/1GB, 1)
+          Write-Host "free before: $free GB"
+          # The suite + CPU torch need ~6 GB; the hosted image starts near 29.
+          # Purging these trees sequentially cost 19 minutes on 2026-09-25
+          # (VS 4m, dotnet 5m, Android 4m) and the job timeout is the binding
+          # constraint — so purge only when short on space, and in parallel.
+          if ($free -ge 12) {
+            Write-Host "12 GB or more free: skipping the SDK purge"
+            exit 0
+          }
           $paths = @(
             'C:\Program Files\Microsoft Visual Studio',
             'C:\Program Files (x86)\Microsoft Visual Studio',
@@ -59,12 +107,12 @@ jobs:
             'C:\hostedtoolcache\windows\PyPy', 'C:\hostedtoolcache\windows\Ruby',
             'C:\hostedtoolcache\windows\Go'
           )
-          foreach ($p in $paths) {
-            if (Test-Path $p) {
-              Remove-Item -Recurse -Force $p -ErrorAction SilentlyContinue
-              Write-Host "removed $p"
+          $paths | ForEach-Object -Parallel {
+            if (Test-Path $_) {
+              Remove-Item -Recurse -Force $_ -ErrorAction SilentlyContinue
+              Write-Host "removed $_"
             }
-          }
+          } -ThrottleLimit 4
           Write-Host "free after:  $([math]::Round((Get-PSDrive C).Free/1GB,1)) GB"
 
       - uses: actions/checkout@v4
@@ -92,10 +140,43 @@ jobs:
           # run blocks in single quotes, so $VAR expansion never happens there.
           pip install -e ${{ env.SPLINTER_HOME }}
           pip install -e .
+          pip install pytest-xdist==3.8.0
 
       - name: Disk headroom
         shell: bash
         run: df -h / 2>/dev/null || true
+
+      # A crashed windows runner leaves no test log, so record every drive and
+      # the free RAM it started the suite with.  Also point the suite's temp at
+      # the big D: drive: pytest tmp_path lives on C: by default, and a few
+      # tests size multi-GB files (sparse on NTFS after testing.sparse, but
+      # D:'s ~147 GB is the right home for them anyway).
+      - name: Disk + memory headroom (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem |
+            Select-Object Name, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}},
+                                     @{n='UsedGB';e={[math]::Round($_.Used/1GB,1)}} |
+            Format-Table | Out-String | Write-Host
+          $os = Get-CimInstance Win32_OperatingSystem
+          Write-Host ("RAM free: {0} GB / total {1} GB" -f `
+            [math]::Round($os.FreePhysicalMemory/1MB,1), `
+            [math]::Round($os.TotalVisibleMemorySize/1MB,1))
+          $tmp = Join-Path $env:RUNNER_WORKSPACE ".tmp"
+          New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+          Write-Host "suite TMP: $tmp"
+
+      # Prove the NTFS sparse flag works before the suite relies on it.
+      - name: Sparse-file probe (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $before = (Get-PSDrive D).Free
+          python -c "from pathlib import Path; from testing.sparse import sized_file; sized_file(Path(r'D:\a\sparse-probe.bin'), 20)"
+          $after = (Get-PSDrive D).Free
+          Write-Host ("sparse probe: D: free delta {0} GB (expect ~0)" -f [math]::Round(($before-$after)/1GB,2))
+          Remove-Item D:\a\sparse-probe.bin -Force -ErrorAction SilentlyContinue
 
       # The suite's only real encoder is paraphrase-MiniLM-L3-v2 (~90 MB);
       # cache it so repeat runs stay offline and no download can fail mid-test.
@@ -117,5 +198,23 @@ jobs:
 
       # Deterministic offline suite: unit + integration (perf benchmarks stay
       # out of CI - threshold assertions flake on shared runners)
+      # NOTE: no explicit shell here.  Default per-OS shells are used on
+      # purpose: running the suite under Git Bash on Windows killed the hosted
+      # runner mid-run (twice, with no log) while pwsh runs completed.
       - name: Run offline test suite
-        run: python -m pytest tests/unit tests/integration -q
+        env:
+          CI_SCOPE: ${{ inputs.scope || 'all' }}
+          CI_JOBS: ${{ inputs.jobs || '4' }}
+          # Windows pytest temp goes to the roomy D: drive (created above).
+          TMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
+          TEMP: ${{ runner.os == 'Windows' && format('{0}\.tmp', runner.workspace) || '' }}
+        run: python scripts/ci_scope.py -q
+
+      # How much the suite actually wrote, even when it passes.
+      - name: Disk after suite (Windows)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem |
+            Select-Object Name, @{n='FreeGB';e={[math]::Round($_.Free/1GB,1)}} |
+            Format-Table | Out-String | Write-Host
