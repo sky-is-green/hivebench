@@ -57,7 +57,7 @@ jobs:
       # runner has 114 GB free and the Windows workspace lives on D: (147 GB).
       # The wheel cache now goes to the workspace and is restored weekly by the
       # cache step below.
-      PIP_CACHE_DIR: ${{ runner.workspace }}/.pip-cache
+      PIP_CACHE_DIR: ${{ github.workspace }}/.pip-cache
       # Encoder weights live in the workspace so they can be cached; ~90 MB.
       HF_HOME: ${{ github.workspace }}/.hf-cache
       HF_HUB_DISABLE_TELEMETRY: "1"
@@ -152,7 +152,7 @@ jobs:
       - name: Cache pip wheels
         uses: actions/cache@v4
         with:
-          path: ${{ runner.workspace }}/.pip-cache
+          path: ${{ github.workspace }}/.pip-cache
           key: pip-${{ runner.os }}-${{ steps.week.outputs.week }}
 
       # CPU-only torch keeps the install lean (default wheels pull CUDA)
