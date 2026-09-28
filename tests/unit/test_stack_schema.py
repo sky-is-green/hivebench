@@ -49,7 +49,7 @@ def _tier(role, **over):
 # --- the authored default stacks -------------------------------------------
 
 
-@pytest.mark.parametrize("name", ["peer-2tier", "peer-3tier", "amd-freetoken", "amd-freetoken-125b", "amd-freetoken-125b-lowvram", "amd-freetoken-35b"])
+@pytest.mark.parametrize("name", ["peer-2tier", "peer-3tier", "ember", "ember-125b", "ember-125b-lowvram", "ember-35b"])
 def test_authored_stacks_validate(name):
     """Both default stacks are on disk, parse, and pass shape validation."""
     assert (STACKS / f"{name}.json").is_file(), f"stacks/{name}.json is missing"
@@ -62,17 +62,17 @@ def test_authored_stacks_validate(name):
     assert validate_shape(stack) == []
 
 
-def test_amd_freetoken_uses_the_rocm_engine():
+def test_ember_uses_the_rocm_engine():
     """The AMD stack targets the prism ROCm binary (tools/backends/rocm)."""
-    stack = load_stack("amd-freetoken")
-    assert stack.tiers, "amd-freetoken has tiers"
+    stack = load_stack("ember")
+    assert stack.tiers, "ember has tiers"
     assert {tier.backend for tier in stack.tiers} == {"rocm"}
     assert validate_shape(stack) == []
 
 
-def test_amd_freetoken_125b_is_the_moe_recipe():
+def test_ember_125b_is_the_moe_recipe():
     """The working FreeToken stack: 125B MoE, dual-card split, headless first."""
-    stack = load_stack("amd-freetoken-125b")
+    stack = load_stack("ember-125b")
     assert validate_shape(stack) == []
     (face,) = stack.tiers
     assert face.role == ROLE_FACE
@@ -85,9 +85,9 @@ def test_amd_freetoken_125b_is_the_moe_recipe():
     assert face.engine_args == ["--lazy-mode", "on", "-np", "1"]
 
 
-def test_amd_freetoken_lowvram_uses_the_slot_cache():
+def test_ember_lowvram_uses_the_slot_cache():
     """The FreeToken stack: 12 layers' experts off-VRAM, 128 GPU slots each."""
-    stack = load_stack("amd-freetoken-125b-lowvram")
+    stack = load_stack("ember-125b-lowvram")
     assert validate_shape(stack) == []
     (face,) = stack.tiers
     assert face.backend == "rocm"
@@ -100,7 +100,7 @@ def test_amd_freetoken_lowvram_uses_the_slot_cache():
 
 def test_authored_stacks_round_trip_through_the_data_model():
     """to_dict is byte-faithful: reloading a re-serialised stack is identical."""
-    for name in ("peer-2tier", "peer-3tier", "amd-freetoken", "amd-freetoken-125b", "amd-freetoken-125b-lowvram", "amd-freetoken-35b"):
+    for name in ("peer-2tier", "peer-3tier", "ember", "ember-125b", "ember-125b-lowvram", "ember-35b"):
         raw = json.loads((STACKS / f"{name}.json").read_text(encoding="utf-8"))
         assert Stack.from_dict(raw).to_dict() == raw, f"{name} is not canonical"
 
@@ -139,7 +139,7 @@ def test_peer_3tier_is_face_plus_agency_plus_mechanics():
 
 def test_saving_the_authored_stacks_reproduces_the_files(tmp_path):
     """save(load(authored)) == authored, so the files stay hand-editable."""
-    for name in ("peer-2tier", "peer-3tier", "amd-freetoken", "amd-freetoken-125b", "amd-freetoken-125b-lowvram", "amd-freetoken-35b"):
+    for name in ("peer-2tier", "peer-3tier", "ember", "ember-125b", "ember-125b-lowvram", "ember-35b"):
         original = (STACKS / f"{name}.json").read_text(encoding="utf-8")
         path = save_stack(load_stack(name), root=tmp_path)
         assert path == tmp_path / "stacks" / f"{name}.json"

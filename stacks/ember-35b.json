@@ -1,10 +1,10 @@
 {
-  "name": "amd-freetoken-35b",
+  "name": "ember-35b",
   "version": 1,
   "tiers": [
     {
       "role": "face",
-      "repo": "local/amd-freetoken",
+      "repo": "local/ember",
       "file": "Qwen3.8-35B-A3B-IQ2_M.gguf",
       "ctx": 4096,
       "ngl": 99,

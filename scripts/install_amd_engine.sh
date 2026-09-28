@@ -80,9 +80,9 @@ echo "[amd-engine] ok: $("$DEST/llama-server" --version 2>/dev/null | head -1)"
 cat <<EOF
 
 [amd-engine] next:
-  - apply a stack with "backend": "rocm"  (see stacks/amd-freetoken.json)
+  - apply a stack with "backend": "rocm"  (see stacks/ember.json)
   - or point the harness at it directly:
       scripts/install_amd_engine.sh && \\
       HARNESS_LLAMA_SERVER=$DEST/llama-server python -m harness
-  - engine docs: docs/AMD-FREETOKEN.md
+  - engine docs: docs/EMBER.md
 EOF
