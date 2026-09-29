@@ -178,7 +178,7 @@ echo "baseline: $BASE_MS ms/token"
 server_stop
 
 SPEC_LOG=$OUT/stage3-sidecar.log
-R=$(server_start "-md $SIDECAR --spec-type draft-mtp-sidecar --spec-draft-n-max 1" "$SPEC_LOG")
+R=$(server_start "-md $SIDECAR" "$SPEC_LOG")
 [ "$R" = "ok" ] || fail_prereq "sidecar server failed ($R)"
 srv_request "$N_PREDICT" false "$OUT/stage3-sidecar.json"
 srv_request "$N_PREDICT" true    # cached prompt: exercises the no-ctx_dft save/load path
