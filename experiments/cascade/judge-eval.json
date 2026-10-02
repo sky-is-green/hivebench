@@ -1,0 +1,1144 @@
+{
+ "summary": {
+  "tasks": 27,
+  "sources": [
+   "code",
+   "qa",
+   "reasoning"
+  ],
+  "api_judge": {
+   "tasks": 27,
+   "accept_rate": 0.8518518518518519,
+   "false_accepts": 1,
+   "false_rejects": 0,
+   "correct_verdicts": 26
+  },
+  "intern_decision": {
+   "model": "internlm/Intern-Decision-4B",
+   "device": "cuda",
+   "mean_ms": 280.9,
+   "sweep": [
+    {
+     "threshold": 0.05,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.1,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.15,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.2,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.25,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.3,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.35,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.4,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.45,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.5,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.55,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 3,
+     "false_rejects": 2,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.6,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 3,
+     "false_rejects": 2,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.65,
+     "accept_rate": 0.8148148148148148,
+     "false_accepts": 2,
+     "false_rejects": 2,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.7,
+     "accept_rate": 0.7777777777777778,
+     "false_accepts": 1,
+     "false_rejects": 2,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.75,
+     "accept_rate": 0.7407407407407407,
+     "false_accepts": 1,
+     "false_rejects": 3,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.8,
+     "accept_rate": 0.7407407407407407,
+     "false_accepts": 1,
+     "false_rejects": 3,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.85,
+     "accept_rate": 0.7037037037037037,
+     "false_accepts": 0,
+     "false_rejects": 3,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.9,
+     "accept_rate": 0.5925925925925926,
+     "false_accepts": 0,
+     "false_rejects": 6,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.95,
+     "accept_rate": 0.5185185185185185,
+     "false_accepts": 0,
+     "false_rejects": 8,
+     "correct_verdicts": 19
+    }
+   ]
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "bucket": "qa",
+   "candidate": "Canberra",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9744,
+   "judge_ms": 3352.3
+  },
+  {
+   "id": "qa-element-w",
+   "bucket": "qa",
+   "candidate": "Tungsten",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9744,
+   "judge_ms": 142.7
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "bucket": "qa",
+   "candidate": "Jane Austen",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9608,
+   "judge_ms": 135.1
+  },
+  {
+   "id": "qa-largest-planet",
+   "bucket": "qa",
+   "candidate": "Jupiter",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.98,
+   "judge_ms": 133.0
+  },
+  {
+   "id": "math-train-speed",
+   "bucket": "reasoning",
+   "candidate": "80",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9631,
+   "judge_ms": 133.9
+  },
+  {
+   "id": "math-linear",
+   "bucket": "reasoning",
+   "candidate": "7",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.2682,
+   "judge_ms": 134.2
+  },
+  {
+   "id": "math-percent",
+   "bucket": "reasoning",
+   "candidate": "59.5",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.7193,
+   "judge_ms": 133.6
+  },
+  {
+   "id": "math-diagonal",
+   "bucket": "reasoning",
+   "candidate": "13",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9471,
+   "judge_ms": 134.9
+  },
+  {
+   "id": "math-bat-ball",
+   "bucket": "reasoning",
+   "candidate": "0.05",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9054,
+   "judge_ms": 135.1
+  },
+  {
+   "id": "code-count-vowels",
+   "bucket": "code",
+   "candidate": "```python\ndef count_vowels(s):\n    vowels = 'aeiouAEIOU'\n    count = 0\n    for char in s:\n        if char in vowels:\n            count += 1\n    return count\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9759,
+   "judge_ms": 162.4
+  },
+  {
+   "id": "code-fib",
+   "bucket": "code",
+   "candidate": "```python\ndef fib(n):\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    if n == 0:\n        return 0\n    if n == 1:\n        return 1\n    a, b = 0, 1\n    for i in range(2, n + 1):\n        a, b = b, a + b\n    return b\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9692,
+   "judge_ms": 173.8
+  },
+  {
+   "id": "code-palindrome",
+   "bucket": "code",
+   "candidate": "```python\ndef is_palindrome(s):\n    cleaned = ''.join(c for c in s.lower() if c.isalnum())\n    return cleaned == cleaned[::-1]\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.98,
+   "judge_ms": 159.8
+  },
+  {
+   "id": "code-dedupe",
+   "bucket": "code",
+   "candidate": "```python\ndef dedupe(seq):\n    seen = set()\n    result = []\n    for item in seq:\n        if item not in seen:\n            seen.add(item)\n            result.append(item)\n    return result\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 0.95,
+   "p_correct": 0.9812,
+   "judge_ms": 160.3
+  },
+  {
+   "id": "math-shirt-price",
+   "bucket": "reasoning",
+   "candidate": "$31.25",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.112,
+   "judge_ms": 340.9
+  },
+  {
+   "id": "math-digit-7",
+   "bucket": "reasoning",
+   "candidate": "The digit 7 appears **20** times when writing all integers from 1 to 100 inclusive.\n\nHere's the breakdown:\n\n- **Units digit 7** (10 numbers): 7, 17, 27, 37, 47, 57, 67, 77, 87, 97 \u2192 10 occurrences\n- **Tens digit 7** (10 numbers): 70, 71, 72, 73, 74, 75, 76, 77, 78, 79 \u2192 10 occurrences\n\nNote that 77 contributes 2 occurrences (one in the tens place and one in the units place), so the total is 10 + 10 = **20**.",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9584,
+   "judge_ms": 211.6
+  },
+  {
+   "id": "math-clock-angle",
+   "bucket": "reasoning",
+   "candidate": "172.5",
+   "scion_ok": false,
+   "api_verdict": "reject",
+   "api_confidence": 1.0,
+   "p_correct": 0.2935,
+   "judge_ms": 152.5
+  },
+  {
+   "id": "math-day-of-week",
+   "bucket": "reasoning",
+   "candidate": "Thursday",
+   "scion_ok": false,
+   "api_verdict": "reject",
+   "api_confidence": 1.0,
+   "p_correct": 0.6933,
+   "judge_ms": 148.2
+  },
+  {
+   "id": "math-probability",
+   "bucket": "reasoning",
+   "candidate": "```python\ndef probability_both_red():\n    \"\"\"Calculate the probability that both balls drawn without replacement are red.\"\"\"\n    total_balls = 3 + 5\n    red_balls = 3\n    \n    # First draw: probability of drawing a red ball\n    first_prob = red_balls / total_balls\n    \n    # Second draw: probability of drawing a red ball (one red already removed)\n    second_prob = (red_balls - 1) / (total_balls - 1)\n    \n    # Combined probability\n    result = first_prob * second_prob\n    \n    return result\n```",
+   "scion_ok": false,
+   "api_verdict": "reject",
+   "api_confidence": 0.95,
+   "p_correct": 0.8447,
+   "judge_ms": 196.1
+  },
+  {
+   "id": "math-even-sum",
+   "bucket": "reasoning",
+   "candidate": "The sum of the first 20 positive even numbers is 420. The final number is 40.",
+   "scion_ok": false,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.5,
+   "judge_ms": 152.5
+  },
+  {
+   "id": "math-depreciation",
+   "bucket": "reasoning",
+   "candidate": "$12,648",
+   "scion_ok": false,
+   "api_verdict": "reject",
+   "api_confidence": 1.0,
+   "p_correct": 0.6229,
+   "judge_ms": 153.1
+  },
+  {
+   "id": "qa-strawberry-r",
+   "bucket": "qa",
+   "candidate": "3",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.8528,
+   "judge_ms": 148.0
+  },
+  {
+   "id": "qa-berlin-wall",
+   "bucket": "qa",
+   "candidate": "1989",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9744,
+   "judge_ms": 133.2
+  },
+  {
+   "id": "qa-persistence-memory",
+   "bucket": "qa",
+   "candidate": "Salvador Dal\u00ed",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9711,
+   "judge_ms": 148.5
+  },
+  {
+   "id": "code-run-length",
+   "bucket": "code",
+   "candidate": "```python\ndef run_length_encode(s):\n    if not s:\n        return \"\"\n    result = \"\"\n    count = 1\n    for i in range(1, len(s)):\n        if s[i] != s[i - 1]:\n            result += s[i - 1] + str(count)\n            count = 1\n        else:\n            count += 1\n    result += s[-1] + str(count)\n    return result\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.8999,
+   "judge_ms": 172.5
+  },
+  {
+   "id": "code-merge-intervals",
+   "bucket": "code",
+   "candidate": "```python\ndef merge_intervals(intervals):\n    if not intervals:\n        return []\n    \n    intervals.sort(key=lambda x: x[0])\n    \n    merged = []\n    current = intervals[0]\n    \n    for interval in intervals[1:]:\n        if interval[0] <= current[1]:\n            current[1] = max(current[1], interval[1])\n        else:\n            merged.append(current)\n            current = interval\n    \n    merged.append(current)\n    return merged\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9631,
+   "judge_ms": 175.4
+  },
+  {
+   "id": "code-parse-duration",
+   "bucket": "code",
+   "candidate": "```python\nimport re\n\ndef parse_duration(s):\n    hours = 0\n    minutes = 0\n    seconds = 0\n    \n    match = re.search(r'(\\d+)h', s)\n    if match:\n        hours = int(match.group(1))\n    \n    match = re.search(r'(\\d+)m', s)\n    if match:\n        minutes = int(match.group(1))\n    \n    match = re.search(r'(\\d+)s', s)\n    if match:\n        seconds = int(match.group(1))\n    \n    return hours * 3600 + minutes * 60 + seconds\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 0.95,
+   "p_correct": 0.8816,
+   "judge_ms": 189.1
+  },
+  {
+   "id": "code-balanced-brackets",
+   "bucket": "code",
+   "candidate": "```python\ndef is_balanced(s):\n    stack = []\n    for char in s:\n        if char in '({[':\n            stack.append(char)\n        elif char in ')]}':\n            if not stack:\n                return False\n            top = stack.pop()\n            if (char == ')' and top != '(') or (char == ']' and top != '[') or (char == '}' and top != '{'):\n                return False\n    return len(stack) == 0\n```",
+   "scion_ok": true,
+   "api_verdict": "accept",
+   "api_confidence": 1.0,
+   "p_correct": 0.9759,
+   "judge_ms": 172.7
+  }
+ ],
+ "models": {
+  "Intern-Decision-0.8B": {
+   "model": "internlm/Intern-Decision-0.8B",
+   "device": "cuda",
+   "temperature": 2.747760550702957,
+   "mean_ms": 121.5,
+   "no_leak": {
+    "threshold": 0.75,
+    "accept_rate": 0.1111111111111111,
+    "false_accepts": 0,
+    "false_rejects": 19,
+    "correct_verdicts": 8
+   },
+   "sweep": [
+    {
+     "threshold": 0.05,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.1,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.15,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.2,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.25,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.3,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.35,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.4,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 4,
+     "false_rejects": 3,
+     "correct_verdicts": 20
+    },
+    {
+     "threshold": 0.45,
+     "accept_rate": 0.7037037037037037,
+     "false_accepts": 1,
+     "false_rejects": 4,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.5,
+     "accept_rate": 0.6666666666666666,
+     "false_accepts": 1,
+     "false_rejects": 5,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.55,
+     "accept_rate": 0.6296296296296297,
+     "false_accepts": 1,
+     "false_rejects": 6,
+     "correct_verdicts": 20
+    },
+    {
+     "threshold": 0.6,
+     "accept_rate": 0.48148148148148145,
+     "false_accepts": 1,
+     "false_rejects": 10,
+     "correct_verdicts": 16
+    },
+    {
+     "threshold": 0.65,
+     "accept_rate": 0.37037037037037035,
+     "false_accepts": 1,
+     "false_rejects": 13,
+     "correct_verdicts": 13
+    },
+    {
+     "threshold": 0.7,
+     "accept_rate": 0.25925925925925924,
+     "false_accepts": 1,
+     "false_rejects": 16,
+     "correct_verdicts": 10
+    },
+    {
+     "threshold": 0.75,
+     "accept_rate": 0.1111111111111111,
+     "false_accepts": 0,
+     "false_rejects": 19,
+     "correct_verdicts": 8
+    },
+    {
+     "threshold": 0.8,
+     "accept_rate": 0.037037037037037035,
+     "false_accepts": 0,
+     "false_rejects": 21,
+     "correct_verdicts": 6
+    },
+    {
+     "threshold": 0.85,
+     "accept_rate": 0.0,
+     "false_accepts": 0,
+     "false_rejects": 22,
+     "correct_verdicts": 5
+    },
+    {
+     "threshold": 0.9,
+     "accept_rate": 0.0,
+     "false_accepts": 0,
+     "false_rejects": 22,
+     "correct_verdicts": 5
+    },
+    {
+     "threshold": 0.95,
+     "accept_rate": 0.0,
+     "false_accepts": 0,
+     "false_rejects": 22,
+     "correct_verdicts": 5
+    }
+   ],
+   "p_correct": {
+    "qa-capital-australia": 0.4886,
+    "qa-element-w": 0.59,
+    "qa-pride-prejudice": 0.654,
+    "qa-largest-planet": 0.5566,
+    "math-train-speed": 0.6118,
+    "math-linear": 0.4434,
+    "math-percent": 0.3563,
+    "math-diagonal": 0.6118,
+    "math-bat-ball": 0.3563,
+    "code-count-vowels": 0.7572,
+    "code-fib": 0.7487,
+    "code-palindrome": 0.7735,
+    "code-dedupe": 0.7312,
+    "math-shirt-price": 0.3668,
+    "math-digit-7": 0.8372,
+    "math-clock-angle": 0.3774,
+    "math-day-of-week": 0.4211,
+    "math-probability": 0.7487,
+    "math-even-sum": 0.41,
+    "math-depreciation": 0.4211,
+    "qa-strawberry-r": 0.5566,
+    "qa-berlin-wall": 0.5789,
+    "qa-persistence-memory": 0.5114,
+    "code-run-length": 0.6009,
+    "code-merge-intervals": 0.6643,
+    "code-parse-duration": 0.694,
+    "code-balanced-brackets": 0.7036
+   }
+  },
+  "Intern-Decision-2B": {
+   "model": "internlm/Intern-Decision-2B",
+   "device": "cuda",
+   "temperature": 2.100509348277736,
+   "mean_ms": 170.1,
+   "no_leak": {
+    "threshold": 0.7,
+    "accept_rate": 0.5185185185185185,
+    "false_accepts": 0,
+    "false_rejects": 8,
+    "correct_verdicts": 19
+   },
+   "sweep": [
+    {
+     "threshold": 0.05,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.1,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.15,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.2,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.25,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.3,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.35,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.4,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.45,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.5,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 4,
+     "false_rejects": 3,
+     "correct_verdicts": 20
+    },
+    {
+     "threshold": 0.55,
+     "accept_rate": 0.7037037037037037,
+     "false_accepts": 2,
+     "false_rejects": 5,
+     "correct_verdicts": 20
+    },
+    {
+     "threshold": 0.6,
+     "accept_rate": 0.6666666666666666,
+     "false_accepts": 1,
+     "false_rejects": 5,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.65,
+     "accept_rate": 0.5925925925925926,
+     "false_accepts": 1,
+     "false_rejects": 7,
+     "correct_verdicts": 19
+    },
+    {
+     "threshold": 0.7,
+     "accept_rate": 0.5185185185185185,
+     "false_accepts": 0,
+     "false_rejects": 8,
+     "correct_verdicts": 19
+    },
+    {
+     "threshold": 0.75,
+     "accept_rate": 0.5185185185185185,
+     "false_accepts": 0,
+     "false_rejects": 8,
+     "correct_verdicts": 19
+    },
+    {
+     "threshold": 0.8,
+     "accept_rate": 0.5185185185185185,
+     "false_accepts": 0,
+     "false_rejects": 8,
+     "correct_verdicts": 19
+    },
+    {
+     "threshold": 0.85,
+     "accept_rate": 0.37037037037037035,
+     "false_accepts": 0,
+     "false_rejects": 12,
+     "correct_verdicts": 15
+    },
+    {
+     "threshold": 0.9,
+     "accept_rate": 0.14814814814814814,
+     "false_accepts": 0,
+     "false_rejects": 18,
+     "correct_verdicts": 9
+    },
+    {
+     "threshold": 0.95,
+     "accept_rate": 0.0,
+     "false_accepts": 0,
+     "false_rejects": 22,
+     "correct_verdicts": 5
+    }
+   ],
+   "p_correct": {
+    "qa-capital-australia": 0.6027,
+    "qa-element-w": 0.8563,
+    "qa-pride-prejudice": 0.8832,
+    "qa-largest-planet": 0.8489,
+    "math-train-speed": 0.6713,
+    "math-linear": 0.1755,
+    "math-percent": 0.5,
+    "math-diagonal": 0.4851,
+    "math-bat-ball": 0.6168,
+    "code-count-vowels": 0.9106,
+    "code-fib": 0.9004,
+    "code-palindrome": 0.9004,
+    "code-dedupe": 0.895,
+    "math-shirt-price": 0.105,
+    "math-digit-7": 0.9106,
+    "math-clock-angle": 0.5,
+    "math-day-of-week": 0.6713,
+    "math-probability": 0.5738,
+    "math-even-sum": 0.1589,
+    "math-depreciation": 0.5445,
+    "qa-strawberry-r": 0.5445,
+    "qa-berlin-wall": 0.833,
+    "qa-persistence-memory": 0.8832,
+    "code-run-length": 0.8157,
+    "code-merge-intervals": 0.8635,
+    "code-parse-duration": 0.8411,
+    "code-balanced-brackets": 0.8892
+   }
+  },
+  "Intern-Decision-4B": {
+   "model": "internlm/Intern-Decision-4B",
+   "device": "cuda",
+   "temperature": 1.99241824,
+   "mean_ms": 310.2,
+   "no_leak": {
+    "threshold": 0.85,
+    "accept_rate": 0.7037037037037037,
+    "false_accepts": 0,
+    "false_rejects": 3,
+    "correct_verdicts": 24
+   },
+   "sweep": [
+    {
+     "threshold": 0.05,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.1,
+     "accept_rate": 1.0,
+     "false_accepts": 5,
+     "false_rejects": 0,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.15,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.2,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.25,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 5,
+     "false_rejects": 1,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.3,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.35,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.4,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.45,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.5,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 4,
+     "false_rejects": 2,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.55,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 3,
+     "false_rejects": 2,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.6,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 3,
+     "false_rejects": 2,
+     "correct_verdicts": 22
+    },
+    {
+     "threshold": 0.65,
+     "accept_rate": 0.8148148148148148,
+     "false_accepts": 2,
+     "false_rejects": 2,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.7,
+     "accept_rate": 0.7777777777777778,
+     "false_accepts": 1,
+     "false_rejects": 2,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.75,
+     "accept_rate": 0.7407407407407407,
+     "false_accepts": 1,
+     "false_rejects": 3,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.8,
+     "accept_rate": 0.7407407407407407,
+     "false_accepts": 1,
+     "false_rejects": 3,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.85,
+     "accept_rate": 0.7037037037037037,
+     "false_accepts": 0,
+     "false_rejects": 3,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.9,
+     "accept_rate": 0.5925925925925926,
+     "false_accepts": 0,
+     "false_rejects": 6,
+     "correct_verdicts": 21
+    },
+    {
+     "threshold": 0.95,
+     "accept_rate": 0.5185185185185185,
+     "false_accepts": 0,
+     "false_rejects": 8,
+     "correct_verdicts": 19
+    }
+   ],
+   "p_correct": {
+    "qa-capital-australia": 0.9744,
+    "qa-element-w": 0.9744,
+    "qa-pride-prejudice": 0.9608,
+    "qa-largest-planet": 0.98,
+    "math-train-speed": 0.9631,
+    "math-linear": 0.2682,
+    "math-percent": 0.7193,
+    "math-diagonal": 0.9471,
+    "math-bat-ball": 0.9054,
+    "code-count-vowels": 0.9759,
+    "code-fib": 0.9692,
+    "code-palindrome": 0.98,
+    "code-dedupe": 0.9812,
+    "math-shirt-price": 0.112,
+    "math-digit-7": 0.9584,
+    "math-clock-angle": 0.2935,
+    "math-day-of-week": 0.6933,
+    "math-probability": 0.8447,
+    "math-even-sum": 0.5,
+    "math-depreciation": 0.6229,
+    "qa-strawberry-r": 0.8528,
+    "qa-berlin-wall": 0.9744,
+    "qa-persistence-memory": 0.9711,
+    "code-run-length": 0.8999,
+    "code-merge-intervals": 0.9631,
+    "code-parse-duration": 0.8816,
+    "code-balanced-brackets": 0.9759
+   }
+  },
+  "JEV-9B": {
+   "model": "autotrust/JEV-9B",
+   "family": "jev",
+   "device": "cuda:0",
+   "temperature": {
+    "noul": 1.0022178236691426,
+    "choice": 0.9840233476014968,
+    "score": 1.012184473350984
+   },
+   "mean_ms": 292.0,
+   "no_leak": {
+    "threshold": 0.95,
+    "accept_rate": 0.7037037037037037,
+    "false_accepts": 0,
+    "false_rejects": 3,
+    "correct_verdicts": 24
+   },
+   "sweep": [
+    {
+     "threshold": 0.05,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 4,
+     "false_rejects": 0,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.1,
+     "accept_rate": 0.9629629629629629,
+     "false_accepts": 4,
+     "false_rejects": 0,
+     "correct_verdicts": 23
+    },
+    {
+     "threshold": 0.15,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.2,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.25,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.3,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.35,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.4,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.45,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.5,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.55,
+     "accept_rate": 0.9259259259259259,
+     "false_accepts": 3,
+     "false_rejects": 0,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.6,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 2,
+     "false_rejects": 0,
+     "correct_verdicts": 25
+    },
+    {
+     "threshold": 0.65,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 2,
+     "false_rejects": 0,
+     "correct_verdicts": 25
+    },
+    {
+     "threshold": 0.7,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 2,
+     "false_rejects": 0,
+     "correct_verdicts": 25
+    },
+    {
+     "threshold": 0.75,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 2,
+     "false_rejects": 0,
+     "correct_verdicts": 25
+    },
+    {
+     "threshold": 0.8,
+     "accept_rate": 0.8888888888888888,
+     "false_accepts": 2,
+     "false_rejects": 0,
+     "correct_verdicts": 25
+    },
+    {
+     "threshold": 0.85,
+     "accept_rate": 0.8518518518518519,
+     "false_accepts": 1,
+     "false_rejects": 0,
+     "correct_verdicts": 26
+    },
+    {
+     "threshold": 0.9,
+     "accept_rate": 0.7777777777777778,
+     "false_accepts": 1,
+     "false_rejects": 2,
+     "correct_verdicts": 24
+    },
+    {
+     "threshold": 0.95,
+     "accept_rate": 0.7037037037037037,
+     "false_accepts": 0,
+     "false_rejects": 3,
+     "correct_verdicts": 24
+    }
+   ],
+   "p_correct": {
+    "qa-capital-australia": 0.9913,
+    "qa-element-w": 0.9955,
+    "qa-pride-prejudice": 0.9981,
+    "qa-largest-planet": 0.9985,
+    "math-train-speed": 0.9957,
+    "math-linear": 0.8665,
+    "math-percent": 0.9905,
+    "math-diagonal": 0.9816,
+    "math-bat-ball": 0.9668,
+    "code-count-vowels": 0.985,
+    "code-fib": 0.9771,
+    "code-palindrome": 0.9914,
+    "code-dedupe": 0.99,
+    "math-shirt-price": 0.9631,
+    "math-digit-7": 0.9731,
+    "math-clock-angle": 0.0274,
+    "math-day-of-week": 0.575,
+    "math-probability": 0.9478,
+    "math-even-sum": 0.8001,
+    "math-depreciation": 0.1352,
+    "qa-strawberry-r": 0.9096,
+    "qa-berlin-wall": 0.9956,
+    "qa-persistence-memory": 0.9961,
+    "code-run-length": 0.9641,
+    "code-merge-intervals": 0.9812,
+    "code-parse-duration": 0.8552,
+    "code-balanced-brackets": 0.9848
+   }
+  }
+ }
+}

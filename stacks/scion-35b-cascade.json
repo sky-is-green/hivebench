@@ -1,0 +1,18 @@
+{
+  "name": "scion-35b-cascade",
+  "version": 1,
+  "tiers": [
+    {
+      "role": "face",
+      "repo": "local/scion",
+      "file": "qwen35-release-v2-cur05-soup.gguf",
+      "ctx": 8192,
+      "ngl": 99,
+      "backend": "scion",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "pin": "HIP_VISIBLE_DEVICES=1"
+    }
+  ],
+  "routing": { "workers_as": "subagent" }
+}

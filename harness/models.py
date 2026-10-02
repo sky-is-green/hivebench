@@ -94,7 +94,10 @@ def _default_binary() -> Path:
     return REPO_ROOT / "tools" / "llama.cpp" / exe
 
 
-BACKENDS = ("vulkan", "rocm", "cuda", "cpu", "sycl")
+BACKENDS = ("vulkan", "rocm", "cuda", "cpu", "sycl", "scion")
+# ``scion`` is the moe-corr-runtime fork (ternary PQ2_0 container + the
+# draft-mtp-sidecar drafter), staged at tools/backends/scion/llama-server.
+# The Scion stacks need it; the other backends are unchanged.
 
 
 def _binary_for_backend(backend: Optional[str]) -> Optional[Path]:

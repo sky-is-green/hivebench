@@ -1,0 +1,280 @@
+# Cascade pilot — harness layer
+
+The cascade is a **mixture of models by role**, not a fused model: each
+request is assigned to the cheapest model that is good at it, and work is
+spread over CPU, iGPU and both dGPUs.  It has two goals — cost routing (run
+the smallest sufficient model) and a hallucination lever (verification that
+can reject and regenerate).
+
+The design brief lives in the research workspace (`steer-exp/CASCADE-PILOT.md`);
+this repo owns the **deterministic harness layer** of it, `harness/cascade/`.
+
+## Division of labour
+
+| layer | lives in | examples |
+|---|---|---|
+| deterministic policy | `harness/cascade/` | role taxonomy, registry, paths, scheduling, judgement batching/cancellation, thresholds, telemetry |
+| learned judgment | models | routers (C1), decision models (C2–C4, D1–D3, H1), generators, drafters, encoders |
+| measurement / training | offline | per-role oracle, calibration, threshold fitting |
+| launches and residency | `harness/stack/` | spawning llama-server tiers, validating capacity, per-tier status |
+
+## What is implemented
+
+- **`roles.py`** — the role taxonomy A1–H1 as data: input/output contract,
+  device tier, latency budget, context cap, KV policy and candidate ids.  No
+  model choice is baked in.
+- **`registry.py`** — candidate catalog (repo, precision, size, roles covered)
+  and `select_resident_set()`: the brief's minimal-cover consolidation within
+  per-device capacity.
+- **`paths.py`** — path definitions P0–P6 (cache hit, fast, standard QA,
+  escalated, agentic/coding, deep reasoning, vision), with `extends` expansion
+  and async/blocking step flags.
+- **`judgement.py`** — the async judgement broker: batch per role, consume
+  when ready, and drop pending *or late* results when a generation is
+  cancelled (fire-and-consume with cancellation).
+- **`policy.py`** — escalation thresholds, verify window, reasoning-budget
+  cadence, escalation budget.
+- **`scheduler.py`** — per-(role, device) latency model with a brief-budget
+  fallback, path estimation, and expected-cost plan selection including the
+  probability-weighted escalation cost.  ``quality=`` accepts the oracle's
+  per-path metric once measured.
+- **`telemetry.py`** — append-only per-role records + summary (the offline
+  tuner's input).
+- **`oracle.py`** — the per-role measurement record and Pareto-frontier
+  arithmetic for pilot stage 0.
+
+Models are **stubbed** at this layer: judgement handlers are injected, the
+latency model starts from the brief's planning table, and nothing loads a
+model or spawns a server.
+
+## Use
+
+```python
+from harness.cascade import (
+    default_registry, select_resident_set,
+    RouteDecision, plan_request, JudgementBroker,
+)
+
+registry = default_registry()
+resident = select_resident_set(
+    registry, ["A1", "B2", "C1", "D2", "E2"],
+    capacity_gb={"cpu": 8, "igpu": 14, "dgpu0": 20, "dgpu1": 20},
+)
+
+broker = JudgementBroker()
+broker.register_handler("C1", classify_prompt)     # a model call in production
+plan = plan_request(RouteDecision("qa", confidence=0.62), out_len=256)
+```
+
+## Next steps
+
+1. **Stage 0 — per-role oracle.**  Run candidates per role through
+   `harness/stack` and record `CandidateMeasurement` rows; build the per-role
+   frontiers; write the measured cells back into the registry.
+2. **Endpoint wiring.**  A `/v1/cascade/*` router (roles, registry, frontier,
+   plan) mounted like the stack router, so the Studio and the DSH sidecar can
+   drive it.
+3. **Resident-set → stack.**  Turn a chosen resident set into a stack document
+   and launch it through `harness/stack/manager.py`.
+4. **Verifier loop (D1–D3).**  The first end-to-end path with the hallucination
+   lever: generation → async verify → reject/regenerate or escalate.
+
+## First live pilot (2026-10-01)
+
+The first end-to-end run: **Scion summoned through the stack system** and a
+frontier API tier playing the learned-judgment roles. 14 tasks with
+programmatic checkers (`experiments/cascade/tasks-hard.json`), runner
+`experiments/cascade/run_cascade.py` (built on this package: `plan_request`,
+the judgement broker, `Policy`, `TelemetryLog`).
+
+Setup:
+
+```sh
+# the fork binary (ternary PQ2_0 + drafter) as a named backend
+ln -s /home/penis/llama.cpp/build/bin/llama-server tools/backends/scion/llama-server
+./start_harness.sh                                   # sidecar on :8765
+curl -X POST localhost:8765/v1/stacks/scion-35b-cascade/apply
+# Scion GGUF must be in the model library (~/.lmstudio/models or models/gguf)
+.venv/bin/python experiments/cascade/run_cascade.py \
+    --tasks experiments/cascade/tasks-hard.json
+```
+
+The frontier tier is `opencode-go` / `deepseek-v4.1-flash` (OpenAI-compatible,
+needs the `x-opencode-session` header; key read from the OpenCode auth store).
+
+| arm | accuracy | notes |
+|---|---|---|
+| Scion alone | **9/14 (64%)** | 4/4 coding, 4/5 QA, 1/5 reasoning |
+| API alone | **14/14 (100%)** | ceiling, $0.0015 |
+| **cascade** | **13/14 (93%)** | 4 escalations, all corrected; 1 verifier false-accept |
+| router agreement | 50% | it cannot see the local model's actual competence |
+
+Escalation rate **29%**; the verifier caught **4/5** local errors with **0 false
+rejects**; total API spend **$0.0071**. Scion mean 3.9 s/answer (261 completion
+tokens, reasoning); API mean 2.2 s/call.
+
+Read: local-first + verify/escalate recovers most of the gap to the ceiling for
+a fraction of a cent, and the failure mode to watch is the **verifier accepting
+a self-contradicting answer** (the one miss: Scion wrote "the sum is 420. The
+final number is 40." and the verifier accepted 420 without flagging 40). The
+router cannot predict local competence from the task alone — routing needs the
+local model's measured per-bucket accuracy (the oracle), not a zero-shot guess.
+The easy set (13 tasks) had Scion at 13/13 and showed only that the plumbing
+works. Artifacts: `experiments/cascade/runs/<timestamp>/report.json`.
+
+## Console contract (`/v1/cascade/*`)
+
+The sidecar now exposes the engine over HTTP (`harness/cascade/api.py`, mounted
+in `harness/app.py`).  Any console — the DSH panel, the Studio page, `curl` —
+drives the same Python:
+
+| endpoint | verb | wraps |
+|---|---|---|
+| `/v1/cascade/roles` | GET | the A1–H1 taxonomy |
+| `/v1/cascade/paths` | GET | P0–P6 + the route table |
+| `/v1/cascade/registry` | GET | candidate catalog + role coverage |
+| `/v1/cascade/plan` | GET | `plan_request(bucket, confidence, out_len)` |
+| `/v1/cascade/frontier` | GET | per-role Pareto fronts from an oracle JSON |
+| `/v1/cascade/run` | POST | launch a pilot/oracle run (background, pid) |
+| `/v1/cascade/runs` | GET | run index, newest first, with summary |
+| `/v1/cascade/report/{run}` | GET | one run's `report.json` |
+
+```sh
+curl -X POST localhost:8765/v1/cascade/run \
+     -H 'content-type: application/json' \
+     -d '{"tasks":"tasks-hard.json","limit":3,"run_name":"my-run"}'
+curl localhost:8765/v1/cascade/runs
+```
+
+## Local gateway (LiteLLM)
+
+`tools/gateway/` runs **LiteLLM** locally on :4000 as the provider-grade
+control plane: model groups `scion` (the hivebench stack tier) and `flash`
+(opencode-go), retries and a `scion → flash` **error** fallback. Postgres
+(userspace, via the `pgserver` binaries on 127.0.0.1:5433) backs the control
+surface: **per-role virtual keys** (router / verifier / escalation) with daily
+budgets, a spend ledger, request logs, and the dashboard at
+<http://127.0.0.1:4000/ui/>. The runner uses the per-role keys
+(`CASCADE_ROUTER_KEY` / `CASCADE_VERIFIER_KEY` / `CASCADE_ESCALATION_KEY`,
+stored outside the repo at `~/.local/share/hivebench-litellm/keys.env`).
+Verified: both routes; fallback with the local tier unloaded returns a flash
+answer; per-key spend after a pilot (router $0.000523/0.25, verifier
+$0.000358/0.50, escalation $0.000266/2.00). Quality-gated escalation stays in
+`harness/cascade`; the gateway routes on availability, not correctness. See
+`tools/gateway/README.md`.
+
+## Router (C1) — first local decision model
+
+`Tiny-Jev-1.7B` (the brief's lite Jev) now plays C1 in the pilot. It is a
+non-autoregressive decision model (Qwen3-1.7B base, `trust_remote_code`): one
+forward pass returns a probability distribution over typed options, no text
+generation. Offline scoring (`experiments/cascade/router_eval.py`) uses the
+recorded Scion/API outcomes, so router candidates are compared with no
+generation reruns:
+
+| router (14 hard tasks) | policy quality | API share | routing accuracy |
+|---|---|---|---|
+| always local | 0.643 | 0.00 | — |
+| always API | 1.000 | 1.00 | — |
+| oracle | 1.000 | 0.357 | — |
+| frontier API prompt | 0.714 | 0.214 | 0.571 |
+| **Tiny-Jev `choice`** | **1.000** | 0.643 | 0.714 |
+
+Reads: the `choice` framing ("which model should handle this?" → local/api)
+**separates all five Scion failures** — wrong tasks land at 0.56–0.88, the
+confident-correct code tasks at 0.97+ — giving perfect policy quality zero-shot
+at threshold 0.90, where the frontier router managed 0.714. It over-escalates
+correct math (0.74–0.81), so the next lever is calibration on measured outcomes.
+The `noul` framings ("can the local model answer this?") are miscalibrated:
+probabilities cluster high and route everything local, or (rephrased) everything
+API. ~180 ms/decision on CPU; 10–40 ms expected on GPU/iGPU.
+
+**End-to-end** (`cascade-jev-router`, measure mode): cascade quality 13/14,
+router agreement **0.50 → 0.714**, router API spend **$0.0026 → $0**, run cost
+**$0.0071 → $0.0045 (−37%)**.
+
+**Gate mode** (`cascade-gate-090`, threshold 0.90 — the calibrated
+perfect-quality point): an API route now skips local generation *and* the
+verifier, so 9/14 tasks went straight to the API and only the 5 local-routed
+tasks were generated and verified (0 verifier escalations). Result: **14/14
+quality** — the verifier's one false-accept (even-sum, p=0.56) was gated away —
+at **$0.000743**, a **90% cut** vs the original API-router run and −83% vs
+measure mode; router spend stayed $0 (verifier 5 calls, API 9). The threshold
+trade-off from the 27-task calibration: 0.60 → 85% routing accuracy at 3.7%
+API share; 0.75–0.80 → 0.857 quality at 22–30% share; 0.90 → 1.000 quality at
+59% share. 0.90 is the zero-shot separation point; lower thresholds lean on
+the verifier to catch what the router misses. Next: the 4B Jev judge so D3
+goes local too.
+
+## Judge (D3) — local verifier
+
+`Intern-Decision-4B` (the brief's 4B Jev) now plays D3. It is a structured
+decision model (Qwen3.5-4B base, masked-next-token scoring over `<decision>`
+placeholders, fitted temperature T≈1.99): we ask one `noul` field — *"the
+candidate answer is correct and complete"* — and threshold P(yes). The
+checkpoint's own `inference.py` is used as-is (text-only; the multimodal
+processor is stubbed), ~280 ms/judgement on the 7900 XT.
+
+Offline eval on the 27-task labelled history
+(`experiments/cascade/judge_eval.py`):
+
+| judge | accept rate | false accepts | false rejects | correct verdicts |
+|---|---|---|---|---|
+| frontier API prompt (recorded) | 0.852 | 1 | 0 | 26/27 |
+| **Intern-Decision-4B @ 0.85** | 0.704 | **0** | 3 | 24/27 |
+| Intern-Decision-4B @ 0.50 | 0.889 | 4 | 2 | 21/27 |
+
+At 0.85 the local judge is **quality-first**: no wrong answer is accepted; the
+price is 3 unnecessary escalations. The API judge leaks once (its one false
+accept) but wastes no escalations. Either is defensible; 0.85 is the
+no-leak point.
+
+**Scaling — does the judge want more parameters?** Same 27-task set, each
+checkpoint at its own no-leak operating point (the smallest threshold with zero
+false accepts):
+
+| model | thr | accept rate | false rejects | correct verdicts | ms |
+|---|---|---|---|---|---|
+| Intern-Decision-0.8B | 0.75 | 0.111 | 19 | 8/27 | 122 |
+| Intern-Decision-2B | 0.70 | 0.519 | 8 | 19/27 | 170 |
+| **Intern-Decision-4B** | **0.85** | **0.704** | **3** | **24/27** | 310 |
+| **JEV-9B (bf16)** | 0.85 | 0.852 | **0** | **26/27** | 292 |
+| frontier API (generative) | — | 0.852 | 0 | 26/27 (1 leak) | — |
+
+Monotone with diminishing returns: 0.8B → 2B buys +11 correct verdicts,
+2B → 4B +5. The family's published benchmarks show the same shape
+(79.4 → 84.7 → 90.0 average). The 4B is the top of the family — beyond it the
+options are a *generative* local verifier (the API judge's architecture, which
+can actually recompute the answer) or training our own larger judge, not
+another off-the-shelf sibling.
+
+**JEV-9B (`autotrust/JEV-9B`, bf16) matches the frontier API judge** on this
+set: 26/27 correct verdicts, 1 false accept, 0 false rejects at threshold 0.85
+— a direct student of TypeSafe Jev 1.13 (Qwen3.5-9B + LoRA + a 24-slot
+decision head, `bare-v1` prompt, per-kind temperature). It runs locally
+(18 GB bf16, split across both cards, ~292 ms/judgement) with the repo's own
+transformers readout — no vLLM needed. At 0.95 it is also the no-leak point
+(24/27, 3 false rejects). The judge role can now be fully local at
+API-judge quality.
+
+**Full local cascade** (`cascade-full-local`: Tiny-Jev router + Intern-Decision
+judge + Scion generator, API only for the 9 router-gated answers): **14/14
+quality at $0.000481**, with *no* router and *no* verifier API calls. The
+progression on the same 14 tasks:
+
+| configuration | quality | paid roles | cost |
+|---|---|---|---|
+| API router + API judge | 0.929 | answer + router + verifier | $0.007136 |
+| local router, API judge (gate) | 1.000 | answer + verifier | $0.000743 |
+| **local router + local judge (gate)** | **1.000** | **answer only** | **$0.000481** |
+
+That is a **93% cost cut** with quality *up* (the router gated away the one
+case the API verifier used to miss). Caveats: 14 tasks, single sample, and the
+judge runs in-process (the ROCm venv) rather than as a served endpoint.
+
+## Related
+
+- `HIVE-PLAN.md` (local-only) — track plan and task rows.
+- `LOCAL-STACKS.md` (local-only) — model-stack mechanics, KV math.
+- DeepSeek Harness (DSH) side — the agent bridge in `harness/agent.py`; the
+  fork's sidecar/engine packages host the models the cascade picks from.

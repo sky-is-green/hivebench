@@ -77,6 +77,7 @@ from cortex.splinter import Splinter
 from experiments.model_probe import _list_models, probe_model
 from harness.hardware import disk_summary, parse_visible_indices
 from harness.models import LlamaServerManager
+from harness.cascade import api as cascade_api
 from harness.reports import (
     render_report_page,
     render_runs_page,
@@ -2129,6 +2130,11 @@ def create_app(
     stack_manager = StackManager(models_manager)
     app.state.stack_manager = stack_manager
     app.include_router(create_stack_router(stack_manager))
+
+    # Cascade pilot (Track C): the console contract.  The router wraps
+    # harness.cascade and the experiments/cascade run artifacts; it is a
+    # factory so tests can point it at a tmp runs root with a fake launcher.
+    app.include_router(cascade_api.create_router())
 
     def register_local_remove(key: str) -> None:
         """Retire a local instance's provider + engine profile."""

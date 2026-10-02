@@ -1,0 +1,47 @@
+# Local LiteLLM gateway — one OpenAI-compatible control plane in front of the
+# hive's model fleet.  Operated locally; secrets come from the environment
+# (see start.sh), never from this file.
+#
+#   scion  → the hivebench stack tier (llama-server, currently :1234)
+#   flash  → the API provider (opencode-go), used as the strong fallback
+#
+# Fallbacks fire on provider errors (connection refused, timeouts, 5xx), not
+# on answer quality — quality gating is the cascade's verifier layer.
+
+model_list:
+  - model_name: scion
+    litellm_params:
+      model: openai/scion
+      api_base: http://127.0.0.1:1234/v1
+      api_key: sk-local
+
+  - model_name: flash
+    litellm_params:
+      model: openai/deepseek-v4.1-flash
+      api_base: https://opencode.ai/zen/go/v1
+      api_key: os.environ/OPENCODE_GO_KEY
+      # Cost is not in LiteLLM's price map for this custom deployment: declare
+      # it so virtual-key budgets and the spend ledger are real.  $0.15/M in,
+      # $0.60/M out (opencode-go list price).
+      input_cost_per_token: 0.00000015
+      output_cost_per_token: 0.0000006
+      extra_headers:
+        # the zen gateway routes by session; a fixed id is fine locally
+        x-opencode-session: hive-gateway
+        # the provider's edge rejects some default client agents
+        user-agent: curl/8.9.1
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 2
+  fallbacks: [{scion: [flash]}]
+
+litellm_settings:
+  drop_params: true
+  request_timeout: 600
+
+general_settings:
+  master_key: sk-hive-local
+  # Spend tracking / virtual keys need PostgreSQL (LiteLLM 2026 dropped SQLite):
+  #   database_url: postgresql://user:pass@127.0.0.1:5432/litellm
+  # Routing and fallbacks work without a database.

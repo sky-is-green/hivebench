@@ -1,0 +1,421 @@
+{
+ "summary": {
+  "tasks": 27,
+  "sources": [
+   "20261001-221511",
+   "cascade-jev-router"
+  ],
+  "api_coverage": 0.5185185185185185,
+  "always_local": {
+   "quality": 0.8148148148148148,
+   "api_share": 0.0
+  },
+  "always_api": {
+   "quality": 1.0,
+   "api_share": 1.0
+  },
+  "oracle": {
+   "quality": 1.0,
+   "api_share": 0.18518518518518517
+  },
+  "api_router": {
+   "tasks": 27,
+   "routing_accuracy": 0.7407407407407407,
+   "quality": 1.0,
+   "api_share": 0.4444444444444444
+  },
+  "tiny_jev": {
+   "model": "lostargon/Tiny-Jev-1.7B",
+   "device": "cpu",
+   "mean_ms": 195.8111111111111,
+   "sweep": [
+    {
+     "threshold": 0.05,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.1,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.15,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.2,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.25,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.3,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.35,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.4,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.45,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.5,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.55,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.6428571428571429,
+     "api_share": 0.0
+    },
+    {
+     "threshold": 0.6,
+     "routing_accuracy": 0.8518518518518519,
+     "quality": 0.7142857142857143,
+     "api_share": 0.037037037037037035
+    },
+    {
+     "threshold": 0.65,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.7142857142857143,
+     "api_share": 0.07407407407407407
+    },
+    {
+     "threshold": 0.7,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.7142857142857143,
+     "api_share": 0.07407407407407407
+    },
+    {
+     "threshold": 0.75,
+     "routing_accuracy": 0.8148148148148148,
+     "quality": 0.8571428571428571,
+     "api_share": 0.2222222222222222
+    },
+    {
+     "threshold": 0.8,
+     "routing_accuracy": 0.7407407407407407,
+     "quality": 0.8571428571428571,
+     "api_share": 0.2962962962962963
+    },
+    {
+     "threshold": 0.85,
+     "routing_accuracy": 0.5925925925925926,
+     "quality": 0.8571428571428571,
+     "api_share": 0.4444444444444444
+    },
+    {
+     "threshold": 0.9,
+     "routing_accuracy": 0.5925925925925926,
+     "quality": 1.0,
+     "api_share": 0.5925925925925926
+    },
+    {
+     "threshold": 0.95,
+     "routing_accuracy": 0.5555555555555556,
+     "quality": 1.0,
+     "api_share": 0.6296296296296297
+    }
+   ]
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.722,
+   "router_ms": 490.1
+  },
+  {
+   "id": "qa-element-w",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.8168,
+   "router_ms": 236.3
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.8637,
+   "router_ms": 163.0
+  },
+  {
+   "id": "qa-largest-planet",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.7519,
+   "router_ms": 158.2
+  },
+  {
+   "id": "math-train-speed",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "api",
+   "source": "20261001-221511",
+   "p_local_correct": 0.9809,
+   "router_ms": 175.3
+  },
+  {
+   "id": "math-linear",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.8152,
+   "router_ms": 165.3
+  },
+  {
+   "id": "math-percent",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "api",
+   "source": "20261001-221511",
+   "p_local_correct": 0.6183,
+   "router_ms": 161.9
+  },
+  {
+   "id": "math-diagonal",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.8976,
+   "router_ms": 177.4
+  },
+  {
+   "id": "math-bat-ball",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "api",
+   "source": "20261001-221511",
+   "p_local_correct": 0.9734,
+   "router_ms": 194.6
+  },
+  {
+   "id": "code-count-vowels",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.9929,
+   "router_ms": 236.4
+  },
+  {
+   "id": "code-fib",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.995,
+   "router_ms": 197.0
+  },
+  {
+   "id": "code-palindrome",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.9883,
+   "router_ms": 194.1
+  },
+  {
+   "id": "code-dedupe",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": null,
+   "api_router": "local",
+   "source": "20261001-221511",
+   "p_local_correct": 0.9939,
+   "router_ms": 201.8
+  },
+  {
+   "id": "math-shirt-price",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.8124,
+   "router_ms": 180.4
+  },
+  {
+   "id": "math-digit-7",
+   "bucket": "reasoning",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.742,
+   "router_ms": 174.7
+  },
+  {
+   "id": "math-clock-angle",
+   "bucket": "reasoning",
+   "scion_ok": false,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.7127,
+   "router_ms": 178.6
+  },
+  {
+   "id": "math-day-of-week",
+   "bucket": "reasoning",
+   "scion_ok": false,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.7157,
+   "router_ms": 174.2
+  },
+  {
+   "id": "math-probability",
+   "bucket": "reasoning",
+   "scion_ok": false,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.8812,
+   "router_ms": 184.5
+  },
+  {
+   "id": "math-even-sum",
+   "bucket": "reasoning",
+   "scion_ok": false,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.8643,
+   "router_ms": 162.5
+  },
+  {
+   "id": "math-depreciation",
+   "bucket": "reasoning",
+   "scion_ok": false,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.5629,
+   "router_ms": 193.7
+  },
+  {
+   "id": "qa-strawberry-r",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.7794,
+   "router_ms": 167.0
+  },
+  {
+   "id": "qa-berlin-wall",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "local",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.9294,
+   "router_ms": 156.5
+  },
+  {
+   "id": "qa-persistence-memory",
+   "bucket": "qa",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "api",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.8053,
+   "router_ms": 157.2
+  },
+  {
+   "id": "code-run-length",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "local",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.9868,
+   "router_ms": 203.6
+  },
+  {
+   "id": "code-merge-intervals",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "local",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.9745,
+   "router_ms": 202.1
+  },
+  {
+   "id": "code-parse-duration",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "local",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.9708,
+   "router_ms": 213.3
+  },
+  {
+   "id": "code-balanced-brackets",
+   "bucket": "code",
+   "scion_ok": true,
+   "api_ok": true,
+   "api_router": "local",
+   "source": "cascade-jev-router",
+   "p_local_correct": 0.9829,
+   "router_ms": 187.2
+  }
+ ]
+}
