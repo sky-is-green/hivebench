@@ -40,6 +40,58 @@ def _code_block(text: str) -> Optional[str]:
     return None
 
 
+def _boxed(text: str) -> Optional[str]:
+    """Content of the last ``\\boxed{...}`` (balanced braces), or ``None``."""
+    idx = text.rfind("\\boxed{")
+    if idx < 0:
+        return None
+    depth = 0
+    out: list[str] = []
+    for char in text[idx + len("\\boxed{") :]:
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            if depth == 0:
+                return "".join(out).strip()
+            depth -= 1
+        out.append(char)
+    return None
+
+
+def _norm_math(text: str) -> str:
+    """Latex-ish normalization for exact-string math comparison."""
+    value = text.strip().strip("$").strip()
+    for source, target in (
+        ("\\left", ""), ("\\right", ""), ("\\dfrac", "\\frac"),
+        ("\\tfrac", "\\frac"), ("\\,", ""), ("\\!", ""), ("\\;", ""),
+        ("\\ ", ""), ("~", ""), (" ", ""), ("%", ""), ("\\%", ""),
+    ):
+        value = value.replace(source, target)
+    value = re.sub(r"\\text\{([^{}]*)\}", r"\1", value)
+    return value
+
+
+def _math_equal(candidate: str, expect: str) -> bool:
+    """Normalized-string, numeric, then sympy equality (best effort)."""
+    left, right = _norm_math(candidate), _norm_math(expect)
+    if left == right:
+        return True
+    try:
+        return abs(float(left) - float(right)) <= 1e-6 * max(1.0, abs(float(right)))
+    except ValueError:
+        pass
+    try:  # optional sympy fallback: 1/2, (x+1), a^2 ...
+        import sympy
+
+        lx = _norm_math(candidate).replace("^", "**")
+        rx = _norm_math(expect).replace("^", "**")
+        lx = re.sub(r"\\frac\{([^{}]*)\}\{([^{}]*)\}", r"((\1)/(\2))", lx)
+        rx = re.sub(r"\\frac\{([^{}]*)\}\{([^{}]*)\}", r"((\1)/(\2))", rx)
+        return bool(sympy.simplify(sympy.sympify(lx) - sympy.sympify(rx)) == 0)
+    except Exception:  # noqa: BLE001 - unparseable stays unequal
+        return False
+
+
 def check(task: dict, answer: str) -> bool:
     """Apply the task's checker to an answer string."""
     if not answer or not answer.strip():
@@ -50,15 +102,41 @@ def check(task: dict, answer: str) -> bool:
         normalized = _normalize(answer)
         return any(_normalize(e) in normalized for e in spec["expect"])
     if kind == "number":
-        got = _last_number(answer)
+        marker = re.search(
+            r"final answer[^0-9\-+]*([-+]?\d[\d,]*(?:\.\d+)?)", answer, re.I | re.S
+        )
+        got = (
+            float(marker.group(1).replace(",", ""))
+            if marker
+            else _last_number(answer)
+        )
         if got is None:
             return False
         return abs(got - float(spec["expect"])) <= float(spec.get("tol", 1e-6))
+    if kind == "choice":
+        letters = re.findall(r"\b([A-Z])\b", answer.upper())
+        return bool(letters) and letters[-1] == str(spec["expect"]).upper()
+    if kind == "boxed":
+        got = _boxed(answer)
+        if got is None:
+            return False
+        return _math_equal(got, str(spec["expect"]))
     if kind == "code":
         code = _code_block(answer)
         if code is None:
             return False
-        program = code + "\n\n" + "\n".join(spec["tests"]) + "\nprint('PASS')\n"
+        tests = spec["tests"]
+        if isinstance(tests, list):
+            tests = "\n".join(tests)
+        program = (
+            str(spec.get("prelude", ""))
+            + code
+            + "\n\n"
+            + tests
+            + "\n"
+            + str(spec.get("footer", "print('PASS')"))
+            + "\n"
+        )
         with tempfile.NamedTemporaryFile(
             "w", suffix=".py", delete=False, dir="/tmp/opencode"
         ) as fh:

@@ -101,5 +101,10 @@ dep_scan.py
 # TBR ternary artifacts (HIVE-PLAN.md §3: GGUFs, run logs, oracle JSON)
 artifacts/ternary/
 
+# cascade capture traces (regenerable; manifests + MODEL-CARDs are tracked)
+experiments/cascade/results/*/streams.json
+experiments/cascade/results/*/capture.json
+experiments/cascade/results/.model-sha-cache.json
+
 # HF cache (CI sets HF_HOME to $GITHUB_WORKSPACE/.hf-cache)
 .hf-cache/

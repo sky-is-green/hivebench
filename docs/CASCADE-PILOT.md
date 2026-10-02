@@ -397,6 +397,16 @@ What we borrow, concretely:
    gate, value-aware pump; then serve the decision models as endpoints and
    build the DSH console.
 
+## Results tracking
+
+Benchmark runs land under `experiments/cascade/results/<run>/`: `manifest.json`
+(provenance — model sha256, stack, git commit, task-set sha, decode settings —
+plus per-task and per-benchmark aggregates with sample-accuracy and
+task-macro), `streams.json` (full traces, regenerable), and a generated
+`MODEL-CARD.md` for the model page. `results/index.json` indexes runs by model
+sha and task-set sha. Manifests and cards are tracked in git; the large stream
+traces are ignored.
+
 ## Related
 
 - `HIVE-PLAN.md` (local-only) — track plan and task rows.
