@@ -204,11 +204,11 @@ DEFAULT_CANDIDATES: tuple[Candidate, ...] = (
     Candidate(
         id="flash-next", label="Qwen3.8-Flash-Next",
         repo="Qwen/Qwen3.8-Flash-Next",
-        params_b=180.0, precision="ternary",
-        bytes_gb=60.0,
+        params_b=177.0, precision="Q2_0",
+        bytes_gb=66.0,
         devices=(Device.DGPU0, Device.DGPU1),
         roles=("E4",),
-        notes="ternary experts + host-offloaded n-gram; both cards",
+        notes="GSQ-RCO Q2_0 (ISTA-DASLab); expert offload via Ember; ~40 GB active",
     ),
     Candidate(
         id="scion-35b-a3b", label="Scion-35B-A3B",

@@ -153,6 +153,24 @@ the dispatch floor noted below. Their design validates Ember's thesis; the
 unshelve decision is open. Full comparison and borrow list:
 `docs/CASCADE-PILOT.md` ("Strata — the local Flash-Next engine").
 
+### MTP speculation: what it actually takes (2026-10-02)
+
+The GSQ-RCO GGUF **ships no MTP head**. The 31 `mtp.*` tensors (fc_embedding,
+hyper-connection mixers, one MTP layer with its own attention/indexer/experts,
+pre-fc norms) live only in the BF16 checkpoint `Qwen/Qwen3.8-Flash-Next`
+(~360 GB, 131 shards), spread over 28 shards. Strata's `tools/mtp_fetch.py`
+reads the safetensors headers and range-fetches exactly those tensors
+(SHA256-pinned revision `de4b8e4d…`), ~6 GB. So this gap-closer is not a flag:
+it needs (a) an equivalent range-fetch/pack step for the MTP block and (b) an
+MTP draft path in the engine — our fork's `llama-mtp-sidecar` is a different
+(Scion) head architecture. Strata's MIT implementation is the reference;
+porting it with attribution, or adopting Strata as the Flash-Next serving
+engine, are the two paths. Decide before the baseline run.
+
+Model count: HF GGUF metadata reports **~176.9B tensor elements** (so the
+handoff's ~180B is right; Strata's "125B" is not the count to use). Corrected
+in the cascade registry (`flash-next`: 177B, Q2_0, 66 GB).
+
 ## E4 baseline protocol (ready to run when the box frees)
 
 Goal: Flash-Next on AMD at Strata-level performance, measured before any
