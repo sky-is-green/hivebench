@@ -171,7 +171,7 @@ Model count: HF GGUF metadata reports **~176.9B tensor elements** (so the
 handoff's ~180B is right; Strata's "125B" is not the count to use). Corrected
 in the cascade registry (`flash-next`: 177B, Q2_0, 66 GB).
 
-## E4 baseline protocol (ready to run when the box frees)
+## E4 baseline protocol (ready to run — box free 2026-10-02)
 
 Goal: Flash-Next on AMD at Strata-level performance, measured before any
 cascade changes. Ask the human first (one heavy track at a time; 30 GB RAM).
