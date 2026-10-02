@@ -34,9 +34,55 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
+#: Face adapter row the profile patches.  The bundled default already mounts
+#: it, and the loader rejects a second row with the same id — so the generated
+#: profile injects config into that existing row instead of appending one.
+DEEPSEEK_ROW_ID = "llm-deepseek"
+
+#: Face reasoning effort the generated profile requests.  The adapter default
+#: is ``high``, which several llama.cpp chat templates reject outright (the
+#: ternary Bonsai template accepts only xhigh/medium/low and raises a Jinja
+#: exception otherwise); ``low`` is accepted by both families and keeps face
+#: turns terse, which is what delegation wants.
+REASONING_EFFORT = "low"
+
+
+def _patch_deepseek_reasoning(text: str) -> str:
+    """Inject ``reasoningEffort`` into the existing ``llm-deepseek`` row.
+
+    Best-effort and format-tolerant for the shapes the bundled default uses
+    (``- id: llm-deepseek`` followed by a ``name:`` line and no config): a row
+    that already carries a config is left untouched, and so is a base without
+    the row at all.
+    """
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() != f"- id: {DEEPSEEK_ROW_ID}":
+            continue
+        j = i + 1
+        while j < len(lines) and not lines[j].startswith("- "):
+            if lines[j].strip().startswith("config:"):
+                return text  # caller already configured this row
+            j += 1
+        insert_at = i + 1
+        if insert_at < len(lines) and lines[insert_at].strip().startswith("name:"):
+            insert_at += 1
+        lines[insert_at:insert_at] = [
+            "  config:", f"    reasoningEffort: {REASONING_EFFORT}",
+        ]
+        return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+    return text
+
+
 #: dsh plugin module names (the base bundle ships them; we mount/configure).
 PI_AI_PLUGIN = "@deepseek-ai/dsh-llm-pi-ai"
 SUBAGENT_TOOL_PLUGIN = "@deepseek-ai/dsh-tool-subagent"
+SUBAGENT_SPAWN_PLUGIN = "@deepseek-ai/dsh-subagent-spawn-in-process"
+#: The subagent **service definition**.  The SDK runtime's built-in
+#: composition mounts the tool but neither this nor a provider, so a profile
+#: that only configures routes/tools leaves every subagent row pending and the
+#: runtime refuses to boot ("waiting for service: subagents").
+SUBAGENT_SERVICE_PLUGIN = "@deepseek-ai/dsh-subagent"
 
 #: Row id of the dormant pi-ai adapter in the dsh base bundle.  Reusing the id
 #: replaces that row's (empty) config instead of mounting a second adapter.
@@ -45,9 +91,11 @@ PI_AI_ROW_ID = "llm-pi-ai"
 #: pi-ai protocol name for OpenAI chat-completions endpoints (llama-server).
 OPENAI_COMPLETIONS_API = "openai-completions"
 
-#: Provider route registered by ``dsh-subagent-spawn-in-process`` in the base
-#: bundle; the tool rows delegate through it.
-SPAWN_PROVIDER = "spawn"
+#: Subagent provider the generated tool rows delegate through.  The SDK
+#: runtime's base composition mounts ``dsh-tool-subagent`` but **no provider**
+#: (the tool row sits pending and the runtime refuses to boot), so the
+#: generated profile mounts its own, under a name we own.
+SPAWN_PROVIDER = "lsc-spawn"
 
 #: System-side subagent tool names per role (face is never a subagent).
 TOOL_NAMES: dict[str, str] = {
@@ -172,6 +220,12 @@ def routing_entries(routes: list[TierRoute]) -> list[dict[str, Any]]:
             },
         })
     return [
+        {"id": "lsc-subagent-service", "name": SUBAGENT_SERVICE_PLUGIN},
+        {
+            "id": "lsc-subagent-spawn",
+            "name": SUBAGENT_SPAWN_PLUGIN,
+            "config": {"providerName": SPAWN_PROVIDER},
+        },
         {"id": PI_AI_ROW_ID, "name": PI_AI_PLUGIN, "config": {"providers": providers}},
         *tools,
     ]
@@ -242,7 +296,7 @@ def generate_runtime_config(
         return GeneratedRuntime(path=None, digest=digest, routes=routes, entries=entries)
     if not base_text.endswith("\n"):
         base_text += "\n"
-    profile = base_text + render_entries(entries)
+    profile = _patch_deepseek_reasoning(base_text) + render_entries(entries)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"lsc-stack-{digest}.yml"
     path.write_text(profile, encoding="utf-8")

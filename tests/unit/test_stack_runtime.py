@@ -16,7 +16,10 @@ from harness.stack_runtime import (
     PI_AI_PLUGIN,
     PI_AI_ROW_ID,
     SPAWN_PROVIDER,
+    SUBAGENT_SERVICE_PLUGIN,
+    SUBAGENT_SPAWN_PLUGIN,
     SUBAGENT_TOOL_PLUGIN,
+    _patch_deepseek_reasoning,
     config_digest,
     generate_runtime_config,
     render_entries,
@@ -28,6 +31,8 @@ BASE_TEXT = """\
 # fixture base profile with loader tags a round-trip would lose
 - id: sdk-jsonrpc-server
   name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+- id: llm-deepseek
+  name: '@deepseek-ai/dsh-llm-deepseek'
 - id: sessions
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
@@ -96,14 +101,22 @@ def test_explicit_base_url_wins_over_the_port():
 # ---------------------------------------------------------------------------
 
 
-def test_entries_mount_routes_and_one_tool_per_tier():
+def test_entries_mount_service_provider_routes_and_one_tool_per_tier():
     entries = routing_entries(tier_routes(_status()))
     ids = [e["id"] for e in entries]
 
-    assert ids == [PI_AI_ROW_ID, "lsc-delegate-worker", "lsc-delegate-agency"]
-    assert entries[0]["name"] == PI_AI_PLUGIN
+    assert ids == [
+        "lsc-subagent-service", "lsc-subagent-spawn", PI_AI_ROW_ID,
+        "lsc-delegate-worker", "lsc-delegate-agency",
+    ]
+    service = entries[0]
+    assert service["name"] == SUBAGENT_SERVICE_PLUGIN
+    provider = entries[1]
+    assert provider["name"] == SUBAGENT_SPAWN_PLUGIN
+    assert provider["config"] == {"providerName": SPAWN_PROVIDER}
+    assert entries[2]["name"] == PI_AI_PLUGIN
 
-    providers = entries[0]["config"]["providers"]
+    providers = entries[2]["config"]["providers"]
     assert sorted(providers) == ["tier-agency", "tier-worker"]
     worker = providers["tier-worker"]
     assert worker["api"] == OPENAI_COMPLETIONS_API
@@ -113,7 +126,7 @@ def test_entries_mount_routes_and_one_tool_per_tier():
     ]
 
     tool = _row_config(entries, "lsc-delegate-worker")
-    assert entries[1]["name"] == SUBAGENT_TOOL_PLUGIN
+    assert entries[3]["name"] == SUBAGENT_TOOL_PLUGIN
     assert tool["provider"] == SPAWN_PROVIDER
     assert tool["toolName"] == "delegate_worker"
     assert tool["agentOptions"] == {
@@ -157,14 +170,33 @@ def test_generate_appends_to_the_base_and_is_deterministic(tmp_path):
     assert first.digest == second.digest
 
     text = first.path.read_text(encoding="utf-8")
-    assert text.startswith(BASE_TEXT)            # base preserved verbatim
-    assert "!!js" in text                        # loader tags untouched
+    assert "# fixture base profile" in text         # base preserved verbatim
+    assert "!!js" in text                            # loader tags untouched
+    assert "  config:\n    reasoningEffort: low" in text  # face adapter patched
+    assert text.count("- id: llm-deepseek") == 1     # no duplicate row
     assert "- " + json.dumps(
         routing_entries(tier_routes(_status()))[0], sort_keys=True,
         separators=(", ", ": ")) in text
 
     assert first.route_for("worker").tool == "delegate_worker"
     assert first.route_for("face") is None
+
+
+def test_deepseek_row_gets_a_reasoning_effort_patch():
+    patched = _patch_deepseek_reasoning(BASE_TEXT)
+
+    assert "- id: llm-deepseek" in patched
+    assert "  config:\n    reasoningEffort: low" in patched
+    assert patched.count("- id: llm-deepseek") == 1
+
+
+def test_deepseek_patch_leaves_configured_and_absent_rows_alone():
+    configured = BASE_TEXT.replace(
+        "  name: '@deepseek-ai/dsh-llm-deepseek'",
+        "  name: '@deepseek-ai/dsh-llm-deepseek'\n  config:\n    reasoningEffort: high",
+    )
+    assert _patch_deepseek_reasoning(configured) == configured
+    assert _patch_deepseek_reasoning("- id: other\n") == "- id: other\n"
 
 
 def test_different_endpoints_get_different_configs(tmp_path):

@@ -74,6 +74,9 @@ ENGINE_ARGS_ALLOWED: tuple[str, ...] = (
     "--no-mmap",
     "--mlock",
     "--no-op-offload", "--op-offload",
+    # speculative-decoding draft model / sidecar (Scion drafter lane):
+    "--model-draft", "-md",
+    "--spec-draft-n-max", "--draft-max",
 )
 
 _NUMERIC = re.compile(r"^-?\d+(?:\.\d+)?$")

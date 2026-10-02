@@ -318,13 +318,15 @@ def test_tier_env_parses_the_pin_assignment():
     assert tier_env(_tier("face")) == {}
 
 
-def test_tier_extra_args_emits_split_and_spec_flags():
+def test_tier_extra_args_emits_jinja_split_and_spec_flags():
     tier = _tier("face", ts="1,1", spec={"type": "draft-mtp", "n_max": 3})
     assert tier_extra_args(tier) == [
+        "--jinja",
         "--split-mode", "layer", "--tensor-split", "1,1",
         "--spec-type", "draft-mtp", "--draft-max", "3",
     ]
-    assert tier_extra_args(_tier("worker")) == []
+    # a plain worker still carries --jinja: no tool template without it
+    assert tier_extra_args(_tier("worker")) == ["--jinja"]
 
 
 def test_tier_extra_args_appends_engine_args_verbatim():

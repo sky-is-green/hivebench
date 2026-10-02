@@ -117,14 +117,16 @@ def tier_env(tier: Tier) -> dict[str, str]:
 def tier_extra_args(tier: Tier) -> list[str]:
     """Flags the ``load_options`` seam cannot carry.
 
-    Emits ``--split-mode layer --tensor-split <ts>`` when ``tier.ts`` is set, and the
-    speculative-decoding flags for ``tier.spec`` (``--spec-type draft-mtp``,
-    ``--draft-max <n_max>``) when present.  ``tier.engine_args``
-    (schema-validated: only the curated engine knobs) is appended
-    verbatim, last, so a stack can pin e.g. ``--device``, ``-np`` or
-    ``--lazy-mode`` for a tier.
+    Always emits ``--jinja``: llama.cpp only applies the model's tool template
+    under it, so without this a tier cannot call tools (LOCAL-STACKS §6 makes
+    it mandatory for tool-driving tiers).  Emits ``--split-mode layer
+    --tensor-split <ts>`` when ``tier.ts`` is set, and the speculative-decoding
+    flags for ``tier.spec`` (``--spec-type draft-mtp``, ``--draft-max <n_max>``)
+    when present.  ``tier.engine_args`` (schema-validated: only the curated
+    engine knobs) is appended verbatim, last, so a stack can pin e.g.
+    ``--device``, ``-np`` or ``--lazy-mode`` for a tier.
     """
-    args: list[str] = []
+    args: list[str] = ["--jinja"]
     tensor_split = _tier_field(tier, "ts", None)
     if tensor_split:
         args += ["--split-mode", "layer", "--tensor-split", str(tensor_split)]
