@@ -77,6 +77,26 @@ class InternDecisionJudge:
             dtype=dtype,
         )
 
+    def noul(self, state: dict[str, Any], question: str) -> tuple[float, float]:
+        """P(question is true | state) under the noul head, and latency in ms.
+
+        The generic hook for questions other than the trained D2 one (the
+        prefix/steering probe uses it).
+        """
+        request: dict[str, Any] = {
+            "state": state,
+            "questions": {
+                "probe": {
+                    "type": "noul",
+                    "instructions": question,
+                    "criteria": {"yes": "true", "no": "false"},
+                }
+            },
+        }
+        result = self.engine.predict(request)
+        answer = result["answers"]["probe"]
+        return float(answer["noul"]), float(result["timing"]["inference_ms"])
+
     def verdict(self, task: dict, candidate: str) -> tuple[float, float]:
         """P(candidate is correct) and the forward-pass latency in ms."""
         request: dict[str, Any] = {
@@ -162,17 +182,22 @@ class Jev9BJudge:
         probs = self.torch.softmax(logits / self.temperatures[kind], dim=-1)[0].tolist()
         return dict(zip(options, probs))
 
+    def noul(self, state: str, question: str) -> tuple[float, float]:
+        """P(question is true | state) under the noul head, and latency in ms.
+
+        The public hook for questions other than the trained D2 one — the
+        prefix/steering probe asks about partial answers through this.
+        """
+        started = time.time()
+        probs = self._decide("noul", state, question, ["false", "true"])
+        return float(probs["true"]), (time.time() - started) * 1000.0
+
     def verdict(self, task: dict, candidate: str) -> tuple[float, float]:
         """P(candidate is correct) and the forward-pass latency in ms."""
         state = f"Task: {task['prompt']}\nCandidate answer: {candidate}"
-        started = time.time()
-        probs = self._decide(
-            "noul",
-            state,
-            "The candidate answer is correct and complete for the task.",
-            ["false", "true"],
+        return self.noul(
+            state, "The candidate answer is correct and complete for the task."
         )
-        return float(probs["true"]), (time.time() - started) * 1000.0
 
 
 if __name__ == "__main__":  # tiny manual probe

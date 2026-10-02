@@ -1,0 +1,437 @@
+{
+ "model": "Qwen/Qwen3-1.7B",
+ "summary": {
+  "model": "Qwen/Qwen3-1.7B",
+  "mode": "prob",
+  "tasks": 27,
+  "cuts": {
+   "16": {
+    "n": 16,
+    "auc": 0.5104,
+    "mean_p_correct": 0.3167,
+    "mean_p_wrong": 0.3025,
+    "at_085": {
+     "cancelled": 4,
+     "false_cancels": 3,
+     "caught": 1,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 1,
+      "false_cancels": 3
+     },
+     "0.7": {
+      "caught": 1,
+      "false_cancels": 3
+     },
+     "0.85": {
+      "caught": 1,
+      "false_cancels": 3
+     }
+    }
+   },
+   "64": {
+    "n": 13,
+    "auc": 0.55,
+    "mean_p_correct": 0.16,
+    "mean_p_wrong": 0.0833,
+    "at_085": {
+     "cancelled": 1,
+     "false_cancels": 1,
+     "caught": 0,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 0,
+      "false_cancels": 1
+     },
+     "0.7": {
+      "caught": 0,
+      "false_cancels": 1
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 1
+     }
+    }
+   },
+   "128": {
+    "n": 7,
+    "auc": 0.4,
+    "mean_p_correct": 0.406,
+    "mean_p_wrong": 0.045,
+    "at_085": {
+     "cancelled": 2,
+     "false_cancels": 2,
+     "caught": 0,
+     "leaks": 2
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 0,
+      "false_cancels": 2
+     },
+     "0.7": {
+      "caught": 0,
+      "false_cancels": 2
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 2
+     }
+    }
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "scion_ok": true,
+   "n_tokens": 25,
+   "p": {
+    "16": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's tackle this. The use"
+   }
+  },
+  {
+   "id": "qa-element-w",
+   "scion_ok": true,
+   "n_tokens": 14,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "scion_ok": true,
+   "n_tokens": 34,
+   "p": {
+    "16": 1.0
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's tackle this. The use"
+   }
+  },
+  {
+   "id": "qa-largest-planet",
+   "scion_ok": true,
+   "n_tokens": 33,
+   "p": {
+    "16": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's tackle this. The use"
+   }
+  },
+  {
+   "id": "math-train-speed",
+   "scion_ok": true,
+   "n_tokens": 38,
+   "p": {
+    "16": 1.0
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The task is to "
+   }
+  },
+  {
+   "id": "math-linear",
+   "scion_ok": true,
+   "n_tokens": 77,
+   "p": {
+    "16": 0.07,
+    "64": 0.07
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user provid",
+    "64": "<think>\nOkay, let's see. The user provid"
+   }
+  },
+  {
+   "id": "math-percent",
+   "scion_ok": true,
+   "n_tokens": 49,
+   "p": {
+    "16": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "math-diagonal",
+   "scion_ok": true,
+   "n_tokens": 97,
+   "p": {
+    "16": 0.13,
+    "64": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user is ask",
+    "64": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "math-bat-ball",
+   "scion_ok": true,
+   "n_tokens": 110,
+   "p": {
+    "16": 0.05,
+    "64": 0.05
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's try to figure out th",
+    "64": "<think>\nOkay, let's see. The problem is "
+   }
+  },
+  {
+   "id": "code-count-vowels",
+   "scion_ok": true,
+   "n_tokens": 118,
+   "p": {
+    "16": null,
+    "64": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "code-fib",
+   "scion_ok": true,
+   "n_tokens": 165,
+   "p": {
+    "16": null,
+    "64": 0.02,
+    "128": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants ",
+    "128": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "code-palindrome",
+   "scion_ok": true,
+   "n_tokens": 329,
+   "p": {
+    "16": null,
+    "64": null,
+    "128": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants ",
+    "128": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "code-dedupe",
+   "scion_ok": true,
+   "n_tokens": 127,
+   "p": {
+    "16": null,
+    "64": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "math-shirt-price",
+   "scion_ok": true,
+   "n_tokens": 126,
+   "p": {
+    "16": 0.31,
+    "64": 0.08
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The problem say",
+    "64": "<think>\nOkay, let's see. The problem is "
+   }
+  },
+  {
+   "id": "math-digit-7",
+   "scion_ok": false,
+   "n_tokens": 625,
+   "p": {
+    "16": 0.09,
+    "64": 0.2,
+    "128": 0.05
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The task is to ",
+    "64": "<think>\nOkay, let's see. The user is ask",
+    "128": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "math-clock-angle",
+   "scion_ok": false,
+   "n_tokens": 304,
+   "p": {
+    "16": 0.12,
+    "64": 0.05,
+    "128": 0.04
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user is ask",
+    "64": "<think>\nOkay, let's see. The user is ask",
+    "128": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "math-day-of-week",
+   "scion_ok": true,
+   "n_tokens": 88,
+   "p": {
+    "16": 1.0,
+    "64": 0.02
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user is ask",
+    "64": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "math-probability",
+   "scion_ok": true,
+   "n_tokens": 301,
+   "p": {
+    "16": 0.03,
+    "64": 1.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The problem is ",
+    "64": "<think>\nOkay, let's see. The task is to ",
+    "128": "<think>\nOkay, let's see. The task is to "
+   }
+  },
+  {
+   "id": "math-even-sum",
+   "scion_ok": true,
+   "n_tokens": 190,
+   "p": {
+    "16": 0.04,
+    "64": 0.03,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user is ask",
+    "64": "<think>\nOkay, let's see. The user is ask",
+    "128": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "math-depreciation",
+   "scion_ok": false,
+   "n_tokens": 102,
+   "p": {
+    "16": 0.0,
+    "64": 0.0
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The task is to ",
+    "64": "<think>\nOkay, let's see. The user is ask"
+   }
+  },
+  {
+   "id": "qa-strawberry-r",
+   "scion_ok": true,
+   "n_tokens": 87,
+   "p": {
+    "16": 0.03,
+    "64": 0.02
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The task is to ",
+    "64": "<think>\nOkay, let's see. The user asked "
+   }
+  },
+  {
+   "id": "qa-berlin-wall",
+   "scion_ok": true,
+   "n_tokens": 15,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-persistence-memory",
+   "scion_ok": false,
+   "n_tokens": 36,
+   "p": {
+    "16": 1.0
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's tackle this. The use"
+   }
+  },
+  {
+   "id": "code-run-length",
+   "scion_ok": true,
+   "n_tokens": 448,
+   "p": {
+    "16": 0.04,
+    "64": 0.01,
+    "128": 0.01
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants ",
+    "128": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "code-merge-intervals",
+   "scion_ok": true,
+   "n_tokens": 150,
+   "p": {
+    "16": null,
+    "64": null,
+    "128": 0.01
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants ",
+    "128": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "code-parse-duration",
+   "scion_ok": true,
+   "n_tokens": 571,
+   "p": {
+    "16": 0.1,
+    "64": 0.3,
+    "128": 0.01
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants ",
+    "128": "<think>\nOkay, let's see. The user wants "
+   }
+  },
+  {
+   "id": "code-balanced-brackets",
+   "scion_ok": true,
+   "n_tokens": 237,
+   "p": {
+    "16": null,
+    "64": null,
+    "128": null
+   },
+   "raw": {
+    "16": "<think>\nOkay, let's see. The user wants ",
+    "64": "<think>\nOkay, let's see. The user wants ",
+    "128": "<think>\nOkay, let's see. The user wants "
+   }
+  }
+ ]
+}

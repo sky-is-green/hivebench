@@ -1,0 +1,549 @@
+{
+ "model": "Qwen/Qwen3-1.7B",
+ "summary": {
+  "model": "Qwen/Qwen3-1.7B",
+  "mode": "binary_logit",
+  "tasks": 27,
+  "cuts": {
+   "16": {
+    "n": 25,
+    "auc": 0.6548,
+    "mean_p_correct": 0.8182,
+    "mean_p_wrong": 0.409,
+    "at_085": {
+     "cancelled": 18,
+     "false_cancels": 17,
+     "caught": 1,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 3,
+      "false_cancels": 4
+     },
+     "0.7": {
+      "caught": 3,
+      "false_cancels": 4
+     },
+     "0.85": {
+      "caught": 3,
+      "false_cancels": 4
+     }
+    }
+   },
+   "32": {
+    "n": 24,
+    "auc": 0.7188,
+    "mean_p_correct": 0.862,
+    "mean_p_wrong": 0.422,
+    "at_085": {
+     "cancelled": 17,
+     "false_cancels": 16,
+     "caught": 1,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.7": {
+      "caught": 3,
+      "false_cancels": 3
+     },
+     "0.85": {
+      "caught": 3,
+      "false_cancels": 4
+     }
+    }
+   },
+   "64": {
+    "n": 19,
+    "auc": 0.6875,
+    "mean_p_correct": 0.8604,
+    "mean_p_wrong": 0.6665,
+    "at_085": {
+     "cancelled": 16,
+     "false_cancels": 14,
+     "caught": 2,
+     "leaks": 1
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 1,
+      "false_cancels": 2
+     },
+     "0.7": {
+      "caught": 1,
+      "false_cancels": 2
+     },
+     "0.85": {
+      "caught": 1,
+      "false_cancels": 2
+     }
+    }
+   },
+   "128": {
+    "n": 10,
+    "auc": 0.9688,
+    "mean_p_correct": 0.9772,
+    "mean_p_wrong": 0.4325,
+    "at_085": {
+     "cancelled": 7,
+     "false_cancels": 7,
+     "caught": 0,
+     "leaks": 2
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 1,
+      "false_cancels": 0
+     },
+     "0.7": {
+      "caught": 1,
+      "false_cancels": 0
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 1
+     }
+    }
+   },
+   "256": {
+    "n": 6,
+    "auc": 0.75,
+    "mean_p_correct": 0.8595,
+    "mean_p_wrong": 0.9997,
+    "at_085": {
+     "cancelled": 5,
+     "false_cancels": 3,
+     "caught": 2,
+     "leaks": 0
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 0,
+      "false_cancels": 1
+     },
+     "0.7": {
+      "caught": 0,
+      "false_cancels": 1
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 1
+     }
+    }
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "scion_ok": true,
+   "n_tokens": 25,
+   "p": {
+    "16": 0.9999997617630899
+   },
+   "raw": {
+    "16": "logits YES=52.0 NO=36.8"
+   }
+  },
+  {
+   "id": "qa-element-w",
+   "scion_ok": true,
+   "n_tokens": 14,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "scion_ok": true,
+   "n_tokens": 34,
+   "p": {
+    "16": 0.9999251537724895,
+    "32": 0.9999999907625504
+   },
+   "raw": {
+    "16": "logits YES=49.8 NO=40.2",
+    "32": "logits YES=53.0 NO=34.5"
+   }
+  },
+  {
+   "id": "qa-largest-planet",
+   "scion_ok": true,
+   "n_tokens": 33,
+   "p": {
+    "16": 0.9999996072137997,
+    "32": 0.999999887464838
+   },
+   "raw": {
+    "16": "logits YES=51.8 NO=37.0",
+    "32": "logits YES=51.8 NO=35.8"
+   }
+  },
+  {
+   "id": "math-train-speed",
+   "scion_ok": true,
+   "n_tokens": 38,
+   "p": {
+    "16": 0.9968273171575148,
+    "32": 0.9999989322971299
+   },
+   "raw": {
+    "16": "logits YES=47.8 NO=42.0",
+    "32": "logits YES=50.8 NO=37.0"
+   }
+  },
+  {
+   "id": "math-linear",
+   "scion_ok": true,
+   "n_tokens": 77,
+   "p": {
+    "16": 0.9998415637808975,
+    "32": 0.9996646498695335,
+    "64": 0.9999998555019963
+   },
+   "raw": {
+    "16": "logits YES=46.2 NO=37.5",
+    "32": "logits YES=47.8 NO=39.8",
+    "64": "logits YES=51.0 NO=35.2"
+   }
+  },
+  {
+   "id": "math-percent",
+   "scion_ok": true,
+   "n_tokens": 49,
+   "p": {
+    "16": 0.9990889488055994,
+    "32": 0.43782349911420193
+   },
+   "raw": {
+    "16": "logits YES=46.8 NO=39.8",
+    "32": "logits YES=40.0 NO=40.2"
+   }
+  },
+  {
+   "id": "math-diagonal",
+   "scion_ok": true,
+   "n_tokens": 97,
+   "p": {
+    "16": 0.006692850924284856,
+    "32": 1.3709572068578448e-06,
+    "64": 0.999999931743971
+   },
+   "raw": {
+    "16": "logits YES=40.0 NO=45.0",
+    "32": "logits YES=34.2 NO=47.8",
+    "64": "logits YES=51.0 NO=34.5"
+   }
+  },
+  {
+   "id": "math-bat-ball",
+   "scion_ok": true,
+   "n_tokens": 110,
+   "p": {
+    "16": 0.9525741268224331,
+    "32": 0.9999646437492583,
+    "64": 0.9999998144608981
+   },
+   "raw": {
+    "16": "logits YES=45.5 NO=42.5",
+    "32": "logits YES=49.0 NO=38.8",
+    "64": "logits YES=53.0 NO=37.5"
+   }
+  },
+  {
+   "id": "code-count-vowels",
+   "scion_ok": true,
+   "n_tokens": 118,
+   "p": {
+    "16": 0.9999999123575255,
+    "32": 0.9988304897349445,
+    "64": 0.9820137900379086
+   },
+   "raw": {
+    "16": "logits YES=52.5 NO=36.2",
+    "32": "logits YES=46.2 NO=39.5",
+    "64": "logits YES=47.5 NO=43.5"
+   }
+  },
+  {
+   "id": "code-fib",
+   "scion_ok": true,
+   "n_tokens": 165,
+   "p": {
+    "16": 0.9999999123575255,
+    "32": 0.9975273768433652,
+    "64": 0.9999999123575254,
+    "128": 0.9998766054240137
+   },
+   "raw": {
+    "16": "logits YES=51.2 NO=35.0",
+    "32": "logits YES=48.5 NO=42.5",
+    "64": "logits YES=52.8 NO=36.5",
+    "128": "logits YES=49.0 NO=40.0"
+   }
+  },
+  {
+   "id": "code-palindrome",
+   "scion_ok": true,
+   "n_tokens": 329,
+   "p": {
+    "16": 0.9999996072137998,
+    "32": 0.9890130573694069,
+    "64": 0.9999996072137998,
+    "128": 0.9999998144608981,
+    "256": 0.9999999979388464
+   },
+   "raw": {
+    "16": "logits YES=52.0 NO=37.2",
+    "32": "logits YES=47.0 NO=42.5",
+    "64": "logits YES=51.5 NO=36.8",
+    "128": "logits YES=51.0 NO=35.5",
+    "256": "logits YES=53.0 NO=33.0"
+   }
+  },
+  {
+   "id": "code-dedupe",
+   "scion_ok": true,
+   "n_tokens": 127,
+   "p": {
+    "16": 0.8807970779778824,
+    "32": 0.9990889488055994,
+    "64": 0.9770226300899745
+   },
+   "raw": {
+    "16": "logits YES=46.5 NO=44.5",
+    "32": "logits YES=49.2 NO=42.2",
+    "64": "logits YES=46.5 NO=42.8"
+   }
+  },
+  {
+   "id": "math-shirt-price",
+   "scion_ok": true,
+   "n_tokens": 126,
+   "p": {
+    "16": 0.22270013882530884,
+    "32": 0.9999785550515792,
+    "64": 0.9999991684719723
+   },
+   "raw": {
+    "16": "logits YES=43.2 NO=44.5",
+    "32": "logits YES=50.0 NO=39.2",
+    "64": "logits YES=51.2 NO=37.2"
+   }
+  },
+  {
+   "id": "math-digit-7",
+   "scion_ok": false,
+   "n_tokens": 625,
+   "p": {
+    "16": 0.18242552380635632,
+    "32": 0.6224593312018546,
+    "64": 0.9975273768433652,
+    "128": 0.047425873177566774,
+    "256": 0.9999038975845006
+   },
+   "raw": {
+    "16": "logits YES=42.0 NO=43.5",
+    "32": "logits YES=44.0 NO=43.5",
+    "64": "logits YES=48.2 NO=42.2",
+    "128": "logits YES=41.2 NO=44.2",
+    "256": "logits YES=48.2 NO=39.0"
+   }
+  },
+  {
+   "id": "math-clock-angle",
+   "scion_ok": false,
+   "n_tokens": 304,
+   "p": {
+    "16": 0.3775406687981454,
+    "32": 0.04742587317756678,
+    "64": 0.0019267346633274752,
+    "128": 0.8175744761936437,
+    "256": 0.9995694429186753
+   },
+   "raw": {
+    "16": "logits YES=42.2 NO=42.8",
+    "32": "logits YES=39.2 NO=42.2",
+    "64": "logits YES=39.0 NO=45.2",
+    "128": "logits YES=42.0 NO=40.5",
+    "256": "logits YES=46.5 NO=38.8"
+   }
+  },
+  {
+   "id": "math-day-of-week",
+   "scion_ok": true,
+   "n_tokens": 88,
+   "p": {
+    "16": 0.9999993524052018,
+    "32": 0.9999986290427931,
+    "64": 0.9999999804443194
+   },
+   "raw": {
+    "16": "logits YES=53.2 NO=39.0",
+    "32": "logits YES=52.0 NO=38.5",
+    "64": "logits YES=54.0 NO=36.2"
+   }
+  },
+  {
+   "id": "math-probability",
+   "scion_ok": true,
+   "n_tokens": 301,
+   "p": {
+    "16": 0.9999991684719722,
+    "32": 0.9999970976880148,
+    "64": 0.9980732653366726,
+    "128": 0.99999976176309,
+    "256": 0.9999999586006245
+   },
+   "raw": {
+    "16": "logits YES=46.8 NO=32.8",
+    "32": "logits YES=50.8 NO=38.0",
+    "64": "logits YES=46.2 NO=40.0",
+    "128": "logits YES=50.2 NO=35.0",
+    "256": "logits YES=49.0 NO=32.0"
+   }
+  },
+  {
+   "id": "math-even-sum",
+   "scion_ok": true,
+   "n_tokens": 190,
+   "p": {
+    "16": 0.0015011822567369915,
+    "32": 7.484622751061123e-05,
+    "64": 1.670142184809518e-05,
+    "128": 0.9999999123575254
+   },
+   "raw": {
+    "16": "logits YES=38.2 NO=44.8",
+    "32": "logits YES=35.5 NO=45.0",
+    "64": "logits YES=34.0 NO=45.0",
+    "128": "logits YES=52.0 NO=35.8"
+   }
+  },
+  {
+   "id": "math-depreciation",
+   "scion_ok": false,
+   "n_tokens": 102,
+   "p": {
+    "16": 0.07585818002124355,
+    "32": 0.017986209962091555,
+    "64": 0.9999938558253979
+   },
+   "raw": {
+    "16": "logits YES=40.8 NO=43.2",
+    "32": "logits YES=43.0 NO=47.0",
+    "64": "logits YES=52.0 NO=40.0"
+   }
+  },
+  {
+   "id": "qa-strawberry-r",
+   "scion_ok": true,
+   "n_tokens": 87,
+   "p": {
+    "16": 0.9996646498695335,
+    "32": 0.9999038975845006,
+    "64": 0.07585818002124356
+   },
+   "raw": {
+    "16": "logits YES=46.2 NO=38.2",
+    "32": "logits YES=44.0 NO=34.8",
+    "64": "logits YES=38.8 NO=41.2"
+   }
+  },
+  {
+   "id": "qa-berlin-wall",
+   "scion_ok": true,
+   "n_tokens": 15,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-persistence-memory",
+   "scion_ok": false,
+   "n_tokens": 36,
+   "p": {
+    "16": 0.9999999317439708,
+    "32": 0.9999991684719723
+   },
+   "raw": {
+    "16": "logits YES=51.8 NO=35.2",
+    "32": "logits YES=51.5 NO=37.5"
+   }
+  },
+  {
+   "id": "code-run-length",
+   "scion_ok": true,
+   "n_tokens": 448,
+   "p": {
+    "16": 0.9399133498259924,
+    "32": 0.9999999804443194,
+    "64": 0.8519528019683106,
+    "128": 0.8175744761936437,
+    "256": 0.9999999928058672
+   },
+   "raw": {
+    "16": "logits YES=46.0 NO=43.2",
+    "32": "logits YES=53.0 NO=35.2",
+    "64": "logits YES=43.8 NO=42.0",
+    "128": "logits YES=40.0 NO=38.5",
+    "256": "logits YES=53.5 NO=34.8"
+   }
+  },
+  {
+   "id": "code-merge-intervals",
+   "scion_ok": true,
+   "n_tokens": 150,
+   "p": {
+    "16": 0.9999999123575255,
+    "32": 0.9999999973534264,
+    "64": 0.9999996940977731,
+    "128": 0.9999982396567867
+   },
+   "raw": {
+    "16": "logits YES=52.5 NO=36.2",
+    "32": "logits YES=54.2 NO=34.5",
+    "64": "logits YES=53.0 NO=38.0",
+    "128": "logits YES=51.2 NO=38.0"
+   }
+  },
+  {
+   "id": "code-parse-duration",
+   "scion_ok": true,
+   "n_tokens": 571,
+   "p": {
+    "16": 0.18242552380635635,
+    "32": 0.8175744761936437,
+    "64": 0.8807970779778824,
+    "128": 0.9999999748900091,
+    "256": 0.43782349911420193
+   },
+   "raw": {
+    "16": "logits YES=45.2 NO=46.8",
+    "32": "logits YES=46.8 NO=45.2",
+    "64": "logits YES=45.0 NO=43.0",
+    "128": "logits YES=53.5 NO=36.0",
+    "256": "logits YES=43.5 NO=43.8"
+   }
+  },
+  {
+   "id": "code-balanced-brackets",
+   "scion_ok": true,
+   "n_tokens": 237,
+   "p": {
+    "16": 0.99999976176309,
+    "32": 0.9999991684719723,
+    "64": 0.9999646437492583,
+    "128": 0.9999999997210531
+   },
+   "raw": {
+    "16": "logits YES=51.2 NO=36.0",
+    "32": "logits YES=50.5 NO=36.5",
+    "64": "logits YES=49.0 NO=38.8",
+    "128": "logits YES=53.8 NO=31.8"
+   }
+  }
+ ]
+}

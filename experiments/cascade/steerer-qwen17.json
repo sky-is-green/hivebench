@@ -1,0 +1,548 @@
+{
+ "model": "Qwen/Qwen3-1.7B",
+ "summary": {
+  "model": "Qwen/Qwen3-1.7B",
+  "tasks": 27,
+  "cuts": {
+   "16": {
+    "n": 24,
+    "auc": 0.275,
+    "mean_p_correct": 0.539,
+    "mean_p_wrong": 0.5875,
+    "at_085": {
+     "cancelled": 1,
+     "false_cancels": 0,
+     "caught": 1,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 3,
+      "false_cancels": 16
+     },
+     "0.7": {
+      "caught": 3,
+      "false_cancels": 4
+     },
+     "0.85": {
+      "caught": 1,
+      "false_cancels": 0
+     }
+    }
+   },
+   "32": {
+    "n": 21,
+    "auc": 0.6481,
+    "mean_p_correct": 0.585,
+    "mean_p_wrong": 0.44,
+    "at_085": {
+     "cancelled": 1,
+     "false_cancels": 1,
+     "caught": 0,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 15
+     },
+     "0.7": {
+      "caught": 0,
+      "false_cancels": 5
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 1
+     }
+    }
+   },
+   "64": {
+    "n": 13,
+    "auc": 0.1136,
+    "mean_p_correct": 0.6245,
+    "mean_p_wrong": 0.785,
+    "at_085": {
+     "cancelled": 0,
+     "false_cancels": 0,
+     "caught": 0,
+     "leaks": 2
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 10
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 5
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 0
+     }
+    }
+   },
+   "128": {
+    "n": 9,
+    "auc": 0.6429,
+    "mean_p_correct": 0.7143,
+    "mean_p_wrong": 0.415,
+    "at_085": {
+     "cancelled": 1,
+     "false_cancels": 1,
+     "caught": 0,
+     "leaks": 2
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 1,
+      "false_cancels": 7
+     },
+     "0.7": {
+      "caught": 1,
+      "false_cancels": 4
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 1
+     }
+    }
+   },
+   "256": {
+    "n": 5,
+    "auc": 0.75,
+    "mean_p_correct": 0.8167,
+    "mean_p_wrong": 0.775,
+    "at_085": {
+     "cancelled": 2,
+     "false_cancels": 2,
+     "caught": 0,
+     "leaks": 2
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.85": {
+      "caught": 0,
+      "false_cancels": 2
+     }
+    }
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "scion_ok": true,
+   "n_tokens": 25,
+   "p": {
+    "16": 0.6
+   },
+   "raw": {
+    "16": "60"
+   }
+  },
+  {
+   "id": "qa-element-w",
+   "scion_ok": true,
+   "n_tokens": 14,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "scion_ok": true,
+   "n_tokens": 34,
+   "p": {
+    "16": 0.65,
+    "32": 0.65
+   },
+   "raw": {
+    "16": "65",
+    "32": "65\n\nThe AI's response is"
+   }
+  },
+  {
+   "id": "qa-largest-planet",
+   "scion_ok": true,
+   "n_tokens": 33,
+   "p": {
+    "16": 0.66,
+    "32": 0.65
+   },
+   "raw": {
+    "16": "66",
+    "32": "65\n\nThe AI's final answer"
+   }
+  },
+  {
+   "id": "math-train-speed",
+   "scion_ok": true,
+   "n_tokens": 38,
+   "p": {
+    "16": 0.6,
+    "32": 0.0
+   },
+   "raw": {
+    "16": "60\n\nProbability (0-1",
+    "32": "Probability (0-100):"
+   }
+  },
+  {
+   "id": "math-linear",
+   "scion_ok": true,
+   "n_tokens": 77,
+   "p": {
+    "16": 0.07,
+    "32": 0.75,
+    "64": null
+   },
+   "raw": {
+    "16": "7x - 4 = 4",
+    "32": "Probability: 75\n\nFinal number",
+    "64": "The AI correctly solved the equation ste"
+   }
+  },
+  {
+   "id": "math-percent",
+   "scion_ok": true,
+   "n_tokens": 49,
+   "p": {
+    "16": 0.7,
+    "32": 0.66
+   },
+   "raw": {
+    "16": "70\n\nProbability (0-1",
+    "32": "66.5\n\nProbability (0"
+   }
+  },
+  {
+   "id": "math-diagonal",
+   "scion_ok": true,
+   "n_tokens": 97,
+   "p": {
+    "16": null,
+    "32": null,
+    "64": null
+   },
+   "raw": {
+    "16": "The diagonal of a rectangle can be found",
+    "32": "The AI has started the solution but has",
+    "64": "The AI correctly identified the method t"
+   }
+  },
+  {
+   "id": "math-bat-ball",
+   "scion_ok": true,
+   "n_tokens": 110,
+   "p": {
+    "16": 0.75,
+    "32": 0.7,
+    "64": null
+   },
+   "raw": {
+    "16": "75\n\nThe probability that the AI",
+    "32": "70\n\nThe probability that the AI",
+    "64": "The problem is a classic algebraic puzzl"
+   }
+  },
+  {
+   "id": "code-count-vowels",
+   "scion_ok": true,
+   "n_tokens": 118,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.6
+   },
+   "raw": {
+    "16": "60",
+    "32": "60",
+    "64": "60"
+   }
+  },
+  {
+   "id": "code-fib",
+   "scion_ok": true,
+   "n_tokens": 165,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.8,
+    "128": 0.85
+   },
+   "raw": {
+    "16": "60",
+    "32": "60",
+    "64": "80",
+    "128": "85"
+   }
+  },
+  {
+   "id": "code-palindrome",
+   "scion_ok": true,
+   "n_tokens": 329,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.6,
+    "128": 0.6,
+    "256": 0.85
+   },
+   "raw": {
+    "16": "60",
+    "32": "60",
+    "64": "60",
+    "128": "60\n\nThe probability is estimated to",
+    "256": "85\n\nThe function is correct and"
+   }
+  },
+  {
+   "id": "code-dedupe",
+   "scion_ok": true,
+   "n_tokens": 127,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.6
+   },
+   "raw": {
+    "16": "60",
+    "32": "60",
+    "64": "60"
+   }
+  },
+  {
+   "id": "math-shirt-price",
+   "scion_ok": true,
+   "n_tokens": 126,
+   "p": {
+    "16": 0.75,
+    "32": 0.7,
+    "64": null
+   },
+   "raw": {
+    "16": "75\n\nProbability (0-1",
+    "32": "70\n\nThe AI correctly set up",
+    "64": "The problem involves finding the origina"
+   }
+  },
+  {
+   "id": "math-digit-7",
+   "scion_ok": false,
+   "n_tokens": 625,
+   "p": {
+    "16": 0.0,
+    "32": 0.07,
+    "64": 0.82,
+    "128": 0.8,
+    "256": 0.8
+   },
+   "raw": {
+    "16": "0\n\nThe partial response only counts the",
+    "32": "7 appears once in the number 7",
+    "64": "82\n\nThe probability that the AI",
+    "128": "80\n\nThe digit 7 appears",
+    "256": "80\n\nThe digit 7 appears"
+   }
+  },
+  {
+   "id": "math-clock-angle",
+   "scion_ok": false,
+   "n_tokens": 304,
+   "p": {
+    "16": 0.75,
+    "32": null,
+    "64": 0.75,
+    "128": 0.03,
+    "256": 0.75
+   },
+   "raw": {
+    "16": "75\n\nProbability (0-1",
+    "32": "Let me calculate the angles of the hour",
+    "64": "75\n\nProbability (0-1",
+    "128": "The hour hand at 3:1",
+    "256": "75\n\nThe AI's final answer"
+   }
+  },
+  {
+   "id": "math-day-of-week",
+   "scion_ok": true,
+   "n_tokens": 88,
+   "p": {
+    "16": 0.7,
+    "32": 1.0,
+    "64": 0.7
+   },
+   "raw": {
+    "16": "70\n\nThe final answer is Sunday",
+    "32": "100 \u00f7 7 =",
+    "64": "70\n\nThe AI correctly calculated that"
+   }
+  },
+  {
+   "id": "math-probability",
+   "scion_ok": true,
+   "n_tokens": 301,
+   "p": {
+    "16": 0.03,
+    "32": null,
+    "64": null,
+    "128": null,
+    "256": null
+   },
+   "raw": {
+    "16": "We have 3 red balls and",
+    "32": "Let's calculate the probability step by ",
+    "64": "The probability of drawing a red ball fi",
+    "128": "The final answer is $ \\frac{",
+    "256": "The AI correctly calculated the probabil"
+   }
+  },
+  {
+   "id": "math-even-sum",
+   "scion_ok": true,
+   "n_tokens": 190,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.65,
+    "128": 0.8
+   },
+   "raw": {
+    "16": "60\n\nProbability (0-1",
+    "32": "60\n\nThe first 20",
+    "64": "65\n\n**Probability (0-",
+    "128": "80\n\nThe AI correctly identified the"
+   }
+  },
+  {
+   "id": "math-depreciation",
+   "scion_ok": false,
+   "n_tokens": 102,
+   "p": {
+    "16": 0.75,
+    "32": 0.6,
+    "64": null
+   },
+   "raw": {
+    "16": "75\n\nProbability (0-1",
+    "32": "60\n\nProbability (0-1",
+    "64": "The partial response correctly calculate"
+   }
+  },
+  {
+   "id": "qa-strawberry-r",
+   "scion_ok": true,
+   "n_tokens": 87,
+   "p": {
+    "16": 0.07,
+    "32": 0.07,
+    "64": 0.07
+   },
+   "raw": {
+    "16": "7\n\nProbability (0-10",
+    "32": "7\n\nProbability (0-10",
+    "64": "7\n\nProbability (0-10"
+   }
+  },
+  {
+   "id": "qa-berlin-wall",
+   "scion_ok": true,
+   "n_tokens": 15,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-persistence-memory",
+   "scion_ok": false,
+   "n_tokens": 36,
+   "p": {
+    "16": 0.85,
+    "32": 0.65
+   },
+   "raw": {
+    "16": "85",
+    "32": "65"
+   }
+  },
+  {
+   "id": "code-run-length",
+   "scion_ok": true,
+   "n_tokens": 448,
+   "p": {
+    "16": 0.6,
+    "32": 0.7,
+    "64": 0.75,
+    "128": 0.75,
+    "256": 0.85
+   },
+   "raw": {
+    "16": "60",
+    "32": "70",
+    "64": "75",
+    "128": "75",
+    "256": "85\n\nThe AI's final answer"
+   }
+  },
+  {
+   "id": "code-merge-intervals",
+   "scion_ok": true,
+   "n_tokens": 150,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.6,
+    "128": 0.8
+   },
+   "raw": {
+    "16": "60",
+    "32": "60",
+    "64": "60",
+    "128": "80"
+   }
+  },
+  {
+   "id": "code-parse-duration",
+   "scion_ok": true,
+   "n_tokens": 571,
+   "p": {
+    "16": 0.4,
+    "32": 0.45,
+    "64": 0.75,
+    "128": 0.6,
+    "256": 0.75
+   },
+   "raw": {
+    "16": "40",
+    "32": "45",
+    "64": "75",
+    "128": "60",
+    "256": "75"
+   }
+  },
+  {
+   "id": "code-balanced-brackets",
+   "scion_ok": true,
+   "n_tokens": 237,
+   "p": {
+    "16": 0.6,
+    "32": 0.6,
+    "64": 0.75,
+    "128": 0.6
+   },
+   "raw": {
+    "16": "60",
+    "32": "60",
+    "64": "75",
+    "128": "60"
+   }
+  }
+ ]
+}

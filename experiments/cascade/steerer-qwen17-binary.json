@@ -1,0 +1,549 @@
+{
+ "model": "Qwen/Qwen3-1.7B",
+ "summary": {
+  "model": "Qwen/Qwen3-1.7B",
+  "mode": "binary",
+  "tasks": 27,
+  "cuts": {
+   "16": {
+    "n": 25,
+    "auc": 0.7798,
+    "mean_p_correct": 0.8095,
+    "mean_p_wrong": 0.25,
+    "at_085": {
+     "cancelled": 18,
+     "false_cancels": 17,
+     "caught": 1,
+     "leaks": 3
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 1,
+      "false_cancels": 17
+     },
+     "0.7": {
+      "caught": 1,
+      "false_cancels": 17
+     },
+     "0.85": {
+      "caught": 1,
+      "false_cancels": 17
+     }
+    }
+   },
+   "32": {
+    "n": 24,
+    "auc": 0.675,
+    "mean_p_correct": 0.85,
+    "mean_p_wrong": 0.5,
+    "at_085": {
+     "cancelled": 19,
+     "false_cancels": 17,
+     "caught": 2,
+     "leaks": 2
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 17
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 17
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 17
+     }
+    }
+   },
+   "64": {
+    "n": 19,
+    "auc": 0.6042,
+    "mean_p_correct": 0.875,
+    "mean_p_wrong": 0.6667,
+    "at_085": {
+     "cancelled": 16,
+     "false_cancels": 14,
+     "caught": 2,
+     "leaks": 1
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 14
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 14
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 14
+     }
+    }
+   },
+   "128": {
+    "n": 10,
+    "auc": 0.75,
+    "mean_p_correct": 1.0,
+    "mean_p_wrong": 0.5,
+    "at_085": {
+     "cancelled": 9,
+     "false_cancels": 8,
+     "caught": 1,
+     "leaks": 1
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 1,
+      "false_cancels": 8
+     },
+     "0.7": {
+      "caught": 1,
+      "false_cancels": 8
+     },
+     "0.85": {
+      "caught": 1,
+      "false_cancels": 8
+     }
+    }
+   },
+   "256": {
+    "n": 6,
+    "auc": 0.375,
+    "mean_p_correct": 0.75,
+    "mean_p_wrong": 1.0,
+    "at_085": {
+     "cancelled": 5,
+     "false_cancels": 3,
+     "caught": 2,
+     "leaks": 0
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 3
+     }
+    }
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "scion_ok": true,
+   "n_tokens": 25,
+   "p": {
+    "16": 1.0
+   },
+   "raw": {
+    "16": "YES"
+   }
+  },
+  {
+   "id": "qa-element-w",
+   "scion_ok": true,
+   "n_tokens": 14,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "scion_ok": true,
+   "n_tokens": 34,
+   "p": {
+    "16": 1.0,
+    "32": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES"
+   }
+  },
+  {
+   "id": "qa-largest-planet",
+   "scion_ok": true,
+   "n_tokens": 33,
+   "p": {
+    "16": 1.0,
+    "32": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES"
+   }
+  },
+  {
+   "id": "math-train-speed",
+   "scion_ok": true,
+   "n_tokens": 38,
+   "p": {
+    "16": 1.0,
+    "32": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES"
+   }
+  },
+  {
+   "id": "math-linear",
+   "scion_ok": true,
+   "n_tokens": 77,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "math-percent",
+   "scion_ok": true,
+   "n_tokens": 49,
+   "p": {
+    "16": 1.0,
+    "32": 0.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "NO"
+   }
+  },
+  {
+   "id": "math-diagonal",
+   "scion_ok": true,
+   "n_tokens": 97,
+   "p": {
+    "16": 0.0,
+    "32": 0.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "NO",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "math-bat-ball",
+   "scion_ok": true,
+   "n_tokens": 110,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "code-count-vowels",
+   "scion_ok": true,
+   "n_tokens": 118,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "code-fib",
+   "scion_ok": true,
+   "n_tokens": 165,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES"
+   }
+  },
+  {
+   "id": "code-palindrome",
+   "scion_ok": true,
+   "n_tokens": 329,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES",
+    "256": "YES"
+   }
+  },
+  {
+   "id": "code-dedupe",
+   "scion_ok": true,
+   "n_tokens": 127,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "math-shirt-price",
+   "scion_ok": true,
+   "n_tokens": 126,
+   "p": {
+    "16": 0.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "YES",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "math-digit-7",
+   "scion_ok": false,
+   "n_tokens": 625,
+   "p": {
+    "16": 0.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 0.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "YES",
+    "64": "YES",
+    "128": "NO",
+    "256": "YES"
+   }
+  },
+  {
+   "id": "math-clock-angle",
+   "scion_ok": false,
+   "n_tokens": 304,
+   "p": {
+    "16": 0.0,
+    "32": 0.0,
+    "64": 0.0,
+    "128": 1.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "NO",
+    "64": "NO",
+    "128": "YES",
+    "256": "YES"
+   }
+  },
+  {
+   "id": "math-day-of-week",
+   "scion_ok": true,
+   "n_tokens": 88,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "math-probability",
+   "scion_ok": true,
+   "n_tokens": 301,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES",
+    "256": "YES"
+   }
+  },
+  {
+   "id": "math-even-sum",
+   "scion_ok": true,
+   "n_tokens": 190,
+   "p": {
+    "16": 0.0,
+    "32": 0.0,
+    "64": 0.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "NO",
+    "64": "NO",
+    "128": "YES"
+   }
+  },
+  {
+   "id": "math-depreciation",
+   "scion_ok": false,
+   "n_tokens": 102,
+   "p": {
+    "16": 0.0,
+    "32": 0.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "NO",
+    "64": "YES"
+   }
+  },
+  {
+   "id": "qa-strawberry-r",
+   "scion_ok": true,
+   "n_tokens": 87,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 0.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "NO"
+   }
+  },
+  {
+   "id": "qa-berlin-wall",
+   "scion_ok": true,
+   "n_tokens": 15,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-persistence-memory",
+   "scion_ok": false,
+   "n_tokens": 36,
+   "p": {
+    "16": 1.0,
+    "32": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES"
+   }
+  },
+  {
+   "id": "code-run-length",
+   "scion_ok": true,
+   "n_tokens": 448,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES",
+    "256": "YES"
+   }
+  },
+  {
+   "id": "code-merge-intervals",
+   "scion_ok": true,
+   "n_tokens": 150,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES"
+   }
+  },
+  {
+   "id": "code-parse-duration",
+   "scion_ok": true,
+   "n_tokens": 571,
+   "p": {
+    "16": 0.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0,
+    "256": 0.0
+   },
+   "raw": {
+    "16": "NO",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES",
+    "256": "NO"
+   }
+  },
+  {
+   "id": "code-balanced-brackets",
+   "scion_ok": true,
+   "n_tokens": 237,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "YES",
+    "32": "YES",
+    "64": "YES",
+    "128": "YES"
+   }
+  }
+ ]
+}

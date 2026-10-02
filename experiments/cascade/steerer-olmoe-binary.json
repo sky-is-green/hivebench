@@ -1,0 +1,529 @@
+{
+ "model": "allenai/OLMoE-1B-7B-0924",
+ "summary": {
+  "model": "allenai/OLMoE-1B-7B-0924",
+  "mode": "binary",
+  "tasks": 27,
+  "cuts": {
+   "16": {
+    "n": 18,
+    "auc": 0.4286,
+    "mean_p_correct": 0.8571,
+    "mean_p_wrong": 1.0,
+    "at_085": {
+     "cancelled": 16,
+     "false_cancels": 12,
+     "caught": 4,
+     "leaks": 0
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 4,
+      "false_cancels": 12
+     },
+     "0.7": {
+      "caught": 4,
+      "false_cancels": 12
+     },
+     "0.85": {
+      "caught": 4,
+      "false_cancels": 12
+     }
+    }
+   },
+   "32": {
+    "n": 17,
+    "auc": 0.631,
+    "mean_p_correct": 0.9286,
+    "mean_p_wrong": 0.6667,
+    "at_085": {
+     "cancelled": 15,
+     "false_cancels": 13,
+     "caught": 2,
+     "leaks": 1
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 13
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 13
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 13
+     }
+    }
+   },
+   "64": {
+    "n": 15,
+    "auc": 0.6667,
+    "mean_p_correct": 1.0,
+    "mean_p_wrong": 0.6667,
+    "at_085": {
+     "cancelled": 14,
+     "false_cancels": 12,
+     "caught": 2,
+     "leaks": 1
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 12
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 12
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 12
+     }
+    }
+   },
+   "128": {
+    "n": 6,
+    "auc": 0.375,
+    "mean_p_correct": 0.75,
+    "mean_p_wrong": 1.0,
+    "at_085": {
+     "cancelled": 5,
+     "false_cancels": 3,
+     "caught": 2,
+     "leaks": 0
+    },
+    "cancel": {
+     "0.5": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.7": {
+      "caught": 2,
+      "false_cancels": 3
+     },
+     "0.85": {
+      "caught": 2,
+      "false_cancels": 3
+     }
+    }
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "qa-capital-australia",
+   "scion_ok": true,
+   "n_tokens": 30,
+   "p": {
+    "16": null
+   },
+   "raw": {
+    "16": "The AI's response is correct and complet"
+   }
+  },
+  {
+   "id": "qa-element-w",
+   "scion_ok": true,
+   "n_tokens": 16,
+   "p": {
+    "16": 1.0
+   },
+   "raw": {
+    "16": "YES\n\nNO\n\nT"
+   }
+  },
+  {
+   "id": "qa-pride-prejudice",
+   "scion_ok": true,
+   "n_tokens": 36,
+   "p": {
+    "16": 1.0,
+    "32": null
+   },
+   "raw": {
+    "16": "YES\n\nThe user asks who",
+    "32": "The user asks if the answer is"
+   }
+  },
+  {
+   "id": "qa-largest-planet",
+   "scion_ok": true,
+   "n_tokens": 35,
+   "p": {
+    "16": null,
+    "32": null
+   },
+   "raw": {
+    "16": "The AI's final answer will be correct",
+    "32": "The user asks for the largest planet"
+   }
+  },
+  {
+   "id": "math-train-speed",
+   "scion_ok": true,
+   "n_tokens": 31,
+   "p": {
+    "16": 1.0
+   },
+   "raw": {
+    "16": "YES\n\nNO\n\nThe"
+   }
+  },
+  {
+   "id": "math-linear",
+   "scion_ok": true,
+   "n_tokens": 66,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES\n\nStep 2",
+    "32": "YES\n\nTASK:\nIf",
+    "64": "YES\n\nThe AI's final"
+   }
+  },
+  {
+   "id": "math-percent",
+   "scion_ok": true,
+   "n_tokens": 34,
+   "p": {
+    "16": null,
+    "32": 0.0
+   },
+   "raw": {
+    "16": "The AI's final answer will be",
+    "32": "NO\n\nThe AI's final"
+   }
+  },
+  {
+   "id": "math-diagonal",
+   "scion_ok": true,
+   "n_tokens": 83,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES\n\nThe AI's final answer",
+    "32": "The answer is YES.",
+    "64": "YES, the length of the diagonal is"
+   }
+  },
+  {
+   "id": "math-bat-ball",
+   "scion_ok": true,
+   "n_tokens": 101,
+   "p": {
+    "16": 0.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "NO\n\nThe bat costs $",
+    "32": "YES\n\nThe ball costs $",
+    "64": "YES\n\nTASK:\nA"
+   }
+  },
+  {
+   "id": "code-count-vowels",
+   "scion_ok": true,
+   "n_tokens": 138,
+   "p": {
+    "16": null,
+    "32": 1.0,
+    "64": 1.0,
+    "128": null
+   },
+   "raw": {
+    "16": "PARTIAL RESPONSE:",
+    "32": "YES\n\nNO\n\nYES",
+    "64": "YES\n\nPARTIAL RESPON",
+    "128": "```\n\n## Part 2:"
+   }
+  },
+  {
+   "id": "code-fib",
+   "scion_ok": true,
+   "n_tokens": 180,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": null
+   },
+   "raw": {
+    "16": "YES\n\nNO\n\nThe",
+    "32": "YES\n\nPARTIAL RESPON",
+    "64": "YES\n\nThe iterative approach:",
+    "128": "```\n\nThe recursive approach:"
+   }
+  },
+  {
+   "id": "code-palindrome",
+   "scion_ok": true,
+   "n_tokens": 389,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": null,
+    "128": 1.0,
+    "256": null
+   },
+   "raw": {
+    "16": "YES\n\nNO\n\nPART",
+    "32": "YES\n\nNO\n\nYES",
+    "64": "- First, I\n\nAnswer",
+    "128": "- YES: The string reads the same",
+    "256": "- `is_palindrome(\""
+   }
+  },
+  {
+   "id": "code-dedupe",
+   "scion_ok": true,
+   "n_tokens": 145,
+   "p": {
+    "16": 1.0,
+    "32": null,
+    "64": 1.0,
+    "128": null
+   },
+   "raw": {
+    "16": "YES\n\nPARTIAL RESP",
+    "32": "The user wants a Python function `",
+    "64": "YES\n\nNO\n\nThe",
+    "128": "```\n\n## Part 2:"
+   }
+  },
+  {
+   "id": "math-shirt-price",
+   "scion_ok": true,
+   "n_tokens": 109,
+   "p": {
+    "16": 0.0,
+    "32": null,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "NO\n\nThe original price of",
+    "32": "The original price of the shirt was",
+    "64": "YES, the original price is $25"
+   }
+  },
+  {
+   "id": "math-digit-7",
+   "scion_ok": false,
+   "n_tokens": 446,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "YES\n\nThe AI's final answer",
+    "32": "YES\n\n**10-19",
+    "64": "YES\n\nThe AI's final",
+    "128": "YES\n\nThe AI's final",
+    "256": "YES\n\nThe AI's final answer"
+   }
+  },
+  {
+   "id": "math-clock-angle",
+   "scion_ok": false,
+   "n_tokens": 232,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "YES.\n\nThe AI's final",
+    "32": "YES\n\nThe answer is YES.",
+    "64": "YES.\n\nThe AI's final",
+    "128": "YES\n\nThe answer is YES."
+   }
+  },
+  {
+   "id": "math-day-of-week",
+   "scion_ok": true,
+   "n_tokens": 78,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "YES\n\n100 days from today",
+    "32": "YES\n\nThe AI's final answer",
+    "64": "YES\n\nThe AI's final answer"
+   }
+  },
+  {
+   "id": "math-probability",
+   "scion_ok": true,
+   "n_tokens": 270,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 0.0,
+    "256": 1.0
+   },
+   "raw": {
+    "16": "YES, the probability is 3/8",
+    "32": "YES\n\nThe probability that both",
+    "64": "YES:\n\nNO:",
+    "128": "NO\n\nThe AI's final answer",
+    "256": "YES\n\n## The next question"
+   }
+  },
+  {
+   "id": "math-even-sum",
+   "scion_ok": true,
+   "n_tokens": 128,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 1.0
+   },
+   "raw": {
+    "16": "YES\n\nThe AI's final answer",
+    "32": "YES\n\nThe AI's final answer",
+    "64": "YES: The AI's final answer will",
+    "128": "YES\n\nThe AI's final"
+   }
+  },
+  {
+   "id": "math-depreciation",
+   "scion_ok": false,
+   "n_tokens": 80,
+   "p": {
+    "16": 1.0,
+    "32": 0.0,
+    "64": 0.0
+   },
+   "raw": {
+    "16": "YES\n\nThe car is worth",
+    "32": "NO\n\nThe car is worth",
+    "64": "NO\n\nThe car is worth"
+   }
+  },
+  {
+   "id": "qa-strawberry-r",
+   "scion_ok": true,
+   "n_tokens": 93,
+   "p": {
+    "16": null,
+    "32": 1.0,
+    "64": 1.0
+   },
+   "raw": {
+    "16": "The AI's final answer will be",
+    "32": "YES\n\nThe AI's final",
+    "64": "YES\n\nThe final answer is:"
+   }
+  },
+  {
+   "id": "qa-berlin-wall",
+   "scion_ok": true,
+   "n_tokens": 10,
+   "p": {},
+   "raw": {}
+  },
+  {
+   "id": "qa-persistence-memory",
+   "scion_ok": false,
+   "n_tokens": 39,
+   "p": {
+    "16": 1.0,
+    "32": null
+   },
+   "raw": {
+    "16": "YES\n\nNO\n\nThe",
+    "32": "The user asks if the answer is"
+   }
+  },
+  {
+   "id": "code-run-length",
+   "scion_ok": true,
+   "n_tokens": 501,
+   "p": {
+    "16": null,
+    "32": null,
+    "64": 1.0,
+    "128": null,
+    "256": null
+   },
+   "raw": {
+    "16": "The user wants a Python function that pe",
+    "32": "The user wants a Python function that pe",
+    "64": "YES\n\nPARTIAL RESPON",
+    "128": "```\n\n### Part 2",
+    "256": "- 'aaabbc'\n-"
+   }
+  },
+  {
+   "id": "code-merge-intervals",
+   "scion_ok": true,
+   "n_tokens": 182,
+   "p": {
+    "16": null,
+    "32": 1.0,
+    "64": null,
+    "128": null
+   },
+   "raw": {
+    "16": "The user wants a Python function that",
+    "32": "YES:\nThe function should return",
+    "64": "```\n\n## Solution",
+    "128": "```\n\n## Part 2:"
+   }
+  },
+  {
+   "id": "code-parse-duration",
+   "scion_ok": true,
+   "n_tokens": 576,
+   "p": {
+    "16": null,
+    "32": 1.0,
+    "64": null,
+    "128": 1.0,
+    "256": null
+   },
+   "raw": {
+    "16": "The AI's final answer will be correct",
+    "32": "YES\n\nPARTIAL RESPON",
+    "64": "- I need to parse strings that",
+    "128": "- YES:\n\n- NO",
+    "256": "- The user wants a Python function that"
+   }
+  },
+  {
+   "id": "code-balanced-brackets",
+   "scion_ok": true,
+   "n_tokens": 265,
+   "p": {
+    "16": 1.0,
+    "32": 1.0,
+    "64": null,
+    "128": null,
+    "256": null
+   },
+   "raw": {
+    "16": "YES\n\nNO\n\nYES",
+    "32": "YES\n\nNO\n\nYES",
+    "64": "- If the stack is empty, the",
+    "128": "- If the stack is empty, return",
+    "256": "```\n\n## Part 2"
+   }
+  }
+ ]
+}

@@ -1,0 +1,108 @@
+{
+ "tasks": 27,
+ "wrong": 4,
+ "n_embd": 2048,
+ "pool": 8,
+ "cuts": {
+  "16": {
+   "n": 26,
+   "auc_pooled_lr": 0.1932,
+   "auc_pooled_centroid": 0.2045,
+   "auc_raw_lr": 0.4886,
+   "auc_raw_centroid": 0.4773,
+   "wrong_ranks_pooled_lr": {
+    "math-digit-7": 21,
+    "math-clock-angle": 12,
+    "math-depreciation": 23,
+    "qa-persistence-memory": 25
+   },
+   "cancel_pooled_lr": [
+    {
+     "rank": 25,
+     "caught": 4,
+     "false_cancels": 21,
+     "task": null
+    }
+   ]
+  },
+  "32": {
+   "n": 24,
+   "auc_pooled_lr": 0.3,
+   "auc_pooled_centroid": 0.3,
+   "auc_raw_lr": 0.1125,
+   "auc_raw_centroid": 0.0125,
+   "wrong_ranks_pooled_lr": {
+    "math-digit-7": 20,
+    "math-clock-angle": 7,
+    "math-depreciation": 15,
+    "qa-persistence-memory": 24
+   },
+   "cancel_pooled_lr": [
+    {
+     "rank": 24,
+     "caught": 4,
+     "false_cancels": 20,
+     "task": null
+    }
+   ]
+  },
+  "64": {
+   "n": 19,
+   "auc_pooled_lr": 0.0833,
+   "auc_pooled_centroid": 0.2917,
+   "auc_raw_lr": 0.2917,
+   "auc_raw_centroid": 0.5625,
+   "wrong_ranks_pooled_lr": {
+    "math-digit-7": 17,
+    "math-clock-angle": 15,
+    "math-depreciation": 18
+   },
+   "cancel_pooled_lr": [
+    {
+     "rank": 18,
+     "caught": 3,
+     "false_cancels": 15,
+     "task": null
+    }
+   ]
+  },
+  "128": {
+   "n": 12,
+   "auc_pooled_lr": 0.2,
+   "auc_pooled_centroid": 0.3,
+   "auc_raw_lr": 0.0,
+   "auc_raw_centroid": 0.3,
+   "wrong_ranks_pooled_lr": {
+    "math-digit-7": 12,
+    "math-clock-angle": 7
+   },
+   "cancel_pooled_lr": [
+    {
+     "rank": 12,
+     "caught": 2,
+     "false_cancels": 10,
+     "task": null
+    }
+   ]
+  },
+  "256": {
+   "n": 6,
+   "auc_pooled_lr": 0.0,
+   "auc_pooled_centroid": 0.0,
+   "auc_raw_lr": 0.125,
+   "auc_raw_centroid": 0.75,
+   "wrong_ranks_pooled_lr": {
+    "math-digit-7": 6,
+    "math-clock-angle": 5
+   },
+   "cancel_pooled_lr": [
+    {
+     "rank": 6,
+     "caught": 2,
+     "false_cancels": 4,
+     "task": null
+    }
+   ]
+  }
+ }
+}

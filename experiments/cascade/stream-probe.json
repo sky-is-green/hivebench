@@ -1,0 +1,190 @@
+{
+ "base": "http://127.0.0.1:1235/v1",
+ "abort_deltas": 32,
+ "phases": {
+  "control": {
+   "deltas": 96,
+   "first_delta_ms": 58.9,
+   "stream_read_ms": 1296.1,
+   "followup_ms": 1367.3
+  },
+  "disconnect": {
+   "deltas_read": 32,
+   "read_ms": 473.7,
+   "followup_ms": 153.3,
+   "tokens_before": 299.0,
+   "tokens_after": 334.0,
+   "tokens_generated_after_close": 35.0,
+   "metrics_trace": [
+    {
+     "t_ms": 0.8,
+     "tokens_predicted_total": 299.0,
+     "requests_processing": 1.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 201.9,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 402.9,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 603.8,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 804.7,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1005.7,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1206.4,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1407.4,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1608.2,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1809.1,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 2009.9,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 2210.8,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 2411.7,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    }
+   ]
+  },
+  "resumable": {
+   "deltas_read": 32,
+   "read_ms": 476.1,
+   "delete_status": 204,
+   "replay_status": 404,
+   "followup_ms": 150.5,
+   "tokens_before": 334.0,
+   "tokens_after": 369.0,
+   "tokens_generated_after_delete": 35.0,
+   "metrics_trace": [
+    {
+     "t_ms": 0.6,
+     "tokens_predicted_total": 334.0,
+     "requests_processing": 1.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 201.4,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 402.4,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 603.3,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 804.1,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1004.7,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1205.7,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1406.5,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1607.6,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 1808.3,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 2009.1,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 2210.0,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    },
+    {
+     "t_ms": 2410.7,
+     "tokens_predicted_total": 369.0,
+     "requests_processing": 0.0,
+     "requests_deferred": 0.0
+    }
+   ]
+  }
+ }
+}

@@ -272,6 +272,54 @@ That is a **93% cost cut** with quality *up* (the router gated away the one
 case the API verifier used to miss). Caveats: 14 tasks, single sample, and the
 judge runs in-process (the ROCm venv) rather than as a served endpoint.
 
+## Judge vs steerer — async-steering experiments (2026-10-02)
+
+The judgement broker can fire mid-generation, so the question was what a
+verdict on a *partial* generation is worth. It splits the verification roles:
+
+- **Judge (D2/D3)** — predicate on a finished artifact: P(answer correct) at
+  EOS, answer-only. JEV-9B scores 26/27, and is measurably worse when shown the
+  reasoning (false accepts 1 → 3 on the full stream); the contract is now
+  explicitly **answer-only**.
+- **Steerer (new role D0)** — forecast on a trajectory: P(final outcome |
+  prefix) at checkpoints, whose only actions are continue / cancel-to-escalate /
+  force-answer. No trustworthy implementation yet, so **cancel-on-reject is not
+  wired**.
+
+Mechanics (dedicated `-np 1 --metrics` server): both cancel paths work —
+closing a plain stream and `DELETE /v1/stream` stop compute in ≤200 ms
+(`stop: cancel task` in the log, `requests_processing → 0`, ~35 tokens of
+decode-ahead overrun, slot free in ~150 ms). The pilot stack runs 4 slots, so
+per-slot cancel is fine but occupancy timing needs `-np 1`.
+
+Streams and sensors (27 captured Scion streams, reasoning + answer; the answer
+starts at a **median 92%** of the stream, so steering can only act on the
+reasoning):
+
+| sensor | AUC @16/64/128 | cancel @0.5: caught wrong / false cancels |
+|---|---|---|
+| JEV-9B `complete` | 0.82 / 0.81 / 0.75 | 3 / 7 |
+| Intern-Decision 0.8B · 2B | 0.67 / 0.62 / 0.88 · 0.61 / 0.70 / 0.70 | 4 / 16 · 3 / 20 |
+| Qwen3-1.7B, YES/NO | 0.78 / 0.60 / 0.75 | **3 / 4** |
+| Qwen3.5-4B, YES/NO | 0.53 / 0.56 / 0.65 | 3 / 14 |
+| Qwen3-1.7B, verbalized P | 0.28 / 0.11 / 0.64 | — |
+| linear probe on Scion hidden states | 0.19 / 0.08 / 0.20 | underpowered |
+
+Read: every sensor catches the same long, visibly confused traces and misses
+the same short wrong answer. The best zero-shot sensor (1.7B, binary decision)
+still false-cancels four correct answers per three caught — more escalation
+cost than the ~1k local tokens it saves. **Do not wire cancel-on-reject yet.**
+The binding asset is a steering dataset (~100 hard tasks × 3–5 samples with
+streams, hidden dumps and checker labels — the capture pipeline exists) and a
+steerer trained with an asymmetric false-cancel penalty; H1's "answer
+determined" signal needs the same treatment.
+
+Scripts: `stream_capture.py`, `stream_probe.py`, `prefix_eval.py`,
+`steerer_llm_eval.py`, `steerer_compare.py`, `build_hidden_windows.py`,
+`hidden_probe.py`. Artifacts: `prefix-stream-eval.json`,
+`prefix-steerer-{08b,2b}.json`, `steerer-*.json`, `steerer-compare.json`,
+`hidden-probe.json`, `stream-probe.json`, `streams/scion-v2-streams/`.
+
 ## Related
 
 - `HIVE-PLAN.md` (local-only) — track plan and task rows.
