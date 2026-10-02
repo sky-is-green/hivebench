@@ -320,6 +320,83 @@ Scripts: `stream_capture.py`, `stream_probe.py`, `prefix_eval.py`,
 `prefix-steerer-{08b,2b}.json`, `steerer-*.json`, `steerer-compare.json`,
 `hidden-probe.json`, `stream-probe.json`, `streams/scion-v2-streams/`.
 
+## Related work and prior art (2026-10-02)
+
+Routing and cascading between independently trained LLMs is an established
+field. The 2026 survey *Dynamic Model Routing and Cascading for Efficient LLM
+Inference* (Moslem & Kelleher, arXiv:2603.04445) maps it along three axes:
+when the decision is made (pre-generation / post-generation / multi-stage),
+what signals it uses (query / model metadata / response / feedback), and how
+it is computed (heuristic / supervised / bandit / RL). This harness is the
+multi-stage, response+feedback, supervised+heuristic corner of that space.
+
+Closest methods: **FrugalGPT** (router + quality estimator + cost-aware stop
+judge), **AutoMix** (self-verification + POMDP stop), **Cascade Routing**
+(dynamic model reordering per query), **RouteLLM** (binary win-prediction
+trained on preference/outcome labels), Arch-Router / UniRoute / bandit routers
+(query-side), **CALM** (per-timestep confidence early exit with calibrated
+thresholds), **speculative cascades** (token-level deferral rule), **PRMs**
+(step-level supervision). Provider practice: OpenAI GPT-5's continuously
+trained real-time router; Azure Foundry model router (trained model with
+Balanced/Cost/Quality modes and failover); Bedrock intelligent prompt routing
+(quality prediction within a family, fallback model + quality-difference
+criterion); OpenRouter/gateway auto-routing. Mid-stream generation control
+exists in production only for safety filters (`finish_reason:
+content_filter`), never for quality; thinking budgets / effort controls are
+the shipped form of H1.
+
+Historical lineage, all pre-2000: **Chow's reject option** (1970) is our judge
+threshold; **Wald's SPRT** (1945) is calibrated early stopping; **boosted
+cascades** (Viola–Jones 2001, on 1990s boosting) are our P-paths;
+**algorithm portfolios and restarts under heavy-tailed runtimes** (Rice 1976;
+Luby 1993; Gomes & Selman 2001) are our candidate pools; **mixture of experts**
+(Jacobs, Jordan, Nowlan & Hinton 1991) is our role mixture; **anytime
+algorithms and value of computation** (Russell & Wefald 1991; Zilberstein;
+Horvitz 1988) plus **Simon's satisficing** are H1 and the quality target;
+**Hearsay-II blackboard control** (1980) is our scheduler and broker;
+**Minton's utility problem** (1988) says verification must pay rent; **MYCIN
+certainty factors** are the historical twin of the verbalized-confidence
+failure we measured. The old era stalled because there was no calibrated
+per-step evidence, no cheap multiple models, no metered cost; all three now
+exist.
+
+What we borrow, concretely:
+
+1. **SPRT/CALM boundaries** with an explicit false-cancel budget once the
+   steerer has a score — replace the hand-fitted single threshold.
+2. **Instrument P0–P6 as a designed cascade** (reach/reject/cost per stage,
+   Viola–Jones style) and allow dynamic ordering (cascade routing).
+3. **Train deferral jointly with the real cost matrix** (learning-to-defer),
+   not separately thresholded models.
+4. **Measure the generator runtime distribution**; test restart/interleave
+   policies against single long paths (heavy tails).
+5. **VOC gate**: skip the judge/steerer when expected gain < its cost
+   (Minton's utility problem); no shipped cascade does this explicitly.
+6. **Value-aware opportunistic broker pump** (Hearsay), not submission order.
+
+## Priority plan after the literature pass
+
+1. **Evaluation floor first**: held-out split plus a real benchmark slice
+   (GSM8K / MATH / HumanEval / TruthfulQA, local) at 3–5 samples per task;
+   thresholds fitted on train, reported on test. Nothing above is credible
+   without this.
+2. **Dataset asset**: capture ~100 hard tasks × 3–5 samples with streams,
+   hidden dumps and checker labels (the `stream_capture` +
+   `build_hidden_windows` pipeline); it feeds router training, steerer
+   training, calibration and the benchmarks.
+3. **Router (C1)**: train/calibrate on accumulated outcome labels
+   (RouteLLM-style binary win prediction) instead of the zero-shot Tiny-Jev
+   threshold.
+4. **Judge (D2/D3)**: cost-sensitive operating point from the actual
+   escalation-vs-wrong cost ratio (Chow), fitted on held-out data; keep
+   answer-only.
+5. **Steerer (D0)**: trained probe (text or hidden state) with an asymmetric
+   false-cancel loss and SPRT/CALM boundaries; only then wire
+   cancel-on-reject. H1's "answer determined" signal rides the same probe.
+6. **Policy upgrades**: cascade instrumentation and dynamic ordering, the VOC
+   gate, value-aware pump; then serve the decision models as endpoints and
+   build the DSH console.
+
 ## Related
 
 - `HIVE-PLAN.md` (local-only) — track plan and task rows.
