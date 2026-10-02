@@ -418,6 +418,18 @@ against their 64 GB recommendation; the mapped low-RAM mode with both 20 GB
 cards is the untested path, and it is the same model the flash-next research
 track is exercising.
 
+This is the same problem as **project Ember** (`docs/EMBER.md`): our own
+HIP/ROCm expert-residency engine (`--moe-slot-cache`,
+`GGML_OP_MOE_CACHE_MAP`) already runs the same 125B Q2_0 pack through the
+stack API and measures the same regime on this box (all-resident 26.9 t/s;
+8.1 GiB off-VRAM + 4.1 GiB slots → 24.5 t/s, +27%, ~88% hits; 24.3 GiB
+off-VRAM + slots → 11.5-15.4 t/s). Strata adds what Ember's open list is
+missing: CPU co-execution of misses instead of a PCIe gather, MTP and
+prompt-lookup speculation, 8K prefill chunks with layer-ahead prefetch, KV
+streaming and k8v4, adaptive per-conversation caches, and the serving/product
+surface. Ember's advantage: it is ours, HIP-native, measured on this exact
+box, and already wired through `stacks/ember-*.json`.
+
 ## Priority plan after the literature pass
 
 1. **Evaluation floor first**: held-out split plus a real benchmark slice

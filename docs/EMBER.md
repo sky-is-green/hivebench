@@ -130,6 +130,25 @@ default `models_dir` on this box): the 125B in
   can carry `-ncmoe`, `-msc`, `--lazy-mode`, `-np`, etc. without owning the
   model/host/port flags.
 
+## Strata — external reference point (2026-10-02)
+
+[Strata](https://github.com/Niko1221/Strata) (MIT, ~5.7k stars, trending
+September 2026) runs the same Qwen3.8-Flash-Next Q2_0 pack on consumer GPUs
+with an overlapping design: an adaptive hot-expert cache in VRAM and all
+experts in RAM, but **off-VRAM experts are computed by the CPU in place**
+(AVX-512, concurrent with the GPU) instead of fetched over PCIe — plus the
+model's own MTP speculation (2.4-3.2 accepted tokens/pass), 8K prefill chunks
+with layer-ahead expert prefetch, KV streaming and k8v4, mapped/resident
+low-RAM modes, and a full OpenAI + Anthropic serving surface with per-tier
+`/metrics` and per-box calibration.
+
+Published Q2_0 numbers on a 12 GB RTX 5070 / 64 GB PC: 87.3 t/s at 1K context,
+73.7 at 128K, 60.3 at 262K. Our all-resident 125B measurement is 26.9 t/s; the
+gap is speculation (1.6-1.8x alone), CPU co-execution, prefill chunking, and
+the dispatch floor noted below. Their design validates Ember's thesis; the
+unshelve decision is open. Full comparison and borrow list:
+`docs/CASCADE-PILOT.md` ("Strata — the local Flash-Next engine").
+
 ## Next steps (in value order, when unshelved)
 
 1. **Kernel-count reduction / fusion** (all configs, biggest headroom). The
