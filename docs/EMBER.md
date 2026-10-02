@@ -153,6 +153,37 @@ the dispatch floor noted below. Their design validates Ember's thesis; the
 unshelve decision is open. Full comparison and borrow list:
 `docs/CASCADE-PILOT.md` ("Strata — the local Flash-Next engine").
 
+## E4 baseline protocol (ready to run when the box frees)
+
+Goal: Flash-Next on AMD at Strata-level performance, measured before any
+cascade changes. Ask the human first (one heavy track at a time; 30 GB RAM).
+
+Preconditions: no other heavy job; ≥26 GB RAM free; driver state clean.
+Apply through the stack API (`ember-125b-lowvram`) or directly:
+
+```sh
+LLAMA_MOE_SLOT_STATS=1 tools/backends/rocm/llama-server \
+  -m ~/Desktop/work/models/qwen38-q2_0/Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf \
+  -ngl 99 -ncmoe 12 -msc auto -c 4096 -np 1 -t 8 \
+  -ts 0.522,0.478 --split-mode layer -lm mmap --lazy-mode on -fa auto
+```
+
+Runs, in order (record every one under `experiments/cascade/results/` with
+model sha + engine commit + flags):
+
+1. all-resident baseline (`-ncmoe 0`), then `-ncmoe 12 -msc auto`, then
+   `-ncmoe 24 -msc 256`;
+2. per run: cold prefill (1K/4K prompt) and warm prefill, 256-token decode,
+   `expert tiers` hit rates, host-RAM peak, VRAM peak, disk MB per generation;
+3. optional reference: Strata's AMD/HIP build on the same box, same prompts —
+   this is the "as well as Strata" comparison;
+4. abort criteria: free RAM < 4 GB during load, OOM, driver reset.
+
+Then the gap-closing ladder, in value order: MTP layer (fetch/pack, then
+`--model-draft`/`--spec-draft-max` through the engine-args seam), CPU
+co-execution of misses, prefill chunking + layer-ahead prefetch, KV
+streaming/k8v4, dispatch-floor reduction, telemetry/calibration.
+
 ## Next steps (in value order, when unshelved)
 
 1. **Kernel-count reduction / fusion** (all configs, biggest headroom). The
