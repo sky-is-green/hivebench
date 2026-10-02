@@ -8,8 +8,12 @@ the Hivebench harness; it is *inspired by* [FlashML
 FreeToken](https://github.com/FlashML-org/FreeToken)'s published design (LRU
 expert caching, bandwidth-adaptive co-execution) but shares no code with it and
 targets a different runtime (llama.cpp/ggml, not their Python/Triton engine).
-Formerly tracked as "AMD FreeToken" — the branch is now **`ember`** (engine:
-**`engine/ember`**); old references map 1:1.
+Formerly tracked as "AMD FreeToken".
+
+> **Consolidated 2026-10-02:** Ember is a lane of the **hive_cascade** program.
+> The standalone `ember` branch is retired (tip `4d07d81`, fully contained in
+> `hive_cascade`); the engine branch **`engine/ember`** in the prism repo keeps
+> its name. Anything Ember-marked lives on `hive_cascade` now.
 
 ## Status (2026-09-28, shelved)
 
