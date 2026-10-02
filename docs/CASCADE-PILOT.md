@@ -374,6 +374,50 @@ What we borrow, concretely:
    (Minton's utility problem); no shipped cascade does this explicitly.
 6. **Value-aware opportunistic broker pump** (Hearsay), not submission order.
 
+### Strata — the local Flash-Next engine (2026)
+
+[Strata](https://github.com/Niko1221/Strata) (MIT, ~5.7k stars, trending
+September 2026) runs **Qwen3.8-Flash-Next** — the registry's `flash-next` E4
+candidate — on consumer GPUs by tiering its 24,576 experts across
+VRAM/RAM/CPU/SSD: attention, mixers, routers and an **adaptive expert cache**
+on the GPU (it re-learns the hot experts per conversation), all experts pinned
+in RAM, the rest computed in place on the CPU, and a 28.8 GB n-gram lookup
+table read from the SSD. Speed comes from the model's own MTP layer (up to 3
+drafted tokens, 2.4-3.2 accepted per pass) plus prompt-lookup drafts, 8K-token
+prefill chunks with next-layer expert prefetch over PCIe, and optional KV
+streaming / quantization (`--kv-resident`, `k8v4`). Low-RAM modes map experts
+from the pack (`--mmap-experts`), keep a resident budget
+(`--resident-budget-gib`), or prefetch predicted pages (`STRATA_LOOKAHEAD`).
+
+The serving layer is as instructive as the engine: an OpenAI **and** Anthropic
+compatible API, reasoning-effort levels plus a hard `reasoning_budget_tokens`
+(H1's shipped form), `/metrics` with per-tier expert counts and draft
+acceptance, **idle unload + min-free-VRAM guard + before-load hooks**, prompt
+and conversation checkpoints, MCP in both directions, and per-box calibration
+(`--calibrate`) of PCIe fraction, draft threshold and CPU pool.
+
+What to borrow for hivebench:
+
+1. The **idle-unload / min-free-VRAM / before-load triad** is exactly the
+   arbitration our stack manager needs for two research tracks on one box
+   (today one track OOMs the other).
+2. **Per-tier expert telemetry** belongs in the oracle and residency math —
+   our candidates are monolithic `bytes_gb` today.
+3. **Per-box calibration** is an oracle primitive we already model, but
+   Strata actually measures and keeps only >3% wins.
+4. Their **bench/results layout** (dated run dirs, engine version, settings,
+   per-length matrices, explicit caveats) matches our manifest/MODEL-CARD
+   tracking; adopt the dated-dir convention.
+5. **Determinism caveats**: adaptive expert tiers and speculation make greedy
+   runs non-byte-identical; our eval manifests should record this and the
+   reproducibility switches.
+
+Strata is a candidate backend for the `flash-next` E4 tier — our ISTA-DASLab
+Q2_0 pack is already local (62 GB on disk) — but this box has 30 GB RAM
+against their 64 GB recommendation; the mapped low-RAM mode with both 20 GB
+cards is the untested path, and it is the same model the flash-next research
+track is exercising.
+
 ## Priority plan after the literature pass
 
 1. **Evaluation floor first**: held-out split plus a real benchmark slice
