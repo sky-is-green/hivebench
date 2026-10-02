@@ -430,6 +430,22 @@ streaming and k8v4, adaptive per-conversation caches, and the serving/product
 surface. Ember's advantage: it is ours, HIP-native, measured on this exact
 box, and already wired through `stacks/ember-*.json`.
 
+## Program direction — Ember absorbed, Flash-Next as E4 (2026-10-02)
+
+Ember (`docs/EMBER.md`) is part of this program: the prism ROCm engine
+(`engine/ember`, expert slot cache) plus `stacks/ember-*.json` become the E4
+tier, and the target generator is **Qwen3.8-Flash-Next Q2_0** (62 GB local
+pack). The cascade is planned around the space E4 leaves: budget its VRAM/RAM
+first, then place the decision models that fit (Tiny-Jev 1.7B router;
+Intern-0.8B/2B judge; JEV-9B only in 35B configs; the iGPU duty desk is a
+BIOS-level user call). The generator becomes a **swappable contract**
+(endpoint + model + caps + measured per-device latency) so the same cascade can
+map the box's ceiling across sizes (35B ↔ 125B ↔ others). **AMD-first: reach
+Strata-level Flash-Next performance before chasing cascade gains** — MTP
+speculation, CPU co-execution of misses, prefill chunking + layer-ahead
+prefetch, KV streaming/k8v4, dispatch-floor reduction, telemetry and per-box
+calibration.
+
 ## Priority plan after the literature pass
 
 1. **Evaluation floor first**: held-out split plus a real benchmark slice
