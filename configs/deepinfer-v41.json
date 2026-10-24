@@ -1,0 +1,9 @@
+{
+  "model": "~/Desktop/work/models/DeepSeek-V4.1-Flash-1017",
+  "served_model_name": "deepseek-v4.1-flash",
+  "ctx": 4096,
+  "expert_parallel_size": 1,
+  "gpu_memory_utilization": 0.9,
+  "seed": 0,
+  "engine_args": []
+}

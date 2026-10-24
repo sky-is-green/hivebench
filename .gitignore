@@ -106,6 +106,13 @@ artifacts/ternary/
 # released to the Hub, not kept in git)
 experiments/encoder-suite/results/*/l3-tuned*/
 experiments/encoder-suite/results/*/*-tuned*/
+# the held-out fine-tune's checkpoint (a build artifact; the measurement
+# that describes it - holdout.json - is tracked)
+experiments/encoder-suite/results/holdout*/holdout-tuned/
+# our own Qwen-family bi-encoder (the weights are a build artifact; the
+# measurements that describe them are tracked)
+experiments/encoder-suite/results/qwen/**/qwen-bi-encoder/
+experiments/encoder-suite/results/qwen/**/teacher-judgements.json
 experiments/cascade/results/*/streams.json
 experiments/cascade/results/*/capture.json
 experiments/cascade/results/.model-sha-cache.json
@@ -121,3 +128,12 @@ experiments/cascade/results/*/logit-*/readout.err
 
 # HF cache (CI sets HF_HOME to $GITHUB_WORKSPACE/.hf-cache)
 .hf-cache/
+
+# The DeepInfer AMD build: the compiled extension, its build directory, and
+# the hipify pass's output files (ROCm's PyTorch writes foo.cpp -> foo_hip.cpp
+# next to the original).  The build script removes the last two itself.
+vendor/deepinfer/build/
+vendor/deepinfer/deepinfer/_so/
+vendor/deepinfer/csrc/*_hip.cpp
+vendor/deepinfer/csrc/graph_timer/*_hip.cpp
+vendor/deepinfer_amd/csrc/*_hip.cpp

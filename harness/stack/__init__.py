@@ -13,6 +13,7 @@ Modules: :mod:`schema` (data model + file I/O + shape validation),
 """
 
 from harness.stack.api import PREFIX, create_router
+from harness.stack.deepinfer import DeepInferLauncher
 from harness.stack.endpoint import endpoint_base, endpoint_port, probe_endpoint
 from harness.stack.manager import (
     StackManager,
@@ -84,6 +85,8 @@ __all__ = [
     # strata launcher
     "StrataLauncher",
     "merge_engine_args",
+    # deepinfer launcher
+    "DeepInferLauncher",
     # api
     "PREFIX",
     "create_router",

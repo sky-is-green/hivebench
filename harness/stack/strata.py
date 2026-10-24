@@ -8,11 +8,13 @@ process.
 
 Generated config: the base config (Strata's ``strata-<model>.json``) is
 copied, the listen ``port`` is synced to the endpoint URL, the engine ``args``
-get ``--max-context <tier.ctx>`` plus the block's ``engine_args`` (an existing
-flag is replaced in place, a new one appended), the engine ``log`` is pointed
-at the harness log directory, and ``options`` are merged on top.  The command
-is Strata's own server: ``<repo>/.venv/bin/python serve/server.py --engine
-strata --config <generated> --port <port>`` from ``<repo>``.
+get the context flag (``--max-context`` by default, or the lane's
+``ctx_flag`` - the DeepSeek-V4.1 engine takes ``--ctx``) with ``<tier.ctx>``
+plus the block's ``engine_args`` (an existing flag is replaced in place, a new
+one appended), the engine ``log`` is pointed at the harness log directory, and
+``options`` are merged on top.  The command is Strata's own server:
+``<repo>/.venv/bin/python serve/server.py --engine strata --config <generated>
+--port <port>`` from ``<repo>``.
 
 Files land under ``harness_state/strata/`` (generated config) and the shared
 ``logs/`` directory (server stdout+stderr, engine log), matching the
@@ -163,7 +165,11 @@ class StrataLauncher:
         """The generated server config: base + port + ctx/args + log + options."""
         config = json.loads(json.dumps(dict(base)))  # deep copy
         config["port"] = endpoint_port(endpoint)
-        overrides = ["--max-context", str(int(getattr(tier, "ctx", 8192)))]
+        # The context flag is the engine's own: the DeepSeek-V4.1 engine takes
+        # `--ctx` and refuses anything it does not know, so the lane names it
+        # (launch.ctx_flag).  The default is the Strata/llama.cpp spelling.
+        ctx_flag = str(launch.get("ctx_flag") or "--max-context")
+        overrides = [ctx_flag, str(int(getattr(tier, "ctx", 8192)))]
         overrides += [str(token) for token in (launch.get("engine_args") or [])]
         config["args"] = merge_engine_args(list(config.get("args") or []), overrides)
         config["log"] = str(engine_log)

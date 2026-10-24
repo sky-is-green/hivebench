@@ -1,0 +1,29 @@
+{
+  "name": "deepinfer-v41",
+  "version": 1,
+  "tiers": [
+    {
+      "role": "face",
+      "repo": "local/deepinfer",
+      "file": "DeepSeek-V4.1-Flash-1017",
+      "ctx": 4096,
+      "ngl": 99,
+      "backend": "rocm",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "endpoint": "http://127.0.0.1:8090/v1",
+      "caps": {},
+      "launch": {
+        "kind": "deepinfer",
+        "repo": "~/Desktop/work/hivebench",
+        "config": "configs/deepinfer-v41.json",
+        "python": ".venv-amd/bin/python",
+        "engine_args": [],
+        "timeout_s": 1800
+      }
+    }
+  ],
+  "routing": {
+    "workers_as": "subagent"
+  }
+}

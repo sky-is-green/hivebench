@@ -165,6 +165,38 @@ def test_build_config_merges_options_on_top(tmp_path):
     assert config["idle_unload_s"] == 600
 
 
+def test_build_config_uses_the_lanes_own_context_flag(tmp_path):
+    """The DeepSeek-V4.1 engine takes ``--ctx`` and refuses unknown flags.
+
+    The launcher forces the context onto the engine's argv, so a lane whose
+    engine spells it differently names it (``launch.ctx_flag``) and the
+    default spelling is left out entirely - passing both would abort the
+    engine on the flag it does not know.
+    """
+    launcher = StrataLauncher()
+    tier = _tier(tmp_path, ctx=32768, ctx_flag="--ctx")
+    config = launcher.build_config(
+        {"args": ["--ctx", "262144", "--experts", "gpu"], "port": 1},
+        tier.launch, tier, "http://127.0.0.1:18080/v1", tmp_path / "e.log")
+
+    args = config["args"]
+    assert args.count("--ctx") == 1
+    assert args[args.index("--ctx") + 1] == "32768"
+    assert "--max-context" not in args
+    assert args[args.index("--experts") + 1] == "gpu"
+
+
+def test_build_config_defaults_to_max_context(tmp_path):
+    launcher = StrataLauncher()
+    tier = _tier(tmp_path, ctx=8192)
+    config = launcher.build_config(
+        {"args": [], "port": 1}, tier.launch, tier,
+        "http://127.0.0.1:18080/v1", tmp_path / "e.log")
+    args = config["args"]
+    assert args[args.index("--max-context") + 1] == "8192"
+    assert "--ctx" not in args
+
+
 # ---------------------------------------------------------------------------
 # resolution
 # ---------------------------------------------------------------------------

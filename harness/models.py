@@ -111,6 +111,12 @@ def _binary_for_backend(backend: Optional[str]) -> Optional[Path]:
     return p if p.is_file() else None
 
 
+def backend_binary(backend: Optional[str]) -> Optional[Path]:
+    """Public form of the per-backend lookup (``hive serve`` picks a build that
+    is actually installed instead of guessing)."""
+    return _binary_for_backend(backend)
+
+
 class OutOfMemoryError(RuntimeError):
     """A model cannot load without exhausting VRAM/RAM.
 

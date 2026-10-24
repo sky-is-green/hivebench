@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 from harness.models import launch_extra_args
+from harness.stack.deepinfer import DeepInferLauncher
 from harness.stack.endpoint import endpoint_base, endpoint_port, probe_endpoint
 from harness.stack.residency import plan_residency
 from harness.stack.schema import ROLE_FACE, Stack, Tier
@@ -206,6 +207,7 @@ class StackManager:
         hardware: Any = None,
         endpoint_prober: Optional[Callable[[str], dict[str, Any]]] = None,
         strata_launcher: Optional[StrataLauncher] = None,
+        deepinfer_launcher: Optional[DeepInferLauncher] = None,
     ) -> None:
         self.models_manager = models_manager
         self.stacks_root = stacks_root
@@ -216,16 +218,38 @@ class StackManager:
                 log_dir=getattr(models_manager, "log_dir", None),
                 prober=self.endpoint_prober,
             )
+        if deepinfer_launcher is None:
+            deepinfer_launcher = DeepInferLauncher(
+                log_dir=getattr(models_manager, "log_dir", None),
+                prober=self.endpoint_prober,
+            )
         self.strata_launcher = strata_launcher
+        self.deepinfer_launcher = deepinfer_launcher
         self._applied: Optional[Stack] = None
         self._plan: Any = None
         self._runtimes: dict[str, TierRuntime] = {}
         self._keys: dict[str, str] = {}
         self._launched: set[str] = set()
+        #: Which launcher owns each launched role (the launch kind decides).
+        self._launcher_of: dict[str, Any] = {}
 
     # ------------------------------------------------------------------
     # internals
     # ------------------------------------------------------------------
+    def _launcher_for(self, launch: Any) -> Any:
+        """The launcher that owns a ``launch`` block, by its ``kind``.
+
+        ``strata`` and ``deepinfer`` are the two kinds this build knows; an
+        unknown kind falls back to the Strata launcher, whose behaviour is
+        the closest match (a generated config plus a managed process).
+        """
+        kind = ""
+        if isinstance(launch, Mapping):
+            kind = str(launch.get("kind") or "").strip().lower()
+        if kind == "deepinfer":
+            return self.deepinfer_launcher
+        return self.strata_launcher
+
     @staticmethod
     def _ordered_tiers(stack: Stack) -> list[Tier]:
         """Stack tiers, face first, others in declared order."""
@@ -323,15 +347,23 @@ class StackManager:
                             raise
                         # The contract is down and the tier knows how to bring
                         # it up: start it (and own the process for unload).
-                        info = self.strata_launcher.start(
+                        launcher = self._launcher_for(launch)
+                        info = launcher.start(
                             stack_name=stack.name, role=tier.role,
                             tier=tier, endpoint=endpoint,
                         )
                         managed = True
                         launched.add(tier.role)
+                        self._launcher_of[tier.role] = launcher
                         health = info.get("health") or self.endpoint_prober(endpoint)
                     if not isinstance(health, Mapping):
                         health = {}
+                    expect = _tier_field(tier, "expect_model", None)
+                    reported_model = health.get("model")
+                    if expect and reported_model and str(expect) != str(reported_model):
+                        raise RuntimeError(
+                            f"endpoint {endpoint} reports model {reported_model!r}, "
+                            f"expected {expect!r} (stale route or wrong server)")
                     reported_ctx = health.get("max_context")
                     runtimes[tier.role] = TierRuntime(
                         role=tier.role,
@@ -385,7 +417,8 @@ class StackManager:
             for key in keys.values():
                 self._safe_unload(key)
             for role in launched:
-                self.strata_launcher.stop(role)
+                launcher = self._launcher_of.get(role, self.strata_launcher)
+                launcher.stop(role)
             role = getattr(tier, "role", "?")
             raise RuntimeError(
                 f"stack '{stack.name}' failed on tier '{role}': {exc}"
@@ -396,6 +429,7 @@ class StackManager:
         self._runtimes = runtimes
         self._keys = keys
         self._launched = launched
+        self._launcher_of = dict(self._launcher_of)
         ordered = [ROLE_FACE] + [role for role in runtimes if role != ROLE_FACE]
         return {
             "ok": True,
@@ -448,13 +482,15 @@ class StackManager:
             if key is not None:
                 self._safe_unload(key)
             elif role in self._launched:
-                self.strata_launcher.stop(role)
+                launcher = self._launcher_of.get(role, self.strata_launcher)
+                launcher.stop(role)
             unloaded.append(role)
         self._applied = None
         self._plan = None
         self._runtimes = {}
         self._keys = {}
         self._launched = set()
+        self._launcher_of = {}
         return {"ok": True, "unloaded": unloaded}
 
     def instance_for(self, role: str) -> Any:

@@ -48,17 +48,20 @@ _TIER_FIELDS: tuple[str, ...] = (
 )
 _TIER_OPTIONAL: tuple[str, ...] = (
     "spec", "mmproj", "pin", "ts", "engine_args", "endpoint", "caps",
-    "launch",
+    "launch", "expect_model",
 )
 _STACK_FIELDS: tuple[str, ...] = ("name", "version", "tiers", "routing")
 
 #: ``launch.kind`` values this build knows.  ``strata`` starts Strata's
-#: ``serve/server.py`` from a generated copy of the tier's config.
-LAUNCH_KINDS: tuple[str, ...] = ("strata",)
+#: ``serve/server.py`` from a generated copy of the tier's config;
+#: ``deepinfer`` starts the OpenAI-compatible facade over DeepInfer's
+#: offline engine (``tools/deepinfer/serve.py``).
+LAUNCH_KINDS: tuple[str, ...] = ("strata", "deepinfer")
 
 #: Fields a tier's ``launch`` object round-trips.
 _LAUNCH_FIELDS: tuple[str, ...] = (
     "kind", "repo", "config", "python", "engine_args", "options", "timeout_s",
+    "ctx_flag",
 )
 
 #: Flags the managed launch owns; a ``launch.engine_args`` entry carrying one
@@ -171,9 +174,11 @@ def validate_launch(value: Any, *, where: str = "tier launch") -> dict[str, Any]
     Shape only: ``kind`` (one of :data:`LAUNCH_KINDS`), ``repo`` and
     ``config`` (strings), optional ``python`` (default ``.venv/bin/python``,
     resolved at start), optional ``engine_args`` (deny-list validated),
-    optional ``options`` object merged into the generated server config, and
-    optional positive ``timeout_s`` for startup.  Paths are resolved when the
-    launcher starts, not here.
+    optional ``options`` object merged into the generated server config,
+    optional ``ctx_flag`` (the engine's own context flag - ``--ctx`` on the
+    DeepSeek-V4.1 engine, which rejects the ``--max-context`` this launcher
+    forces by default), and optional positive ``timeout_s`` for startup.
+    Paths are resolved when the launcher starts, not here.
     """
     if not isinstance(value, Mapping):
         raise ValueError(f"{where} must be an object, got {type(value).__name__}")
@@ -201,6 +206,12 @@ def validate_launch(value: Any, *, where: str = "tier launch") -> dict[str, Any]
         out["python"] = python
     if value.get("engine_args") is not None:
         out["engine_args"] = validate_launch_args(value.get("engine_args"))
+    ctx_flag = _as_optional_text(value.get("ctx_flag"), f"{where} ctx_flag")
+    if ctx_flag is not None:
+        if not ctx_flag.startswith("--"):
+            raise ValueError(
+                f"{where} ctx_flag {ctx_flag!r} must be a flag (start with '--')")
+        out["ctx_flag"] = ctx_flag
     options = _as_optional_object(value.get("options"), f"{where} options")
     if options is not None:
         owned = [key for key in options if key in LAUNCH_OPTIONS_DENIED]
@@ -322,6 +333,9 @@ class Tier:
     endpoint: Optional[str] = None
     caps: Optional[dict[str, Any]] = None
     launch: Optional[dict[str, Any]] = None
+    #: the model this tier's endpoint must report (a stale route answering
+    #: from another model is refused; LocalAI hit the same class in #10952)
+    expect_model: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         """The tier as it appears in a ``stacks/<name>.json`` file."""
@@ -351,6 +365,8 @@ class Tier:
             out["caps"] = dict(self.caps)
         if self.launch is not None:
             out["launch"] = dict(self.launch)
+        if self.expect_model is not None:
+            out["expect_model"] = self.expect_model
         return out
 
     @classmethod
@@ -388,6 +404,7 @@ class Tier:
             caps=_as_optional_object(data.get("caps"), "tier caps"),
             launch=(validate_launch(data.get("launch"))
                     if data.get("launch") is not None else None),
+            expect_model=_as_optional_text(data.get("expect_model"), "tier expect_model"),
         )
 
 

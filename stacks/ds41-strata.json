@@ -1,0 +1,30 @@
+{
+  "name": "ds41-strata",
+  "version": 1,
+  "tiers": [
+    {
+      "role": "face",
+      "repo": "IndrasMirror/DeepSeek-V4.1-Flash-GSQ-Uncensored",
+      "file": "V41-GSQ.gguf",
+      "ctx": 32768,
+      "ngl": 99,
+      "backend": "rocm",
+      "cache_k": "q8_0",
+      "cache_v": "q8_0",
+      "endpoint": "http://127.0.0.1:8150/v1",
+      "caps": {},
+      "launch": {
+        "kind": "strata",
+        "repo": "~/Desktop/work/strata-ds41",
+        "config": "local/ds41-hivebench.json",
+        "python": "~/Desktop/work/strata/.venv/bin/python",
+        "ctx_flag": "--ctx",
+        "engine_args": [],
+        "timeout_s": 1800
+      }
+    }
+  ],
+  "routing": {
+    "workers_as": "subagent"
+  }
+}

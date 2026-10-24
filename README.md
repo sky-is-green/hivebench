@@ -30,6 +30,32 @@ the API is opt-in. It runs the cascade, the memory arms and the A/B batteries
 from the same result schema, and every run leaves a report, a manifest and a
 harvest. The detailed guide is in [`hivebench/README.md`](hivebench/README.md).
 
+## One harness, any engine, placed per role
+
+A stack tier does not hard-code an engine. It names a **role** — in the cascade,
+a functional slot such as `face`, `worker` or the escalation tier — and carries
+the engine as a field: `backend`, `launch.kind`, `pin` (which card), `ctx`, KV
+cache types, args. The harness owns each tier's lifecycle (start, health-check,
+route, stop), and the endpoint contract is the same whether the engine behind it
+is llama.cpp, the Strata fork (which serves a 163 GB DeepSeek-V4.1 through its
+own server) or DeepInfer. A new engine is one adapter module plus a
+`launch.kind` entry; the stack schema, routing, API and app do not change.
+
+**What this is not.** Multi-engine serving is not new and we do not claim it.
+NVIDIA Triton runs several backends with per-model GPU placement; LocalAI
+coordinates 60+ backend processes behind one API with per-model GPU settings and
+runtime registration; Ray Serve LLM defines an engine-agnostic protocol; control
+planes such as Modelplane advertise "any model on any engine". If the claim were
+"slots for engines", those would be counterexamples.
+
+What we have not found elsewhere is the combination: the slots are **functional
+roles in a verification loop** (solve → detect → repair → escalate), the engine
+and the card are chosen from that role's measured cost, and the verifier never
+sees an answer key. In Triton or LocalAI the multiple engines are a deployment
+convenience; here they are the mechanism by which a wrong answer is caught. That
+combination — plus local-first operation on two consumer cards, with no
+Kubernetes, no container runtime and no API key — is the claim.
+
 ## Layout
 
 | path | what lives there |

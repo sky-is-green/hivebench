@@ -423,6 +423,37 @@ The live benchmark talks to an OpenAI-compatible backend (e.g. LM Studio on
 | `tests/` | unit + integration suite for the splinter system — run from here |
 | `harness/` | HiveBench Studio sidecar (`python -m harness`) |
 | `vendor/deepseek_harness/` | vendored dsh Python SDK (the agent bridge; re-based with `scripts/revendor_dsh.py`) |
+| `vendor/deepinfer/` | vendored DeepInfer engine (deepseek-ai/DeepInfer; re-vendored with `scripts/revendor_deepinfer.py`) |
+| `vendor/deepinfer_amd/` | our AMD (ROCm) lane for it — the platform, the torch-native kernels, the HIP build |
+| `tools/deepinfer/serve.py` | the OpenAI-compatible facade over DeepInfer's offline engine |
+
+## The engine lane: DeepInfer on AMD
+
+DeepInfer is DeepSeek's own inference framework. It ships for NVIDIA
+SM100 and Huawei Ascend 950, it has no HTTP server, and its kernels are
+Blackwell TileLang/DeepGEMM kernels with FP8 weights and FP4 experts.
+
+This repo carries an **AMD (ROCm) lane** for it:
+
+- `vendor/deepinfer_amd/` replaces the platform, the device discovery and
+  the CUDA-only packages (`deep_gemm`, `tile_kernels`, `flash_mla`,
+  `deep_ep`, `deep_select`, `flash_attn`, `tilelang`) with torch-native
+  versions, and builds DeepInfer's C++ core with `hipcc`;
+- `tools/deepinfer/serve.py` wraps DeepInfer's offline API in the
+  OpenAI-compatible surface the harness (and the dsh routes) speak, so a
+  DeepInfer tier is a tier like any other;
+- `harness/stack/deepinfer.py` owns its lifecycle the way the Strata
+  launcher does, and `stacks/deepinfer-v41.json` is the stack.
+
+Measured on 2× RX 7900 XT (gfx1100), ROCm 7.2.4: the C++ core builds and
+loads, the platform reports `amd`, the V4.1 model executor imports, and
+the whole engine initialises.
+
+The honest limit: **DeepSeek-V4.1-Flash cannot run on gfx1100** — its
+checkpoint is FP8 with FP4 experts and RDNA3 has no FP8. The lane's target
+is a bf16 model without the mHC head, which is what our own ternary
+models are. The measurements, the refusals and the remaining work are in
+[`../docs/DEEPINFER-AMD-PORT.md`](../docs/DEEPINFER-AMD-PORT.md).
 
 ## Where we're going
 
